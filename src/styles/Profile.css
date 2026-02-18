@@ -107,6 +107,15 @@
   color: #665b5b;
 }
 
+.profile-page .profile-bio {
+  margin-top: 8px;
+  max-width: 320px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #7d7373;
+}
+
 .profile-page .stats-row {
   display: flex;
   align-items: center;

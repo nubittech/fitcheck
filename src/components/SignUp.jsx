@@ -56,7 +56,10 @@ const SignUp = ({ onBack, onSignUp, onGoLogin }) => {
       return
     }
     if (data.session) {
-      onSignUp(data.session)
+      onSignUp({
+        session: data.session,
+        account: { fullName: fullName.trim(), email: email.trim() }
+      })
     } else {
       setApiError('Account created! Check your email to confirm, then log in.')
     }

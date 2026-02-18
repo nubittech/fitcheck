@@ -9,8 +9,9 @@ import Login from './components/Login'
 import PublicProfile from './components/PublicProfile'
 import SignUp from './components/SignUp'
 import NoMoreContent from './components/NoMoreContent'
+import ProfileSetup from './components/ProfileSetup'
 import { getSession, onAuthStateChange } from './lib/auth'
-import { getOutfits, getProfile, getUserLikes, likeOutfit } from './lib/api'
+import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar } from './lib/api'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -53,8 +54,12 @@ function transformOutfit(raw) {
 }
 
 function App() {
+  const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'
   const [session, setSession] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
+  const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
+  const [profileChecked, setProfileChecked] = useState(false)
+  const [lockProfileSetup, setLockProfileSetup] = useState(false)
   const [authScreen, setAuthScreen] = useState('login')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('home')
@@ -81,12 +86,35 @@ function App() {
   useEffect(() => {
     if (!session?.user?.id) {
       setCurrentUser(null)
+      setNeedsProfileSetup(false)
+      setProfileChecked(true)
       return
     }
+    if (lockProfileSetup) {
+      setCurrentUser(null)
+      setNeedsProfileSetup(true)
+      setProfileChecked(true)
+      return
+    }
+    setProfileChecked(false)
     getProfile(session.user.id).then(({ data }) => {
-      if (data) setCurrentUser(data)
+      if (data) {
+        setCurrentUser(data)
+        const incomplete =
+          !data.full_name ||
+          !data.avatar_url ||
+          !data.bio ||
+          !data.city ||
+          !data.age ||
+          !data.vibes ||
+          data.vibes.length === 0
+        setNeedsProfileSetup(incomplete)
+      } else {
+        setNeedsProfileSetup(true)
+      }
+      setProfileChecked(true)
     })
-  }, [session?.user?.id])
+  }, [session?.user?.id, lockProfileSetup])
 
   // Fetch feed
   const fetchFeed = useCallback(async () => {
@@ -148,10 +176,77 @@ function App() {
   const handleLogout = () => {
     setSession(null)
     setCurrentUser(null)
+    setNeedsProfileSetup(false)
+    setProfileChecked(true)
+    setLockProfileSetup(false)
     setOutfits([])
     setCurrentIndex(0)
     setActiveTab('home')
     setAuthScreen('login')
+  }
+
+  const handleProfileSetupSave = async ({ name, bio, styles, avatarFile, avatarPreview }) => {
+    if (!session?.user?.id) return
+
+    let avatarUrl = avatarPreview || currentUser?.avatar_url || DEFAULT_AVATAR
+    if (avatarFile) {
+      const { data } = await uploadAvatar(session.user.id, avatarFile)
+      if (data?.url) avatarUrl = data.url
+    }
+
+    const { data: updated } = await updateProfile(session.user.id, {
+      full_name: name,
+      bio,
+      vibes: styles,
+      avatar_url: avatarUrl
+    })
+
+    if (updated) {
+      setCurrentUser(updated)
+    } else {
+      setCurrentUser(prev => ({
+        ...(prev || {}),
+        full_name: name,
+        bio,
+        vibes: styles,
+        avatar_url: avatarUrl
+      }))
+    }
+    setLockProfileSetup(false)
+    setNeedsProfileSetup(false)
+  }
+
+  const handleProfileEditSave = async ({ name, bio, city, age, styles, avatarFile, avatarPreview }) => {
+    if (!session?.user?.id) return
+
+    let avatarUrl = avatarPreview || currentUser?.avatar_url || DEFAULT_AVATAR
+    if (avatarFile) {
+      const { data } = await uploadAvatar(session.user.id, avatarFile)
+      if (data?.url) avatarUrl = data.url
+    }
+
+    const { data: updated } = await updateProfile(session.user.id, {
+      full_name: name,
+      bio,
+      city,
+      age,
+      vibes: styles,
+      avatar_url: avatarUrl
+    })
+
+    if (updated) {
+      setCurrentUser(updated)
+    } else {
+      setCurrentUser(prev => ({
+        ...(prev || {}),
+        full_name: name,
+        bio,
+        city,
+        age,
+        vibes: styles,
+        avatar_url: avatarUrl
+      }))
+    }
   }
 
   const renderContent = () => {
@@ -161,7 +256,13 @@ function App() {
           <SignUp
             onBack={() => setAuthScreen('login')}
             onGoLogin={() => setAuthScreen('login')}
-            onSignUp={(s) => setSession(s)}
+            onSignUp={({ session: createdSession }) => {
+              setSession(createdSession)
+              setCurrentUser(null)
+              setLockProfileSetup(true)
+              setNeedsProfileSetup(true)
+              setProfileChecked(true)
+            }}
           />
         )
       }
@@ -169,6 +270,21 @@ function App() {
         <Login
           onLogin={(s) => setSession(s)}
           onGoSignUp={() => setAuthScreen('signup')}
+        />
+      )
+    }
+    if (!profileChecked) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Preparing your profile...</p>
+        </div>
+      )
+    }
+    if (needsProfileSetup) {
+      return (
+        <ProfileSetup
+          initialProfile={{ name: '', bio: '', avatar: '', styles: [] }}
+          onSave={handleProfileSetupSave}
         />
       )
     }
@@ -213,7 +329,7 @@ function App() {
           currentUser={currentUser}
           session={session}
           onLogout={handleLogout}
-          onProfileUpdated={(updated) => setCurrentUser(updated)}
+          onProfileUpdated={handleProfileEditSave}
         />
       )
     }
@@ -254,7 +370,7 @@ function App() {
   return (
     <div className="app">
       {renderContent()}
-      {isLoggedIn && activeTab !== 'add' && !viewingProfile && (
+      {isLoggedIn && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && (
         <BottomNav activeTab={activeTab} onTabChange={(tab) => {
           setActiveTab(tab)
           if (tab !== 'inbox') setSelectedChat(null)

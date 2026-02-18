@@ -1,22 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import '../styles/Profile.css';
 import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
 import DailyLimitDemo from './DailyLimitDemo';
-
-const MOCK_PROFILE = {
-    name: 'Jane Doe',
-    age: 26,
-    location: 'Brooklyn, NY',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-    isPremium: false,
-    stats: {
-        likes: '1.2k',
-        outfits: 14
-    }
-};
 
 const CURRENT_LOOKS = [
     {
@@ -78,11 +66,24 @@ const ICONS = {
     )
 };
 
-const Profile = ({ onLogout }) => {
+const Profile = ({ currentUser, onLogout, onProfileUpdated }) => {
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showDailyLimitDemo, setShowDailyLimitDemo] = useState(false);
+    const profile = useMemo(() => ({
+        name: currentUser?.full_name || 'New Member',
+        age: currentUser?.age ?? '-',
+        city: currentUser?.city || 'City not set',
+        avatar: currentUser?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+        styles: currentUser?.vibes || ['Minimalist'],
+        bio: currentUser?.bio || '',
+        isPremium: Boolean(currentUser?.is_premium),
+        stats: {
+            likes: '1.2k',
+            outfits: 14
+        }
+    }), [currentUser]);
 
     return (
         <div className="profile-page">
@@ -98,28 +99,29 @@ const Profile = ({ onLogout }) => {
             <section className="user-info">
                 <div className="avatar-container">
                     <div className="avatar-ring">
-                        <img src={MOCK_PROFILE.avatar} alt="Profile" className="avatar-img" />
+                        <img src={profile.avatar} alt="Profile" className="avatar-img" />
                     </div>
-                    {MOCK_PROFILE.isPremium && (
+                    {profile.isPremium && (
                         <div className="premium-badge">
                             {ICONS.verified}
                             <span>PREMIUM</span>
                         </div>
                     )}
                 </div>
-                <h2 className="user-name">{MOCK_PROFILE.name}</h2>
-                <p className="user-location">{MOCK_PROFILE.age} / {MOCK_PROFILE.location}</p>
+                <h2 className="user-name">{profile.name}</h2>
+                <p className="user-location">{profile.age} / {profile.city}</p>
+                {profile.bio && <p className="profile-bio">{profile.bio}</p>}
             </section>
 
             {/* Stats */}
             <section className="stats-row">
                 <div className="stat-item">
-                    <span className="stat-value">{MOCK_PROFILE.stats.likes}</span>
+                    <span className="stat-value">{profile.stats.likes}</span>
                     <span className="stat-label">TOTAL LIKES</span>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
-                    <span className="stat-value">{MOCK_PROFILE.stats.outfits}</span>
+                    <span className="stat-value">{profile.stats.outfits}</span>
                     <span className="stat-label">ACTIVE OUTFITS</span>
                 </div>
             </section>
@@ -134,7 +136,7 @@ const Profile = ({ onLogout }) => {
             </section>
 
             {/* Premium Promo for Free Users */}
-            {!MOCK_PROFILE.isPremium && <PremiumPromo onUpgrade={() => setShowDailyLimitDemo(true)} />}
+            {!profile.isPremium && <PremiumPromo onUpgrade={() => setShowDailyLimitDemo(true)} />}
 
             {/* Current Looks */}
             <section className="current-looks">
@@ -193,12 +195,16 @@ const Profile = ({ onLogout }) => {
             )}
 
             {showEditProfile && (
-                <EditProfile onClose={() => setShowEditProfile(false)} />
+                <EditProfile
+                    profile={profile}
+                    onSave={onProfileUpdated}
+                    onClose={() => setShowEditProfile(false)}
+                />
             )}
 
             {showBoost && (
                 <BoostSelection
-                    userType={MOCK_PROFILE.isPremium ? 'premium' : 'free'}
+                    userType={profile.isPremium ? 'premium' : 'free'}
                     onClose={() => setShowBoost(false)}
                     onBoost={() => {
                         alert('Boost activated!');
