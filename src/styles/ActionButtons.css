@@ -2,9 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--secondary);
+  gap: 20px;
+  padding: 8px 0;
 }
 
 .action-btn {
@@ -14,7 +13,7 @@
   border: none;
   cursor: pointer;
   border-radius: 50%;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -26,20 +25,24 @@
   width: 52px;
   height: 52px;
   background: var(--white);
-  color: var(--text-secondary);
-  box-shadow: var(--shadow-sm);
+  border: 2px solid #FFE0E0;
+  color: #FF6B6B;
 }
 
-.skip-btn:active {
-  color: #e74c3c;
+.comment-btn {
+  width: 56px;
+  height: 56px;
+  background: var(--white);
+  border: 2px solid #E0E7FF;
+  color: #5B7FFF;
 }
 
 .like-btn {
-  width: 64px;
-  height: 64px;
-  background: var(--primary);
-  color: var(--white);
-  box-shadow: 0 4px 16px rgba(255, 139, 123, 0.4);
+  width: 52px;
+  height: 52px;
+  background: var(--white);
+  border: 2px solid #D4EDDA;
+  color: var(--success);
 }
 
 .like-btn.pop {
@@ -51,16 +54,4 @@
   25% { transform: scale(1.25); }
   50% { transform: scale(0.95); }
   100% { transform: scale(1); }
-}
-
-.comment-btn {
-  width: 52px;
-  height: 52px;
-  background: var(--white);
-  color: var(--text-secondary);
-  box-shadow: var(--shadow-sm);
-}
-
-.comment-btn:active {
-  color: var(--primary);
 }

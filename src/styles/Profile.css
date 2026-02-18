@@ -1,0 +1,510 @@
+.profile-page {
+  min-height: 100vh;
+  height: 100%;
+  overflow-y: auto;
+  background: #f5f2f0;
+  color: #2f2626;
+  padding: 18px 24px calc(96px + env(safe-area-inset-bottom, 0px));
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.profile-page .profile-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.profile-page .profile-header h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #181215;
+}
+
+.profile-page .settings-btn {
+  position: absolute;
+  right: 2px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #2f2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile-page .user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.profile-page .avatar-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.profile-page .avatar-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 4px;
+  background: #d8dde5;
+}
+
+.profile-page .avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #f5f2f0;
+  display: block;
+}
+
+.profile-page .premium-badge {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 1px solid #ece7e3;
+  border-radius: 999px;
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-page .premium-badge span {
+  font-size: 10px;
+  font-weight: 800;
+  color: #e39f17;
+  letter-spacing: 0.06em;
+}
+
+.profile-page .user-name {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #171215;
+}
+
+.profile-page .user-location {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 400;
+  color: #665b5b;
+}
+
+.profile-page .stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.profile-page .stat-item {
+  min-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-page .stat-value {
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #231b1f;
+}
+
+.profile-page .stat-label {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: #776b6b;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.profile-page .stat-divider {
+  width: 1px;
+  height: 42px;
+  background: #d9d1cf;
+  margin: 0 16px;
+}
+
+.profile-page .action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0 0 28px;
+}
+
+.profile-page .btn {
+  height: 56px;
+  border-radius: 999px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-page .btn-outline {
+  background: #f8fafc;
+  border: 1px solid #d6dde4;
+  color: #1f1a1d;
+}
+
+.profile-page .btn-primary {
+  background: #1d2a44;
+  border: 1px solid #101a2c;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(18, 30, 52, 0.24);
+}
+
+.premium-promo-card {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 22px;
+  margin-bottom: 28px;
+  border: 1px solid #ece7e3;
+}
+
+.promo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.promo-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #f7cf78;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.promo-header h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #20191d;
+}
+
+.promo-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feature-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-infinity,
+.icon-bolt,
+.icon-dollar,
+.icon-filter {
+  background: #fdf1eb;
+  color: #f07f6f;
+}
+
+.feature-item span {
+  font-size: 16px;
+  line-height: 1.2;
+  color: #31292d;
+}
+
+.premium-upgrade-btn {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 999px;
+  background: #f68a7d;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.current-looks {
+  margin-bottom: 32px;
+}
+
+.current-looks .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.profile-page .current-looks h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #211a1e;
+}
+
+.profile-page .badge-24h {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f8dfdb;
+  color: #f0786c;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.looks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.look-card {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #ebe7e4;
+}
+
+.look-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.look-card.large {
+  height: 300px;
+}
+
+.look-card.small {
+  height: 142px;
+}
+
+.looks-column {
+  display: grid;
+  grid-template-rows: 142px 142px;
+  gap: 16px;
+}
+
+.look-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.timer-badge {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e262b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.likes-badge {
+  align-self: flex-start;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+.profile-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #c2b4b2;
+  margin-top: 8px;
+}
+
+.profile-footer p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.boost-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.boost-card {
+  width: 100%;
+  max-width: 360px;
+  border-radius: 28px;
+  background: #ffffff;
+  padding: 24px 18px 16px;
+}
+
+.boost-header h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.boost-header p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #7a7070;
+  text-align: center;
+}
+
+.boost-status {
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 16px;
+}
+
+.free-bg {
+  background: #f4f6fa;
+}
+
+.premium-bg {
+  background: #fff2f0;
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.boost-count {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.boost-actions {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.boost-action-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.boost-action-btn.primary {
+  background: #f68a7d;
+  color: #ffffff;
+}
+
+.boost-action-btn.buy {
+  background: #1d2a44;
+  color: #ffffff;
+}
+
+.boost-action-btn.secondary {
+  background: #f6f7f9;
+  color: #383034;
+  border: 1px solid #e5e6ea;
+}
+
+.back-btn {
+  margin-top: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #857b7b;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+@media (max-width: 420px) {
+  .profile-page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .profile-page .profile-header h1 {
+    font-size: 18px;
+  }
+
+  .profile-page .user-name {
+    font-size: 24px;
+  }
+
+  .profile-page .user-location {
+    font-size: 14px;
+  }
+
+  .profile-page .stat-value {
+    font-size: 20px;
+  }
+
+  .profile-page .stat-label {
+    font-size: 11px;
+  }
+}
