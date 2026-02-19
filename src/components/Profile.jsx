@@ -1,34 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import '../styles/Profile.css';
 import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
 import DailyLimitDemo from './DailyLimitDemo';
-
-const CURRENT_LOOKS = [
-    {
-        id: 1,
-        image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600',
-        timeLeft: '18h left',
-        likes: 240,
-        isLarge: true
-    },
-    {
-        id: 2,
-        image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
-        timeLeft: '4h left',
-        likes: 120,
-        isLarge: false
-    },
-    {
-        id: 3,
-        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600',
-        timeLeft: '23h left',
-        likes: 85,
-        isLarge: false
-    }
-];
+import { getOutfitsByUser } from '../lib/api';
 
 const ICONS = {
     settings: (
@@ -66,24 +43,73 @@ const ICONS = {
     )
 };
 
-const Profile = ({ currentUser, onLogout, onProfileUpdated }) => {
+function getTimeLeft(createdAt) {
+    const created = new Date(createdAt).getTime();
+    const expiresAt = created + 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const diff = expiresAt - now;
+    if (diff <= 0) return null;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+}
+
+const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showDailyLimitDemo, setShowDailyLimitDemo] = useState(false);
+    const [userOutfits, setUserOutfits] = useState([]);
+    const [outfitsLoading, setOutfitsLoading] = useState(true);
+    const [, setTick] = useState(0);
+
     const profile = useMemo(() => ({
         name: currentUser?.full_name || 'New Member',
         age: currentUser?.age ?? '-',
         city: currentUser?.city || 'City not set',
         avatar: currentUser?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-        styles: currentUser?.vibes || ['Minimalist'],
+        styles: currentUser?.vibes || [],
         bio: currentUser?.bio || '',
         isPremium: Boolean(currentUser?.is_premium),
-        stats: {
-            likes: '1.2k',
-            outfits: 14
-        }
     }), [currentUser]);
+
+    // Fetch user outfits
+    useEffect(() => {
+        if (!session?.user?.id) return;
+        setOutfitsLoading(true);
+        getOutfitsByUser(session.user.id).then(({ data }) => {
+            setUserOutfits(data || []);
+            setOutfitsLoading(false);
+        });
+    }, [session?.user?.id]);
+
+    // Tick every minute for countdown update
+    useEffect(() => {
+        const interval = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Filter active outfits (within 24h)
+    const activeOutfits = useMemo(() => {
+        return userOutfits.filter(o => getTimeLeft(o.created_at) !== null);
+    }, [userOutfits]);
+
+    // Stats from real data
+    const totalLikes = useMemo(() => {
+        return userOutfits.reduce((sum, o) => sum + (o.likes_count || 0), 0);
+    }, [userOutfits]);
+
+    const formatLikes = (n) => {
+        if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        return String(n);
+    };
+
+    const getOutfitImage = (outfit) => {
+        const media = outfit.outfit_media || [];
+        const sorted = [...media].sort((a, b) => a.sort_order - b.sort_order);
+        return sorted[0]?.media_url || '';
+    };
 
     return (
         <div className="profile-page">
@@ -116,12 +142,12 @@ const Profile = ({ currentUser, onLogout, onProfileUpdated }) => {
             {/* Stats */}
             <section className="stats-row">
                 <div className="stat-item">
-                    <span className="stat-value">{profile.stats.likes}</span>
+                    <span className="stat-value">{formatLikes(totalLikes)}</span>
                     <span className="stat-label">TOTAL LIKES</span>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
-                    <span className="stat-value">{profile.stats.outfits}</span>
+                    <span className="stat-value">{activeOutfits.length}</span>
                     <span className="stat-label">ACTIVE OUTFITS</span>
                 </div>
             </section>
@@ -145,40 +171,71 @@ const Profile = ({ currentUser, onLogout, onProfileUpdated }) => {
                     <span className="badge-24h">24h only</span>
                 </div>
 
-                <div className="looks-grid">
-                    {/* Main Large Item */}
-                    <div className="look-card large">
-                        <img src={CURRENT_LOOKS[0].image} alt="Look 1" />
-                        <div className="look-overlay">
-                            <div className="timer-badge">
-                                {ICONS.clock} {CURRENT_LOOKS[0].timeLeft}
-                            </div>
-                            <div className="likes-badge">
-                                {ICONS.heart} {CURRENT_LOOKS[0].likes}
-                            </div>
-                        </div>
+                {outfitsLoading ? (
+                    <p className="looks-empty-text">Loading...</p>
+                ) : activeOutfits.length === 0 ? (
+                    <div className="looks-empty">
+                        <div className="looks-empty-icon">{ICONS.hanger}</div>
+                        <p className="looks-empty-text">No active outfits yet</p>
+                        <p className="looks-empty-sub">Share a combo to see it here!</p>
                     </div>
-
-                    {/* Right Column Stack */}
-                    <div className="looks-column">
-                        <div className="look-card small">
-                            <img src={CURRENT_LOOKS[1].image} alt="Look 2" />
+                ) : activeOutfits.length === 1 ? (
+                    <div className="looks-single">
+                        <div className="look-card large">
+                            <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
                             <div className="look-overlay">
                                 <div className="timer-badge">
-                                    {ICONS.clock} {CURRENT_LOOKS[1].timeLeft}
+                                    {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
                                 </div>
-                            </div>
-                        </div>
-                        <div className="look-card small">
-                            <img src={CURRENT_LOOKS[2].image} alt="Look 3" />
-                            <div className="look-overlay">
-                                <div className="timer-badge">
-                                    {ICONS.clock} {CURRENT_LOOKS[2].timeLeft}
+                                <div className="likes-badge">
+                                    {ICONS.heart} {activeOutfits[0].likes_count || 0}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                ) : activeOutfits.length === 2 ? (
+                    <div className="looks-grid">
+                        {activeOutfits.slice(0, 2).map(outfit => (
+                            <div className="look-card equal" key={outfit.id}>
+                                <img src={getOutfitImage(outfit)} alt="Look" />
+                                <div className="look-overlay">
+                                    <div className="timer-badge">
+                                        {ICONS.clock} {getTimeLeft(outfit.created_at)}
+                                    </div>
+                                    <div className="likes-badge">
+                                        {ICONS.heart} {outfit.likes_count || 0}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="looks-grid">
+                        <div className="look-card large">
+                            <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
+                            <div className="look-overlay">
+                                <div className="timer-badge">
+                                    {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
+                                </div>
+                                <div className="likes-badge">
+                                    {ICONS.heart} {activeOutfits[0].likes_count || 0}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="looks-column">
+                            {activeOutfits.slice(1, 3).map(outfit => (
+                                <div className="look-card small" key={outfit.id}>
+                                    <img src={getOutfitImage(outfit)} alt="Look" />
+                                    <div className="look-overlay">
+                                        <div className="timer-badge">
+                                            {ICONS.clock} {getTimeLeft(outfit.created_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </section>
 
             {/* Footer */}

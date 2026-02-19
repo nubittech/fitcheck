@@ -8,7 +8,7 @@ const MAX_STYLES = 3
 const ProfileSetup = ({ initialProfile, onSave }) => {
   const [name, setName] = useState(initialProfile?.name || '')
   const [bio, setBio] = useState(initialProfile?.bio || '')
-  const [styles, setStyles] = useState(initialProfile?.styles?.length ? initialProfile.styles : ['Minimalist'])
+  const [styles, setStyles] = useState(initialProfile?.styles?.length ? initialProfile.styles : [])
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(initialProfile?.avatar || '')
   const [saving, setSaving] = useState(false)
@@ -46,7 +46,16 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
 
       <section className="profile-setup-avatar-section">
         <div className="profile-setup-avatar-wrap">
-          <img src={avatarPreview || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'} alt="profile" className="profile-setup-avatar" />
+          {avatarPreview ? (
+            <img src={avatarPreview} alt="profile" className="profile-setup-avatar" />
+          ) : (
+            <div className="profile-setup-avatar profile-setup-avatar-empty">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#b8b0ab" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+          )}
           <label className="profile-setup-camera-btn">
             <input type="file" accept="image/*" hidden onChange={handleFileChange} />
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +68,7 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
 
       <section className="profile-setup-form">
         <label className="setup-label">Display Name</label>
-        <input className="setup-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
+        <input className="setup-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
 
         <div className="setup-label-row">
           <label className="setup-label">Bio</label>

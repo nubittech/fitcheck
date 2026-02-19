@@ -102,10 +102,7 @@ function App() {
         setCurrentUser(data)
         const incomplete =
           !data.full_name ||
-          !data.avatar_url ||
           !data.bio ||
-          !data.city ||
-          !data.age ||
           !data.vibes ||
           data.vibes.length === 0
         setNeedsProfileSetup(incomplete)
@@ -116,9 +113,9 @@ function App() {
     })
   }, [session?.user?.id, lockProfileSetup])
 
-  // Fetch feed
+  // Fetch feed (skip if profile setup still needed)
   const fetchFeed = useCallback(async () => {
-    if (!session) return
+    if (!session || needsProfileSetup) return
     setFeedLoading(true)
     const [outfitRes, likesRes] = await Promise.all([
       getOutfits(),
@@ -131,11 +128,11 @@ function App() {
       setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
     }
     setFeedLoading(false)
-  }, [session])
+  }, [session, needsProfileSetup])
 
   useEffect(() => {
-    if (session) fetchFeed()
-  }, [session, fetchFeed])
+    if (session && !needsProfileSetup && profileChecked) fetchFeed()
+  }, [session, needsProfileSetup, profileChecked, fetchFeed])
 
   const handleNext = () => {
     if (currentIndex < outfits.length) {
@@ -185,10 +182,10 @@ function App() {
     setAuthScreen('login')
   }
 
-  const handleProfileSetupSave = async ({ name, bio, styles, avatarFile, avatarPreview }) => {
+  const handleProfileSetupSave = async ({ name, bio, styles, avatarFile }) => {
     if (!session?.user?.id) return
 
-    let avatarUrl = avatarPreview || currentUser?.avatar_url || DEFAULT_AVATAR
+    let avatarUrl = currentUser?.avatar_url || ''
     if (avatarFile) {
       const { data } = await uploadAvatar(session.user.id, avatarFile)
       if (data?.url) avatarUrl = data.url
@@ -214,6 +211,7 @@ function App() {
     }
     setLockProfileSetup(false)
     setNeedsProfileSetup(false)
+    setActiveTab('home')
   }
 
   const handleProfileEditSave = async ({ name, bio, city, age, styles, avatarFile, avatarPreview }) => {

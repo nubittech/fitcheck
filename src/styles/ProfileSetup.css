@@ -37,6 +37,13 @@
   border: 5px solid #fff;
 }
 
+.profile-setup-avatar-empty {
+  background: #e6e1de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile-setup-camera-btn {
   position: absolute;
   right: 0;
