@@ -10,7 +10,7 @@ import PublicProfile from './components/PublicProfile'
 import SignUp from './components/SignUp'
 import NoMoreContent from './components/NoMoreContent'
 import ProfileSetup from './components/ProfileSetup'
-import { getSession, onAuthStateChange } from './lib/auth'
+import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar } from './lib/api'
 import './styles/App.css'
 
@@ -181,7 +181,8 @@ function App() {
     ))
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut()
     setSession(null)
     setCurrentUser(null)
     setNeedsProfileSetup(false)
