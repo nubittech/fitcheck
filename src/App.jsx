@@ -68,6 +68,7 @@ function App() {
   const [selectedChat, setSelectedChat] = useState(null)
   const [viewingProfile, setViewingProfile] = useState(null)
   const [feedLoading, setFeedLoading] = useState(false)
+  const [signupName, setSignupName] = useState('')
 
   const isLoggedIn = !!session
 
@@ -99,8 +100,13 @@ function App() {
     setProfileChecked(false)
     getProfile(session.user.id).then(({ data, error }) => {
       if (error) {
-        // Table doesn't exist or network error — skip profile setup, let user through
-        setCurrentUser(null)
+        // Table doesn't exist or network error — use auth metadata as fallback
+        const meta = session.user.user_metadata || {}
+        setCurrentUser({
+          id: session.user.id,
+          full_name: meta.full_name || '',
+          email: session.user.email || '',
+        })
         setNeedsProfileSetup(false)
         setProfileChecked(true)
         return
@@ -223,6 +229,7 @@ function App() {
     }
     setLockProfileSetup(false)
     setNeedsProfileSetup(false)
+    setSignupName('')
     setActiveTab('home')
   }
 
@@ -266,9 +273,10 @@ function App() {
           <SignUp
             onBack={() => setAuthScreen('login')}
             onGoLogin={() => setAuthScreen('login')}
-            onSignUp={({ session: createdSession }) => {
+            onSignUp={({ session: createdSession, account }) => {
               setSession(createdSession)
               setCurrentUser(null)
+              setSignupName(account?.fullName || '')
               setLockProfileSetup(true)
               setNeedsProfileSetup(true)
               setProfileChecked(true)
@@ -293,7 +301,7 @@ function App() {
     if (needsProfileSetup) {
       return (
         <ProfileSetup
-          initialProfile={{ name: '', bio: '', avatar: '', styles: [] }}
+          initialProfile={{ name: signupName || currentUser?.full_name || '', bio: currentUser?.bio || '', avatar: currentUser?.avatar_url || '', styles: currentUser?.vibes || [] }}
           onSave={handleProfileSetupSave}
         />
       )

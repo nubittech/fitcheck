@@ -165,8 +165,7 @@ export async function getProfile(userId) {
 export async function updateProfile(userId, updates) {
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates)
-    .eq('id', userId)
+    .upsert({ id: userId, ...updates })
     .select()
     .single()
   return { data, error }
