@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import '../styles/Inbox.css';
 
-const MOCK_MESSAGES = [
+const INITIAL_MESSAGES = [
     {
         id: 1,
         user: 'Elif Yılmaz',
@@ -59,7 +59,7 @@ const MOCK_MESSAGES = [
     }
 ];
 
-const MOCK_REQUESTS = [
+const INITIAL_REQUESTS = [
     {
         id: 101,
         user: 'Deniz Akın',
@@ -84,7 +84,7 @@ const MOCK_REQUESTS = [
     }
 ];
 
-const MOCK_CHATS = {
+const INITIAL_CHATS = {
     1: [
         { id: 1, sender: 'other', text: "Hey! I saw your outfit post. That jacket is incredible! Where did you find it?", time: "10:23 AM" },
         { id: 2, sender: 'me', text: "Thank you! I got it from a thrift store in Kadıköy, it was such a lucky find.", time: "10:45 AM" },
@@ -110,11 +110,73 @@ const MOCK_CHATS = {
     6: [
         { id: 1, sender: 'other', text: "Love the minimalist vibe of your profile!", time: "Mon" },
         { id: 2, sender: 'me', text: "Thanks man, appreciate it!", time: "Mon" },
+    ],
+    101: [
+        { id: 1, sender: 'other', text: "Hey! Love your style, where did you get that coat?", time: "3h ago" },
+    ],
+    102: [
+        { id: 1, sender: 'other', text: "Can you share the brand of those sneakers?", time: "1d ago" },
     ]
 };
 
-const Inbox = ({ onChatSelect }) => {
+const Inbox = ({ onChatSelect, pendingChat }) => {
     const [activeTab, setActiveTab] = useState('messages');
+    const [messagesList, setMessagesList] = useState(INITIAL_MESSAGES);
+    const [requestsList, setRequestsList] = useState(INITIAL_REQUESTS);
+
+    // If a pendingChat arrives (from PublicProfile Message button), add it to requests
+    useEffect(() => {
+        if (!pendingChat) return;
+        const exists = messagesList.some(m => m.user === pendingChat.user) ||
+                       requestsList.some(r => r.user === pendingChat.user);
+        if (!exists) {
+            const newReq = {
+                id: Date.now(),
+                user: pendingChat.user,
+                avatar: pendingChat.avatar || '',
+                lastMessage: pendingChat.initialMessage || 'New message',
+                time: 'Now',
+                unread: true,
+                online: false,
+                mutualFollowers: 0
+            };
+            // Add chat history for this new request
+            INITIAL_CHATS[newReq.id] = [
+                { id: 1, sender: 'me', text: pendingChat.initialMessage || 'Hey!', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+            ];
+            setRequestsList(prev => [newReq, ...prev]);
+        }
+        // Open the chat
+        const chatTarget = messagesList.find(m => m.user === pendingChat.user) ||
+                           requestsList.find(r => r.user === pendingChat.user);
+        if (chatTarget) {
+            onChatSelect(chatTarget);
+        }
+    }, [pendingChat]);
+
+    const handleAccept = (req) => {
+        // Remove from requests
+        setRequestsList(prev => prev.filter(r => r.id !== req.id));
+        // Add to messages at top
+        const newMsg = {
+            id: req.id,
+            user: req.user,
+            avatar: req.avatar,
+            lastMessage: req.lastMessage,
+            time: 'Now',
+            unread: true,
+            online: req.online,
+            initials: req.initials,
+            bgColor: req.bgColor
+        };
+        setMessagesList(prev => [newMsg, ...prev]);
+        // Open the chat
+        onChatSelect(newMsg);
+    };
+
+    const handleDecline = (reqId) => {
+        setRequestsList(prev => prev.filter(r => r.id !== reqId));
+    };
 
     return (
         <div className="inbox-page">
@@ -134,13 +196,15 @@ const Inbox = ({ onChatSelect }) => {
                     onClick={() => setActiveTab('requests')}
                 >
                     Requests
-                    <span className="badge-count">{MOCK_REQUESTS.length}</span>
+                    {requestsList.length > 0 && (
+                        <span className="badge-count">{requestsList.length}</span>
+                    )}
                 </button>
             </div>
 
             {activeTab === 'messages' ? (
                 <div className="message-list">
-                    {MOCK_MESSAGES.map(msg => (
+                    {messagesList.map(msg => (
                         <div key={msg.id} className={`message-item ${msg.unread ? 'unread-row' : ''}`} onClick={() => onChatSelect(msg)}>
                             <div className="avatar-wrapper">
                                 {msg.avatar ? (
@@ -177,7 +241,7 @@ const Inbox = ({ onChatSelect }) => {
                     </div>
 
                     <div className="message-list">
-                        {MOCK_REQUESTS.map(req => (
+                        {requestsList.map(req => (
                             <div key={req.id} className="request-item">
                                 <div className="request-top" onClick={() => onChatSelect(req)}>
                                     <div className="avatar-wrapper">
@@ -201,14 +265,14 @@ const Inbox = ({ onChatSelect }) => {
                                     )}
                                 </div>
                                 <div className="request-actions">
-                                    <button className="request-btn accept">Accept</button>
-                                    <button className="request-btn decline">Decline</button>
+                                    <button className="request-btn accept" onClick={() => handleAccept(req)}>Accept</button>
+                                    <button className="request-btn decline" onClick={() => handleDecline(req.id)}>Decline</button>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {MOCK_REQUESTS.length === 0 && (
+                    {requestsList.length === 0 && (
                         <div className="requests-empty">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -230,7 +294,7 @@ export const ChatDetail = ({ chat, onBack }) => {
     const chatEndRef = useRef(null);
 
     useEffect(() => {
-        setMessages(MOCK_CHATS[chat.id] || []);
+        setMessages(INITIAL_CHATS[chat.id] || []);
     }, [chat.id]);
 
     useEffect(() => {
@@ -246,6 +310,9 @@ export const ChatDetail = ({ chat, onBack }) => {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setMessages(prev => [...prev, newMsg]);
+        // Also update the shared chat store so navigating back and forth preserves messages
+        if (!INITIAL_CHATS[chat.id]) INITIAL_CHATS[chat.id] = [];
+        INITIAL_CHATS[chat.id].push(newMsg);
         setInputText('');
     };
 

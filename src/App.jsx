@@ -92,6 +92,7 @@ function App() {
   const [signupName, setSignupName] = useState('')
   const [swipeCount, setSwipeCount] = useState(() => getDailySwipes())
   const [showDailyLimit, setShowDailyLimit] = useState(false)
+  const [pendingChat, setPendingChat] = useState(null)
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
@@ -349,7 +350,13 @@ function App() {
           userId={viewingProfile.id}
           onBack={() => setViewingProfile(null)}
           onMessage={() => {
+            const user = viewingProfile
             setViewingProfile(null)
+            setPendingChat({
+              user: user.name,
+              avatar: user.avatar,
+              initialMessage: 'Hey!'
+            })
             setActiveTab('inbox')
           }}
         />
@@ -376,7 +383,7 @@ function App() {
       if (selectedChat) {
         return <ChatDetail chat={selectedChat} onBack={() => setSelectedChat(null)} />
       }
-      return <Inbox onChatSelect={setSelectedChat} />
+      return <Inbox onChatSelect={setSelectedChat} pendingChat={pendingChat} />
     }
     if (activeTab === 'profile') {
       return (
