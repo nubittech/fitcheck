@@ -105,6 +105,8 @@ alter table public.comments enable row level security;
 -- Profiles
 create policy "Profiles viewable by everyone"
   on public.profiles for select using (true);
+create policy "Users can insert own profile"
+  on public.profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile"
   on public.profiles for update using (auth.uid() = id);
 

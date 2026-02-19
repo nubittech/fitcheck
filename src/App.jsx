@@ -10,9 +10,30 @@ import PublicProfile from './components/PublicProfile'
 import SignUp from './components/SignUp'
 import NoMoreContent from './components/NoMoreContent'
 import ProfileSetup from './components/ProfileSetup'
+import DailyLimitDemo from './components/DailyLimitDemo'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar } from './lib/api'
 import './styles/App.css'
+
+const DAILY_SWIPE_LIMIT = 75
+const SWIPE_STORAGE_KEY = 'fitcheck_daily_swipes'
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getDailySwipes() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SWIPE_STORAGE_KEY) || '{}')
+    const today = getTodayKey()
+    if (stored.date === today) return stored.count || 0
+    return 0
+  } catch { return 0 }
+}
+
+function setDailySwipes(count) {
+  localStorage.setItem(SWIPE_STORAGE_KEY, JSON.stringify({ date: getTodayKey(), count }))
+}
 
 function transformOutfit(raw) {
   const profile = raw.profiles || {}
@@ -69,8 +90,11 @@ function App() {
   const [viewingProfile, setViewingProfile] = useState(null)
   const [feedLoading, setFeedLoading] = useState(false)
   const [signupName, setSignupName] = useState('')
+  const [swipeCount, setSwipeCount] = useState(() => getDailySwipes())
+  const [showDailyLimit, setShowDailyLimit] = useState(false)
 
   const isLoggedIn = !!session
+  const isPremiumUser = Boolean(currentUser?.is_premium)
 
   // Auth listener
   useEffect(() => {
@@ -151,8 +175,21 @@ function App() {
     if (session && !needsProfileSetup && profileChecked) fetchFeed()
   }, [session, needsProfileSetup, profileChecked, fetchFeed])
 
+  const incrementSwipe = () => {
+    if (isPremiumUser) return true
+    const newCount = swipeCount + 1
+    setSwipeCount(newCount)
+    setDailySwipes(newCount)
+    if (newCount >= DAILY_SWIPE_LIMIT) {
+      setShowDailyLimit(true)
+      return false
+    }
+    return true
+  }
+
   const handleNext = () => {
     if (currentIndex < outfits.length) {
+      if (!incrementSwipe()) return
       setCurrentIndex(prev => prev + 1)
     }
   }
@@ -348,6 +385,23 @@ function App() {
           session={session}
           onLogout={handleLogout}
           onProfileUpdated={handleProfileEditSave}
+        />
+      )
+    }
+
+    if (showDailyLimit) {
+      return (
+        <DailyLimitDemo
+          swipeCount={swipeCount}
+          onBack={() => setShowDailyLimit(false)}
+          onGoHome={() => {
+            setShowDailyLimit(false)
+            setActiveTab('home')
+          }}
+          onUpgrade={() => {
+            alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
+            setShowDailyLimit(false)
+          }}
         />
       )
     }

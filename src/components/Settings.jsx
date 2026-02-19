@@ -5,8 +5,8 @@ import '../styles/Settings.css'
 
 const APP_VERSION = '1.0.0'
 
-const Settings = ({ onClose, onLogout }) => {
-  const [currentView, setCurrentView] = useState('main') // 'main', 'privacy', 'terms', 'guidelines'
+const Settings = ({ onClose, onLogout, currentUser }) => {
+  const [currentView, setCurrentView] = useState('main')
   const [notifications, setNotifications] = useState(true)
   const [privateAccount, setPrivateAccount] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
@@ -14,7 +14,7 @@ const Settings = ({ onClose, onLogout }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showCancelSub, setShowCancelSub] = useState(false)
 
-  const isPremium = false // TODO: from user context
+  const isPremium = Boolean(currentUser?.is_premium)
 
   if (currentView === 'privacy') {
     return <LegalPage title="Privacy Policy" content={PRIVACY_POLICY} onBack={() => setCurrentView('main')} />

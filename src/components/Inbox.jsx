@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import '../styles/Inbox.css';
 
 const MOCK_MESSAGES = [
@@ -42,7 +42,7 @@ const MOCK_MESSAGES = [
         id: 5,
         user: 'Mehmet Kaya',
         initials: 'MK',
-        bgColor: '#E9D5FF', // Light purple
+        bgColor: '#E9D5FF',
         lastMessage: 'Sent a photo.',
         time: 'Tue',
         unread: false,
@@ -84,39 +84,34 @@ const MOCK_REQUESTS = [
     }
 ];
 
-const MOCK_CHAT = [
-    {
-        id: 1,
-        sender: 'other',
-        text: "Hey! I saw your comment. I actually found this jacket at a small thrift store in Kadıköy last weekend!",
-        time: "10:23 AM"
-    },
-    {
-        id: 2,
-        sender: 'me',
-        text: "Oh wow, that's such a lucky find! It looks amazing on you. Do you happen to know the brand?",
-        time: "10:45 AM"
-    },
-    {
-        id: 3,
-        sender: 'other',
-        text: "Yeah, the tag inside is super faded but it definitely says 'Mavi'. The cut looks very 90s.",
-        time: "10:46 AM"
-    },
-    {
-        id: 4,
-        sender: 'other',
-        text: "I can send a pic of the tag if you want?",
-        time: "10:46 AM"
-    },
-    {
-        id: 5,
-        sender: 'me',
-        image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600', // Mock image sending
-        isImage: true,
-        time: "10:48 AM"
-    }
-];
+const MOCK_CHATS = {
+    1: [
+        { id: 1, sender: 'other', text: "Hey! I saw your outfit post. That jacket is incredible! Where did you find it?", time: "10:23 AM" },
+        { id: 2, sender: 'me', text: "Thank you! I got it from a thrift store in Kadıköy, it was such a lucky find.", time: "10:45 AM" },
+        { id: 3, sender: 'other', text: "No way! I've been looking for something similar. Do you know the brand?", time: "10:46 AM" },
+        { id: 4, sender: 'me', text: "The tag says Mavi. Very 90s cut, I love it.", time: "10:48 AM" },
+        { id: 5, sender: 'other', text: "Where is that jacket from?", time: "10:50 AM" },
+    ],
+    2: [
+        { id: 1, sender: 'me', text: "Hey, loved your minimalist look! Simple but fire.", time: "Yesterday" },
+        { id: 2, sender: 'other', text: "Thanks for the feedback!", time: "Yesterday" },
+    ],
+    3: [
+        { id: 1, sender: 'other', text: "I saw your two outfits side by side, the beige tones looked way better on you!", time: "Yesterday" },
+        { id: 2, sender: 'me', text: "Really? I was unsure about it actually.", time: "Yesterday" },
+        { id: 3, sender: 'other', text: "I think the beige one suits you better.", time: "Yesterday" },
+    ],
+    4: [
+        { id: 1, sender: 'other', text: "Is this available in other colors?", time: "Yesterday" },
+    ],
+    5: [
+        { id: 1, sender: 'other', text: "Sent a photo.", time: "Tue", isImage: true, image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600' },
+    ],
+    6: [
+        { id: 1, sender: 'other', text: "Love the minimalist vibe of your profile!", time: "Mon" },
+        { id: 2, sender: 'me', text: "Thanks man, appreciate it!", time: "Mon" },
+    ]
+};
 
 const Inbox = ({ onChatSelect }) => {
     const [activeTab, setActiveTab] = useState('messages');
@@ -125,12 +120,6 @@ const Inbox = ({ onChatSelect }) => {
         <div className="inbox-page">
             <header className="inbox-header">
                 <h1>Inbox</h1>
-                <button className="icon-btn-ghost">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                </button>
             </header>
 
             <div className="inbox-tabs">
@@ -152,7 +141,7 @@ const Inbox = ({ onChatSelect }) => {
             {activeTab === 'messages' ? (
                 <div className="message-list">
                     {MOCK_MESSAGES.map(msg => (
-                        <div key={msg.id} className="message-item" onClick={() => onChatSelect(msg)}>
+                        <div key={msg.id} className={`message-item ${msg.unread ? 'unread-row' : ''}`} onClick={() => onChatSelect(msg)}>
                             <div className="avatar-wrapper">
                                 {msg.avatar ? (
                                     <img src={msg.avatar} alt={msg.user} className="avatar-img" />
@@ -236,6 +225,37 @@ const Inbox = ({ onChatSelect }) => {
 };
 
 export const ChatDetail = ({ chat, onBack }) => {
+    const [messages, setMessages] = useState([]);
+    const [inputText, setInputText] = useState('');
+    const chatEndRef = useRef(null);
+
+    useEffect(() => {
+        setMessages(MOCK_CHATS[chat.id] || []);
+    }, [chat.id]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSend = () => {
+        if (!inputText.trim()) return;
+        const newMsg = {
+            id: Date.now(),
+            sender: 'me',
+            text: inputText.trim(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages(prev => [...prev, newMsg]);
+        setInputText('');
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
     return (
         <div className="chat-detail-page">
             <header className="chat-header">
@@ -249,12 +269,15 @@ export const ChatDetail = ({ chat, onBack }) => {
                         {chat.avatar ? (
                             <img src={chat.avatar} alt={chat.user} />
                         ) : (
-                            <div className="avatar-placeholder-small">{chat.initials || 'U'}</div>
+                            <div className="avatar-placeholder-small" style={{ backgroundColor: chat.bgColor || '#E9D5FF' }}>
+                                {chat.initials || chat.user?.charAt(0) || 'U'}
+                            </div>
                         )}
                         {chat.online && <div className="online-dot-small"></div>}
                     </div>
                     <div className="user-text">
-                        <span className="username">@{chat.user.toLowerCase().replace(' ', '_')}</span>
+                        <span className="chat-username">{chat.user}</span>
+                        <span className="chat-status">{chat.online ? 'Online' : 'Offline'}</span>
                     </div>
                 </div>
                 <button className="icon-btn-ghost">
@@ -262,28 +285,22 @@ export const ChatDetail = ({ chat, onBack }) => {
                 </button>
             </header>
 
-            {/* Product Context */}
-            <div className="product-context">
-                <div className="product-thumb">
-                    <img src="https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=100" alt="Jacket" />
-                </div>
-                <div className="context-text">
-                    <span className="replying-to">REPLYING TO</span>
-                    <span className="product-name">Vintage Mavi Jacket 90s</span>
-                </div>
-                <button className="view-btn">View</button>
-            </div>
-
             <div className="chat-area">
                 <div className="date-separator">
-                    <span>Today, 10:23 AM</span>
+                    <span>Today</span>
                 </div>
 
-                {MOCK_CHAT.map(msg => (
+                {messages.map(msg => (
                     <div key={msg.id} className={`chat-bubble-wrapper ${msg.sender}`}>
                         {msg.sender === 'other' && (
                             <div className="bubble-avatar">
-                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" alt="Sender" />
+                                {chat.avatar ? (
+                                    <img src={chat.avatar} alt={chat.user} />
+                                ) : (
+                                    <div className="bubble-avatar-placeholder" style={{ backgroundColor: chat.bgColor || '#E9D5FF' }}>
+                                        {chat.initials || chat.user?.charAt(0) || 'U'}
+                                    </div>
+                                )}
                             </div>
                         )}
                         {msg.isImage ? (
@@ -293,24 +310,27 @@ export const ChatDetail = ({ chat, onBack }) => {
                         ) : (
                             <div className="chat-bubble">
                                 <p>{msg.text}</p>
+                                <span className="bubble-time">{msg.time}</span>
                             </div>
                         )}
                     </div>
                 ))}
-                <div className="chat-bubble-wrapper me">
-                    <div className="chat-bubble image-preview-bubble">
-                        {/* Placeholder for the image being sent in mockup */}
-                        <img src="https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600" className="preview-img" />
-                    </div>
-                </div>
+                <div ref={chatEndRef} />
             </div>
 
             <div className="chat-input-area">
                 <button className="add-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 </button>
-                <input type="text" placeholder="Thanks! I'll look for" className="chat-input" />
-                <button className="send-btn">
+                <input
+                    type="text"
+                    placeholder="Type a message..."
+                    className="chat-input"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
+                <button className={`send-btn ${inputText.trim() ? 'active' : ''}`} onClick={handleSend} disabled={!inputText.trim()}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                 </button>
             </div>

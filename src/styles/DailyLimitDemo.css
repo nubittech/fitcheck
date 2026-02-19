@@ -2,144 +2,239 @@
   position: fixed;
   inset: 0;
   z-index: 2300;
-  background: #f5f2f0;
+  background: #f5f1ed;
 }
 
 .daily-limit-page {
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
-.daily-limit-header {
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
-  display: grid;
-  grid-template-columns: 34px 1fr 34px;
+/* Top Bar */
+.daily-limit-topbar {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 10px;
 }
 
-.daily-limit-header h2 {
-  margin: 0;
-  text-align: center;
-  font-size: 19px;
-  font-weight: 700;
-  color: #171214;
-}
-
-.daily-limit-back {
+.dl-close-btn {
+  width: 40px;
+  height: 40px;
   border: none;
-  background: transparent;
-  color: #171214;
-  width: 34px;
-  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  color: #181110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dl-plan-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.dl-plan-badge span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #181110;
+}
+
+/* Illustration */
+.dl-illustration {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.daily-limit-content {
-  flex: 1;
-  padding: 38px 22px calc(28px + env(safe-area-inset-bottom, 0px));
+.dl-illustration-blob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 210px;
+  background: linear-gradient(135deg, rgba(255, 138, 122, 0.2), rgba(242, 204, 143, 0.3));
+  border-radius: 50%;
+  filter: blur(24px);
+}
+
+.dl-illustration-img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mask-image: radial-gradient(circle, black 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle, black 60%, transparent 100%);
+}
+
+/* Content */
+.dl-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  text-align: center;
+  padding: 0 24px;
+  gap: 16px;
 }
 
-.daily-limit-badge {
+.dl-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #181110;
+}
+
+.dl-counter-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #f3cbc4;
-  color: #f18979;
+  padding: 10px 20px;
   border-radius: 999px;
-  padding: 12px 20px;
-  background: #fff7f6;
-  font-size: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 138, 122, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dl-counter-pill span {
+  font-size: 16px;
   font-weight: 700;
+  color: #ff8a7a;
+  letter-spacing: 0.02em;
 }
 
-.daily-limit-content h1 {
-  margin: 34px 0 12px;
-  font-size: 56px;
-  line-height: 1.06;
-  text-align: center;
-  letter-spacing: -0.03em;
-  color: #171214;
-}
-
-.daily-limit-content p {
+.dl-desc {
   margin: 0;
-  max-width: 650px;
-  text-align: center;
-  font-size: 22px;
-  line-height: 1.45;
-  color: #534a4a;
+  max-width: 280px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6b5e5b;
 }
 
-.daily-limit-content p strong {
-  color: #f18979;
-  font-weight: 800;
+/* Bottom / Premium Card */
+.dl-bottom {
+  margin-top: auto;
+  padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
-.daily-limit-premium-btn {
-  margin-top: 52px;
-  width: min(680px, 100%);
-  min-height: 78px;
-  border: none;
-  border-radius: 999px;
-  background: #e8c27f;
-  color: #171214;
-  font-size: 22px;
+.dl-premium-card {
+  position: relative;
+  background: linear-gradient(135deg, #fdfbf7, #f2cc8f);
+  border-radius: 24px;
+  padding: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+}
+
+.dl-premium-card-glow {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 128px;
+  height: 128px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  filter: blur(32px);
+}
+
+.dl-premium-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.dl-premium-title {
+  margin: 0 0 6px;
+  font-size: 20px;
   font-weight: 700;
-  display: inline-flex;
+  color: #4a3b2a;
+}
+
+.dl-premium-subtitle {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.diamond {
-  font-size: 20px;
-}
-
-.daily-limit-home-btn {
-  margin-top: 26px;
-  border: none;
-  background: transparent;
-  color: #8e8888;
-  font-size: 20px;
+  gap: 6px;
+  color: #6b563d;
+  font-size: 13px;
   font-weight: 500;
 }
 
-@media (max-width: 540px) {
-  .daily-limit-content {
-    justify-content: flex-start;
-    padding-top: 92px;
-  }
+.dl-diamond-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #4a3b2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
-  .daily-limit-badge {
-    font-size: 17px;
-    padding: 10px 18px;
-  }
+.dl-premium-btn {
+  position: relative;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: #ff8a7a;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 0 20px rgba(255, 138, 122, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
 
-  .daily-limit-content h1 {
-    margin-top: 26px;
-    font-size: 44px;
-  }
+.dl-premium-btn:active {
+  transform: scale(0.98);
+}
 
-  .daily-limit-content p {
-    font-size: 17px;
-    max-width: 320px;
-  }
+.dl-premium-price {
+  opacity: 0.85;
+  font-weight: 500;
+  font-size: 14px;
+}
 
-  .daily-limit-premium-btn {
-    margin-top: auto;
-    min-height: 68px;
-    font-size: 19px;
-  }
+.dl-more-link {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8c7a63;
+  cursor: pointer;
+}
 
-  .daily-limit-home-btn {
-    font-size: 15px;
-    margin-top: 16px;
-  }
+.dl-dismiss-btn {
+  display: block;
+  margin: 16px auto 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(107, 94, 91, 0.6);
+  cursor: pointer;
+}
+
+.dl-dismiss-btn:hover {
+  color: #181110;
 }

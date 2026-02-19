@@ -4,7 +4,6 @@ import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
-import DailyLimitDemo from './DailyLimitDemo';
 import { getOutfitsByUser } from '../lib/api';
 
 const ICONS = {
@@ -59,7 +58,6 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-    const [showDailyLimitDemo, setShowDailyLimitDemo] = useState(false);
     const [userOutfits, setUserOutfits] = useState([]);
     const [outfitsLoading, setOutfitsLoading] = useState(true);
     const [, setTick] = useState(0);
@@ -162,7 +160,9 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
             </section>
 
             {/* Premium Promo for Free Users */}
-            {!profile.isPremium && <PremiumPromo onUpgrade={() => setShowDailyLimitDemo(true)} />}
+            {!profile.isPremium && <PremiumPromo onUpgrade={() => {
+                alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
+            }} />}
 
             {/* Current Looks */}
             <section className="current-looks">
@@ -248,7 +248,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
             <div style={{ height: '80px' }}></div>
 
             {showSettings && (
-                <Settings onClose={() => setShowSettings(false)} onLogout={onLogout} />
+                <Settings onClose={() => setShowSettings(false)} onLogout={onLogout} currentUser={currentUser} />
             )}
 
             {showEditProfile && (
@@ -270,12 +270,6 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                 />
             )}
 
-            {showDailyLimitDemo && (
-                <DailyLimitDemo
-                    onBack={() => setShowDailyLimitDemo(false)}
-                    onGoHome={() => setShowDailyLimitDemo(false)}
-                />
-            )}
         </div>
     );
 };
