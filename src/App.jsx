@@ -97,7 +97,14 @@ function App() {
       return
     }
     setProfileChecked(false)
-    getProfile(session.user.id).then(({ data }) => {
+    getProfile(session.user.id).then(({ data, error }) => {
+      if (error) {
+        // Table doesn't exist or network error — skip profile setup, let user through
+        setCurrentUser(null)
+        setNeedsProfileSetup(false)
+        setProfileChecked(true)
+        return
+      }
       if (data) {
         setCurrentUser(data)
         const incomplete =
@@ -117,15 +124,19 @@ function App() {
   const fetchFeed = useCallback(async () => {
     if (!session || needsProfileSetup) return
     setFeedLoading(true)
-    const [outfitRes, likesRes] = await Promise.all([
-      getOutfits(),
-      getUserLikes(session.user.id)
-    ])
-    if (outfitRes.data) {
-      setOutfits(outfitRes.data.map(transformOutfit))
-    }
-    if (likesRes.data) {
-      setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
+    try {
+      const [outfitRes, likesRes] = await Promise.all([
+        getOutfits(),
+        getUserLikes(session.user.id)
+      ])
+      if (outfitRes.data) {
+        setOutfits(outfitRes.data.map(transformOutfit))
+      }
+      if (likesRes.data) {
+        setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
+      }
+    } catch (err) {
+      console.warn('Feed fetch failed:', err.message)
     }
     setFeedLoading(false)
   }, [session, needsProfileSetup])
