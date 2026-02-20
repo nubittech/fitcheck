@@ -1,14 +1,18 @@
 import React, { useState, useRef } from 'react'
 import MediaCarousel from './MediaCarousel'
 import { createOutfit, uploadMedia, insertOutfitMedia } from '../lib/api'
+import { useLang } from '../i18n/LangContext'
 import '../styles/NewCombo.css'
 import { STYLE_TYPES } from '../constants/styleTypes'
 
 const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
+  const { t, lang } = useLang()
+  const tr = lang === 'tr'
   const [mediaFiles, setMediaFiles] = useState([])
   const [pieces, setPieces] = useState([])
   const [pieceName, setPieceName] = useState('')
   const [pieceBrand, setPieceBrand] = useState('')
+  const [pieceLink, setPieceLink] = useState('')
   const [gender, setGender] = useState('unisex')
   const [selectedStyle, setSelectedStyle] = useState('Minimalist')
   const [styleOpen, setStyleOpen] = useState(false)
@@ -43,14 +47,19 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const addPiece = () => {
     if (!pieceName.trim()) return
+    // Normalise link: add https:// if missing
+    let link = pieceLink.trim()
+    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link
     setPieces(prev => [...prev, {
       id: Date.now(),
       name: pieceName.trim(),
       brand: pieceBrand.trim() || 'Unknown',
+      link: link || null,
       feedbackEnabled: true
     }])
     setPieceName('')
     setPieceBrand('')
+    setPieceLink('')
   }
 
   const removePiece = (id) => {
@@ -129,6 +138,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setPieces([])
     setPieceName('')
     setPieceBrand('')
+    setPieceLink('')
     setGender('unisex')
     setSelectedStyle('Minimalist')
     setStyleOpen(false)
@@ -151,6 +161,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         return {
           name: piece.name,
           brand: piece.brand || 'Unknown',
+          link: piece.link || null,
           feedbackEnabled: piece.feedbackEnabled || false,
           position: dot ? { x: `${dot.x}%`, y: `${dot.y}%` } : { x: '50%', y: `${40 + index * 12}%` }
         }
@@ -215,10 +226,10 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         <div className="newcombo-header">
           <button className="newcombo-cancel" onClick={() => setShowPreview(false)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
+              <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <h1 className="newcombo-title">Kombin Oluşturma</h1>
+          <h1 className="newcombo-title">{tr ? 'Kombin Oluşturma' : 'New Combo'}</h1>
           <div className="newcombo-header-spacer" />
         </div>
 
@@ -250,9 +261,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             {tagDots.length < pieces.length && (
               <div className="tag-hint-bar">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.8">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                 </svg>
-                <span>Tap photo to tag items</span>
+                <span>{tr ? 'Fotoğrafa dokun, etiket ekle' : 'Tap photo to tag items'}</span>
               </div>
             )}
           </div>
@@ -260,9 +271,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           {/* Tagged items list */}
           <div className="tagged-items-section">
             <div className="tagged-items-header">
-              <span className="tagged-items-label">TAGGED ITEMS</span>
+              <span className="tagged-items-label">{tr ? 'ETİKETLENEN PARÇALAR' : 'TAGGED ITEMS'}</span>
               {tagDots.length > 0 && (
-                <button className="tagged-edit-btn" onClick={() => setTagDots([])}>Edit</button>
+                <button className="tagged-edit-btn" onClick={() => setTagDots([])}>{tr ? 'Düzenle' : 'Edit'}</button>
               )}
             </div>
 
@@ -275,15 +286,21 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                   <span className="tagged-item-brand">{piece.brand}</span>
                   <span className="tagged-item-name">{piece.name}</span>
                 </div>
+                {piece.link && (
+                  <div className="tagged-item-link-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" /></svg>
+                    {tr ? 'Satın Al' : 'Shop'}
+                  </div>
+                )}
               </div>
             ))}
 
             {/* Add another item hint */}
             <div className="add-tag-hint" onClick={() => setShowPreview(false)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
               </svg>
-              <span>Tap photo to add another item</span>
+              <span>{tr ? 'Başka parça eklemek için fotoğrafa dokun' : 'Tap photo to add another item'}</span>
             </div>
           </div>
 
@@ -291,15 +308,15 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           <div className="boost-card">
             <div className="boost-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+                <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" />
               </svg>
             </div>
             <div className="boost-info">
               <div className="boost-title-row">
-                <span className="boost-title">Premium Boost</span>
+                <span className="boost-title">{tr ? 'Premium Öne Çıkarma' : 'Premium Boost'}</span>
                 <span className="boost-pro-tag">PRO</span>
               </div>
-              <span className="boost-desc">Get 2x more visibility in community feed</span>
+              <span className="boost-desc">{tr ? 'Topluluk akışında 2 kat daha fazla görünür ol' : 'Get 2x more visibility in community feed'}</span>
             </div>
             <button
               className={`boost-toggle ${boostEnabled ? 'on' : ''}`}
@@ -311,9 +328,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
           {/* Share button */}
           <button className="share-combo-btn" onClick={handleShareCombo}>
-            Share Combination
+            {tr ? 'Kombini Paylaş' : 'Share Combination'}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
         </div>
@@ -325,8 +342,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     <div className="newcombo-page">
       {/* Header */}
       <div className="newcombo-header">
-        <button className="newcombo-cancel" onClick={onClose}>Cancel</button>
-        <h1 className="newcombo-title">New Combo</h1>
+        <button className="newcombo-cancel" onClick={onClose}>{t('cancel')}</button>
+        <h1 className="newcombo-title">{t('new_combo')}</h1>
         <div className="newcombo-header-spacer" />
       </div>
 
@@ -338,14 +355,14 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
               <div className="upload-placeholder">
                 <div className="upload-icon">
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
                   </svg>
                   <div className="upload-plus">+</div>
                 </div>
-                <span className="upload-text">Tap to upload your look</span>
-                <span className="upload-sub">Supports JPG, PNG (Max 5MB)</span>
+                <span className="upload-text">{tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look'}</span>
+                <span className="upload-sub">{tr ? 'JPG, PNG desteklenir (Maks 5MB)' : 'Supports JPG, PNG (Max 5MB)'}</span>
               </div>
             ) : (
               <div className="media-preview-grid" onClick={(e) => e.stopPropagation()}>
@@ -359,7 +376,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                     {m.type === 'video' && <div className="preview-video-badge">VIDEO</div>}
                     <button className="media-remove" onClick={() => removeMedia(m.id)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
                   </div>
@@ -369,7 +386,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
-                    <span>{4 - mediaFiles.length} left</span>
+                    <span>{tr ? `${4 - mediaFiles.length} kaldı` : `${4 - mediaFiles.length} left`}</span>
                   </button>
                 )}
               </div>
@@ -385,7 +402,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           </div>
           {mediaFiles.length > 0 && (
             <div className="media-info-bar">
-              <span>{imageCount} photo{imageCount !== 1 ? 's' : ''}</span>
+              <span>{imageCount} {tr ? `fotoğraf` : `photo${imageCount !== 1 ? 's' : ''}`}</span>
               {videoCount > 0 && <span>{videoCount} video</span>}
               <span className="media-limit">{mediaFiles.length}/4</span>
             </div>
@@ -396,7 +413,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         <div className="newcombo-section">
           <textarea
             className="caption-input"
-            placeholder="Write a caption for your combo..."
+            placeholder={tr ? 'Kombin için bir başlık yaz...' : 'Write a caption for your combo...'}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={280}
@@ -408,9 +425,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         {/* Tag Pieces */}
         <div className="newcombo-section">
           <div className="section-header">
-            <h2 className="section-title">Tag Pieces</h2>
+            <h2 className="section-title">{t('tag_pieces')}</h2>
             {pieces.length > 0 && (
-              <span className="section-badge">{pieces.length} item{pieces.length !== 1 ? 's' : ''} added</span>
+              <span className="section-badge">{pieces.length} {tr ? 'parça eklendi' : `item${pieces.length !== 1 ? 's' : ''} added`}</span>
             )}
           </div>
 
@@ -418,7 +435,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             <div key={piece.id} className="piece-card">
               <div className="piece-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.38 3.46L16 2 12 5.69 8 2 3.62 3.46 2 8l3.69 4L2 16l1.62 4.54L8 22l4-3.69L16 22l4.38-1.46L22 16l-3.69-4L22 8z"/>
+                  <path d="M20.38 3.46L16 2 12 5.69 8 2 3.62 3.46 2 8l3.69 4L2 16l1.62 4.54L8 22l4-3.69L16 22l4.38-1.46L22 16l-3.69-4L22 8z" />
                 </svg>
               </div>
               <div className="piece-info">
@@ -429,22 +446,22 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                 className={`piece-feedback ${piece.feedbackEnabled ? 'active' : ''}`}
                 onClick={() => toggleFeedback(piece.id)}
               >
-                FEEDBACK
+                {tr ? 'GERİ BİLDİRİM' : 'FEEDBACK'}
                 <div className={`feedback-toggle ${piece.feedbackEnabled ? 'on' : ''}`}>
                   {piece.feedbackEnabled ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ) : (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   )}
                 </div>
               </button>
               <button className="piece-remove" onClick={() => removePiece(piece.id)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -454,32 +471,40 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           <div className="add-piece-form">
             <input
               className="piece-input"
-              placeholder="Item name (e.g. White T-shirt)"
+              placeholder={tr ? 'Ürün adı (ör. Beyaz T-shirt)' : 'Item name (e.g. White T-shirt)'}
               value={pieceName}
               onChange={(e) => setPieceName(e.target.value)}
             />
             <input
               className="piece-input small"
-              placeholder="Brand (optional)"
+              placeholder={tr ? 'Marka (isteğe bağlı)' : 'Brand (optional)'}
               value={pieceBrand}
               onChange={(e) => setPieceBrand(e.target.value)}
+            />
+            <input
+              className="piece-input piece-link-input"
+              placeholder={tr ? '🔗 Satın alma linki (isteğe bağlı)' : '🔗 Shop link (optional — affiliate URL)'}
+              value={pieceLink}
+              onChange={(e) => setPieceLink(e.target.value)}
+              type="url"
+              inputMode="url"
             />
             <button
               className="add-piece-btn"
               onClick={addPiece}
               disabled={!pieceName.trim()}
             >
-              + Add piece
+              + {tr ? 'Parça ekle' : 'Add piece'}
             </button>
           </div>
         </div>
 
         {/* Who is this for */}
         <div className="newcombo-section">
-          <h2 className="section-title">Who is this for?</h2>
+          <h2 className="section-title">{tr ? 'Bu kombin kimin için?' : 'Who is this for?'}</h2>
 
           {/* Gender */}
-          <label className="field-label">GENDER</label>
+          <label className="field-label">{tr ? 'CİNSİYET' : 'GENDER'}</label>
           <div className="gender-row">
             {['unisex', 'female', 'male'].map(g => (
               <button
@@ -487,17 +512,19 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                 className={`gender-chip ${gender === g ? 'selected' : ''}`}
                 onClick={() => setGender(g)}
               >
-                {g.charAt(0).toUpperCase() + g.slice(1)}
+                {tr
+                  ? (g === 'unisex' ? 'Unisex' : g === 'female' ? 'Kadın' : 'Erkek')
+                  : g.charAt(0).toUpperCase() + g.slice(1)}
               </button>
             ))}
           </div>
 
           {/* Style */}
-          <label className="field-label">STYLE</label>
+          <label className="field-label">{tr ? 'STİL' : 'STYLE'}</label>
           <div className="vibe-select" onClick={() => setStyleOpen(!styleOpen)}>
             <span>{selectedStyle}</span>
             <svg className={styleOpen ? 'flipped' : ''} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
+              <polyline points="6 9 12 15 18 9" />
             </svg>
           </div>
           {styleOpen && (
@@ -516,7 +543,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
           {/* Age Range */}
           <div className="age-header">
-            <label className="field-label">TARGET AGE</label>
+            <label className="field-label">{tr ? 'HEDEF YAŞ' : 'TARGET AGE'}</label>
             <span className="age-value">{ageRange[0]} - {ageRange[1]}</span>
           </div>
           <div
@@ -548,9 +575,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         {/* Submit */}
         <div className="newcombo-section newcombo-submit-section">
           <button className={`newcombo-submit ${isValid ? '' : 'disabled'}`} disabled={!isValid} onClick={() => setShowPreview(true)}>
-            Preview Combination
+            {tr ? 'Önizleme' : 'Preview Combination'}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
             </svg>
           </button>
         </div>

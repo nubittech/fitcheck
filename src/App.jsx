@@ -12,7 +12,7 @@ import NoMoreContent from './components/NoMoreContent'
 import ProfileSetup from './components/ProfileSetup'
 import DailyLimitDemo from './components/DailyLimitDemo'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
-import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar } from './lib/api'
+import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
 import './styles/App.css'
 
 const DAILY_SWIPE_LIMIT = 75
@@ -56,11 +56,12 @@ function transformOutfit(raw) {
         thumbnail: m.media_type === 'video' ? m.media_url : undefined
       })),
     caption: raw.caption || '',
+    vibe: raw.vibe || null,
     items: (raw.items || []).map((item, i) => ({
       id: i + 1,
       name: item.name || '',
       brand: item.brand || 'Unknown',
-      votes: { up: 0, down: 0 },
+      link: item.link || null,
       position: item.position || { x: '50%', y: `${35 + i * 25}%` },
       feedbackEnabled: item.feedbackEnabled
     })),
@@ -70,7 +71,9 @@ function transformOutfit(raw) {
       likes: raw.likes_count || 0,
       commentsCount: raw.comments_count || 0
     },
-    isBoosted: raw.is_boosted || false
+    isBoosted: raw.is_boosted || false,
+    boostedAt: raw.boosted_at || null,
+    createdAt: raw.created_at || null
   }
 }
 
@@ -93,6 +96,7 @@ function App() {
   const [swipeCount, setSwipeCount] = useState(() => getDailySwipes())
   const [showDailyLimit, setShowDailyLimit] = useState(false)
   const [pendingChat, setPendingChat] = useState(null)
+  const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
@@ -157,11 +161,12 @@ function App() {
     setFeedLoading(true)
     try {
       const [outfitRes, likesRes] = await Promise.all([
-        getOutfits(),
+        getOutfits({ vibe: selectedVibe }),
         getUserLikes(session.user.id)
       ])
       if (outfitRes.data) {
-        setOutfits(outfitRes.data.map(transformOutfit))
+        const transformed = outfitRes.data.map(transformOutfit)
+        setOutfits(sortFeedWithBoost(transformed))
       }
       if (likesRes.data) {
         setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
@@ -170,11 +175,19 @@ function App() {
       console.warn('Feed fetch failed:', err.message)
     }
     setFeedLoading(false)
-  }, [session, needsProfileSetup])
+  }, [session, needsProfileSetup, selectedVibe])
 
   useEffect(() => {
     if (session && !needsProfileSetup && profileChecked) fetchFeed()
   }, [session, needsProfileSetup, profileChecked, fetchFeed])
+
+  // Re-fetch when vibe filter changes
+  useEffect(() => {
+    if (session && !needsProfileSetup) {
+      setCurrentIndex(0)
+      fetchFeed()
+    }
+  }, [selectedVibe])
 
   const incrementSwipe = () => {
     if (isPremiumUser) return true
@@ -363,7 +376,16 @@ function App() {
       )
     }
     if (activeTab === 'discover') {
-      return <Discover outfits={outfits} />
+      return (
+        <Discover
+          outfits={outfits}
+          onSelectStyle={(style) => {
+            setSelectedVibe(style)
+            setCurrentIndex(0)
+            setActiveTab('home')
+          }}
+        />
+      )
     }
     if (activeTab === 'add') {
       return (
@@ -381,9 +403,9 @@ function App() {
     }
     if (activeTab === 'inbox') {
       if (selectedChat) {
-        return <ChatDetail chat={selectedChat} onBack={() => setSelectedChat(null)} />
+        return <ChatDetail chat={selectedChat} onBack={() => setSelectedChat(null)} currentUser={currentUser} />
       }
-      return <Inbox onChatSelect={setSelectedChat} pendingChat={pendingChat} />
+      return <Inbox onChatSelect={setSelectedChat} currentUser={currentUser} />
     }
     if (activeTab === 'profile') {
       return (
@@ -432,24 +454,52 @@ function App() {
     }
 
     return (
-      <OutfitCard
-        outfit={currentOutfit}
-        currentUser={currentUser}
-        session={session}
-        isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
-        onNext={handleNext}
-        onSkip={handleSkip}
-        onLike={handleLike}
-        onItemVote={handleItemVote}
-        onUserTap={() => setViewingProfile(currentOutfit.user)}
-      />
+      <>
+        {selectedVibe && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0,
+            zIndex: 50, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', padding: '10px 16px',
+            pointerEvents: 'none'
+          }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: 'rgba(224,122,95,0.92)', backdropFilter: 'blur(8px)',
+              color: '#fff', borderRadius: '20px', padding: '5px 12px',
+              fontSize: '13px', fontWeight: '700', pointerEvents: 'all',
+              boxShadow: '0 2px 10px rgba(224,122,95,0.35)'
+            }}>
+              <span>{selectedVibe}</span>
+              <button
+                onClick={() => { setSelectedVibe(null); setCurrentIndex(0) }}
+                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '0 0 0 4px', fontSize: '16px', lineHeight: 1 }}
+              >×</button>
+            </div>
+          </div>
+        )}
+        <OutfitCard
+          outfit={currentOutfit}
+          currentUser={currentUser}
+          session={session}
+          isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
+          onNext={handleNext}
+          onSkip={handleSkip}
+          onLike={handleLike}
+          onItemVote={handleItemVote}
+          onUserTap={() => setViewingProfile(currentOutfit.user)}
+          onOpenChat={(conv) => {
+            setSelectedChat(conv)
+            setActiveTab('inbox')
+          }}
+        />
+      </>
     )
   }
 
   return (
     <div className="app">
       {renderContent()}
-      {isLoggedIn && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && (
+      {isLoggedIn && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (
         <BottomNav activeTab={activeTab} onTabChange={(tab) => {
           setActiveTab(tab)
           if (tab !== 'inbox') setSelectedChat(null)

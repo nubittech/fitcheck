@@ -4,7 +4,8 @@ import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
-import { getOutfitsByUser } from '../lib/api';
+import { getOutfitsByUser, getBoostStatus, activateBoost } from '../lib/api';
+import { useLang } from '../i18n/LangContext';
 
 const ICONS = {
     settings: (
@@ -55,11 +56,13 @@ function getTimeLeft(createdAt) {
 }
 
 const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
+    const { t } = useLang();
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [userOutfits, setUserOutfits] = useState([]);
     const [outfitsLoading, setOutfitsLoading] = useState(true);
+    const [boostsUsed, setBoostsUsed] = useState(0);
     const [, setTick] = useState(0);
 
     const profile = useMemo(() => ({
@@ -72,12 +75,16 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
         isPremium: Boolean(currentUser?.is_premium),
     }), [currentUser]);
 
-    // Fetch user outfits
+    // Fetch user outfits + boost status
     useEffect(() => {
         if (!session?.user?.id) return;
         setOutfitsLoading(true);
-        getOutfitsByUser(session.user.id).then(({ data }) => {
-            setUserOutfits(data || []);
+        Promise.all([
+            getOutfitsByUser(session.user.id),
+            getBoostStatus(session.user.id)
+        ]).then(([outfitRes, boostRes]) => {
+            setUserOutfits(outfitRes.data || []);
+            setBoostsUsed(boostRes.boostsUsed || 0);
             setOutfitsLoading(false);
         });
     }, [session?.user?.id]);
@@ -111,9 +118,8 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
 
     return (
         <div className="profile-page">
-            {/* Header */}
             <header className="profile-header">
-                <h1>Profile</h1>
+                <h1>{t('profile')}</h1>
                 <button className="settings-btn" onClick={() => setShowSettings(true)}>
                     {ICONS.settings}
                 </button>
@@ -137,22 +143,20 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
             </section>
 
-            {/* Stats */}
             <section className="stats-row">
                 <div className="stat-item">
                     <span className="stat-value">{formatLikes(totalLikes)}</span>
-                    <span className="stat-label">TOTAL LIKES</span>
+                    <span className="stat-label">{t('total_likes')}</span>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
                     <span className="stat-value">{activeOutfits.length}</span>
-                    <span className="stat-label">ACTIVE OUTFITS</span>
+                    <span className="stat-label">{t('active_outfits')}</span>
                 </div>
             </section>
 
-            {/* Action Buttons */}
             <section className="action-buttons">
-                <button className="btn btn-outline" onClick={() => setShowEditProfile(true)}>Edit Profile</button>
+                <button className="btn btn-outline" onClick={() => setShowEditProfile(true)}>{t('edit_profile')}</button>
                 <button className="btn btn-primary" onClick={() => setShowBoost(true)}>
                     Boost Profile
                     {ICONS.sparkles}
@@ -164,20 +168,19 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                 alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
             }} />}
 
-            {/* Current Looks */}
             <section className="current-looks">
                 <div className="section-header">
-                    <h3>Current Looks</h3>
-                    <span className="badge-24h">24h only</span>
+                    <h3>{t('current_looks')}</h3>
+                    <span className="badge-24h">{t('only_24h')}</span>
                 </div>
 
                 {outfitsLoading ? (
-                    <p className="looks-empty-text">Loading...</p>
+                    <p className="looks-empty-text">{t('loading')}</p>
                 ) : activeOutfits.length === 0 ? (
                     <div className="looks-empty">
                         <div className="looks-empty-icon">{ICONS.hanger}</div>
-                        <p className="looks-empty-text">No active outfits yet</p>
-                        <p className="looks-empty-sub">Share a combo to see it here!</p>
+                        <p className="looks-empty-text">{t('no_active_outfits')}</p>
+                        <p className="looks-empty-sub">{t('no_active_sub')}</p>
                     </div>
                 ) : activeOutfits.length === 1 ? (
                     <div className="looks-single">
@@ -238,17 +241,24 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                 )}
             </section>
 
-            {/* Footer */}
             <footer className="profile-footer">
                 <div className="hanger-icon">{ICONS.hanger}</div>
-                <p>That's all for today.</p>
+                <p>{t('thats_all')}</p>
             </footer>
 
             {/* Scroll Spacer */}
             <div style={{ height: '80px' }}></div>
 
             {showSettings && (
-                <Settings onClose={() => setShowSettings(false)} onLogout={onLogout} currentUser={currentUser} />
+                <Settings
+                    onClose={() => setShowSettings(false)}
+                    onLogout={onLogout}
+                    currentUser={currentUser}
+                    onUpgrade={() => {
+                        setShowSettings(false)
+                        alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
+                    }}
+                />
             )}
 
             {showEditProfile && (
@@ -262,9 +272,16 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
             {showBoost && (
                 <BoostSelection
                     userType={profile.isPremium ? 'premium' : 'free'}
+                    boostsUsed={boostsUsed}
                     onClose={() => setShowBoost(false)}
-                    onBoost={() => {
-                        alert('Boost activated!');
+                    onBoost={async () => {
+                        if (!session?.user?.id) return;
+                        const { data, error } = await activateBoost(session.user.id);
+                        if (error || !data?.success) {
+                            alert(data?.error || 'Boost aktifleştirilemedi.');
+                            return;
+                        }
+                        setBoostsUsed(data.boosts_used);
                         setShowBoost(false);
                     }}
                 />

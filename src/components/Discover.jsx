@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { STYLE_TYPES } from '../constants/styleTypes'
+import { useLang } from '../i18n/LangContext'
 import '../styles/Discover.css'
 
 const ICONS = {
@@ -61,18 +62,22 @@ const STYLE_ICON_MAP = {
   )
 }
 
-const Discover = ({ outfits = [] }) => {
+const Discover = ({ outfits = [], onSelectStyle }) => {
+  const { t } = useLang()
   const [query, setQuery] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('all')
+  const [showAllStyles, setShowAllStyles] = useState(false)
+
+  const visibleStyles = showAllStyles ? STYLE_TYPES : STYLE_TYPES.slice(0, 6)
 
   const filteredOutfits = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     return outfits.filter((outfit) => {
-      if (selectedStyle !== 'all' && outfit.style !== selectedStyle) return false
+      if (selectedStyle !== 'all' && outfit.vibe !== selectedStyle) return false
       if (!normalized) return true
 
       const haystack = [
-        outfit.style,
+        outfit.vibe,
         outfit.caption,
         outfit.user?.name,
         ...(outfit.items || []).map((item) => item.name)
@@ -94,7 +99,7 @@ const Discover = ({ outfits = [] }) => {
   return (
     <div className="discover-page">
       <header className="discover-header">
-        <h1>Discover</h1>
+        <h1>{t('discover')}</h1>
         <button className="icon-btn filter-btn">{ICONS.filter}</button>
       </header>
 
@@ -102,7 +107,7 @@ const Discover = ({ outfits = [] }) => {
         <div className="search-icon">{ICONS.search}</div>
         <input
           type="text"
-          placeholder="Search styles, trends, users..."
+          placeholder={t('search_placeholder')}
           className="search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -111,17 +116,33 @@ const Discover = ({ outfits = [] }) => {
 
       <section className="section style-types">
         <div className="section-header">
-          <h2>Style Types</h2>
-          <button className="see-all" onClick={() => setSelectedStyle('all')}>See All</button>
+          <h2>{t('style_types')}</h2>
+          <button
+            className="see-all"
+            onClick={() => {
+              if (showAllStyles) {
+                setShowAllStyles(false)
+              } else if (selectedStyle !== 'all') {
+                setSelectedStyle('all')
+              } else {
+                setShowAllStyles(true)
+              }
+            }}
+          >
+            {showAllStyles ? t('show_less') : t('see_all')}
+          </button>
         </div>
         <div className="styles-grid">
-          {STYLE_TYPES.slice(0, 6).map((style) => (
+          {visibleStyles.map((style) => (
             <button
               key={style}
               className={`style-card ${selectedStyle === style ? 'active' : ''}`}
-              onClick={() => setSelectedStyle((prev) => (prev === style ? 'all' : style))}
+              onClick={() => {
+                setSelectedStyle((prev) => (prev === style ? 'all' : style))
+                if (onSelectStyle) onSelectStyle(style)
+              }}
             >
-              <div className="style-icon-wrapper">{STYLE_ICON_MAP[style] || STYLE_ICON_MAP.default || ICONS.default}</div>
+              <div className="style-icon-wrapper">{STYLE_ICON_MAP[style] || ICONS.default}</div>
               <span className="style-name">{style}</span>
             </button>
           ))}
@@ -130,12 +151,12 @@ const Discover = ({ outfits = [] }) => {
 
       <section className="section trending">
         <div className="section-header">
-          <h2>Trending Combinations</h2>
+          <h2>{t('trending')}</h2>
           {selectedStyle !== 'all' && <span className="active-style-tag">{selectedStyle}</span>}
         </div>
 
         {trendingOutfits.length === 0 ? (
-          <div className="discover-empty">No combinations found for this style/filter yet.</div>
+          <div className="discover-empty">{t('no_results')}</div>
         ) : (
           <div className="trending-content">
             {trendingOutfits.map((outfit) => {
@@ -153,7 +174,7 @@ const Discover = ({ outfits = [] }) => {
                     <div className="hot-badge">🔥 {Math.min(99, Math.max(75, likes))}%</div>
                   </div>
                   <div className="trending-meta">
-                    <span className="meta-style">{outfit.style || 'Style'}</span>
+                    <span className="meta-style">{outfit.vibe || 'Style'}</span>
                     <span className="meta-user">@{outfit.user?.name || 'user'}</span>
                   </div>
                 </div>

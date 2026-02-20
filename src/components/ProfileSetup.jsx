@@ -1,11 +1,15 @@
 import React, { useMemo, useState } from 'react'
 import { STYLE_TYPES } from '../constants/styleTypes'
+import { useLang } from '../i18n/LangContext'
 import '../styles/ProfileSetup.css'
 
 const MAX_BIO = 150
 const MAX_STYLES = 3
 
 const ProfileSetup = ({ initialProfile, onSave }) => {
+  const { t, lang } = useLang()
+  const tr = lang === 'tr'
+
   const [name, setName] = useState(initialProfile?.name || '')
   const [bio, setBio] = useState(initialProfile?.bio || '')
   const [styles, setStyles] = useState(initialProfile?.styles?.length ? initialProfile.styles : [])
@@ -40,8 +44,8 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
   return (
     <div className="profile-setup-page">
       <header className="profile-setup-header">
-        <h1>Complete Profile</h1>
-        <p>Set your photo, short bio and style preferences.</p>
+        <h1>{t('setup_title')}</h1>
+        <p>{tr ? 'Fotoğraf, kısa bio ve stil tercihlerini belirle.' : 'Set your photo, short bio and style preferences.'}</p>
       </header>
 
       <section className="profile-setup-avatar-section">
@@ -67,11 +71,11 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
       </section>
 
       <section className="profile-setup-form">
-        <label className="setup-label">Display Name</label>
-        <input className="setup-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+        <label className="setup-label">{tr ? 'Görünen Ad' : 'Display Name'}</label>
+        <input className="setup-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr ? 'Adın' : 'Your name'} />
 
         <div className="setup-label-row">
-          <label className="setup-label">Bio</label>
+          <label className="setup-label">{t('bio')}</label>
           <span>{bio.length}/{MAX_BIO}</span>
         </div>
         <textarea
@@ -79,12 +83,12 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
           maxLength={MAX_BIO}
           value={bio}
           onChange={(e) => setBio(e.target.value)}
-          placeholder="Tell us about your style journey..."
+          placeholder={tr ? 'Stil yolculuğunu anlat...' : 'Tell us about your style journey...'}
         />
 
         <div className="setup-style-header">
-          <label className="setup-label">General Style</label>
-          <span>Select up to {MAX_STYLES}</span>
+          <label className="setup-label">{tr ? 'Genel Stil' : 'General Style'}</label>
+          <span>{tr ? `En fazla ${MAX_STYLES} seç` : `Select up to ${MAX_STYLES}`}</span>
         </div>
         <div className="setup-style-grid">
           {STYLE_TYPES.map((style) => (
@@ -101,7 +105,7 @@ const ProfileSetup = ({ initialProfile, onSave }) => {
       </section>
 
       <button className="profile-setup-save" onClick={handleSubmit} disabled={!canSubmit || saving}>
-        {saving ? 'Saving...' : 'Continue'}
+        {saving ? (tr ? 'Kaydediliyor...' : 'Saving...') : t('continue')}
       </button>
     </div>
   )

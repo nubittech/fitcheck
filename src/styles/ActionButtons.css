@@ -49,9 +49,33 @@
   animation: popAnim 0.6s ease;
 }
 
+/* Active voted states */
+.skip-btn.voted-dislike {
+  background: #FF6B6B;
+  border-color: #FF6B6B;
+  color: #fff;
+}
+
+.like-btn.voted-like {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
 @keyframes popAnim {
-  0% { transform: scale(1); }
-  25% { transform: scale(1.25); }
-  50% { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(1.25);
+  }
+
+  50% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }

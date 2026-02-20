@@ -4,6 +4,29 @@
   overflow: hidden;
 }
 
+/* Approval percentage pill — top right corner of card */
+.approval-pill {
+  position: absolute;
+  top: 54px;
+  right: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.approval-pill svg {
+  color: #ff6b8a;
+}
+
 .outfit-card {
   position: absolute;
   inset: 0;
@@ -33,13 +56,11 @@
 .card-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.2) 0%,
-    transparent 20%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.2) 0%,
+      transparent 20%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.6) 100%);
   pointer-events: none;
 }
 
@@ -70,7 +91,7 @@
   font-weight: 800;
   color: var(--white);
   letter-spacing: 1px;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .top-bell {
@@ -129,7 +150,7 @@
   font-size: 16px;
   font-weight: 700;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .card-user-bar .user-location {
@@ -170,23 +191,27 @@
   font-size: 13px;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== Slide Panel ===== */
 .slide-panel {
   position: absolute;
-  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  bottom: 0;
   left: 0;
   right: 0;
   z-index: 20;
   background: var(--white);
   border-radius: 20px 20px 0 0;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-  /* Collapsed: show only ~110px (handle + buttons + hint) */
-  transform: translateY(calc(100% - 86px));
+  /*
+    Collapsed: show 86px above the nav bar.
+    Nav bar is ~74px + safe area, so total visible from bottom
+    = 86px peek + 74px nav + safe area.
+  */
+  transform: translateY(calc(100% - 86px - 74px - env(safe-area-inset-bottom, 0px)));
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  max-height: 80vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   touch-action: none;
@@ -194,6 +219,19 @@
 
 .slide-panel.expanded {
   transform: translateY(0);
+}
+
+/* Mid stop: shows buttons + rate items (~55% screen) */
+.slide-panel.mid {
+  transform: translateY(calc(100% - 55vh));
+}
+
+/* Full stop: all the way open — covers entire card */
+.slide-panel.full {
+  top: 0;
+  transform: translateY(0);
+  max-height: 100%;
+  border-radius: 20px 20px 0 0;
 }
 
 .panel-handle {
@@ -219,7 +257,9 @@
   transition: transform 0.3s ease;
 }
 
-.panel-hint svg.flipped {
+/* Arrow flips when panel is mid or full */
+.slide-panel.mid .panel-hint svg,
+.slide-panel.full .panel-hint svg {
   transform: rotate(180deg);
 }
 
@@ -285,10 +325,38 @@
   padding: 12px 14px;
 }
 
+/* Wrapper for item name + shop btn */
+.item-vote-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 .item-vote-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* Affiliate shop button — no raw URL shown */
+.item-shop-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(224, 122, 95, 0.1);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  width: fit-content;
+  transition: background 0.2s ease;
+}
+
+.item-shop-btn:active {
+  background: rgba(224, 122, 95, 0.22);
 }
 
 .item-vote-actions {
@@ -315,16 +383,33 @@
   transform: scale(0.9);
 }
 
-.vote-up.highlighted {
+.vote-btn.vote-up.voted {
   color: var(--success);
+}
+
+.vote-btn.vote-down.voted {
+  color: #FF6B6B;
+}
+
+/* Vote stat: percentage + count stacked */
+.vote-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
 }
 
 .vote-pct {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.vote-count {
+  font-size: 9px;
   color: var(--text-secondary);
-  min-width: 44px;
-  text-align: center;
+  font-weight: 500;
 }
 
 /* Nerden aldin button */
@@ -390,6 +475,20 @@
   flex-shrink: 0;
 }
 
+.comment-avatar-placeholder {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #E9D5FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3e3232;
+  flex-shrink: 0;
+}
+
 .comment-body {
   flex: 1;
   min-width: 0;
@@ -425,7 +524,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  /* 74px nav bar + safe area so comment box is always visible */
+  padding-bottom: calc(74px + env(safe-area-inset-bottom, 12px));
   border-top: 1px solid #f0f0f0;
   background: var(--white);
   flex-shrink: 0;
