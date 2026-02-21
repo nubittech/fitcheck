@@ -342,12 +342,11 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
           />
 
           <div className="panel-hint" onClick={() => {
-            if (panelState === 'collapsed') setPanelState('mid')
-            else if (panelState === 'mid') setPanelState('full')
-            else setPanelState('collapsed')
+            setPanelState(prev => prev === 'collapsed' ? 'mid' : 'collapsed')
           }}>
             <svg
               width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: panelState !== 'collapsed' ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}
             >
               <polyline points="18 15 12 9 6 15" />
             </svg>
