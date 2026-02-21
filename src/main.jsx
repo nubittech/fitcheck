@@ -1,13 +1,34 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
 import { LangProvider } from './i18n/LangContext'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/global.css'
+
+// Code splitting — heavy components load on demand
+const App = lazy(() => import('./App'))
+
+const LoadingFallback = () => (
+  <div style={{
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    height: '100svh', background: '#0f0f0f'
+  }}>
+    <div style={{
+      width: '36px', height: '36px', border: '3px solid #333',
+      borderTopColor: '#E07A5F', borderRadius: '50%',
+      animation: 'spin 0.7s linear infinite'
+    }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <LangProvider>
-      <App />
-    </LangProvider>
+    <ErrorBoundary>
+      <LangProvider>
+        <Suspense fallback={<LoadingFallback />}>
+          <App />
+        </Suspense>
+      </LangProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )

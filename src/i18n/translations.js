@@ -32,6 +32,14 @@ export const translations = {
         swipe_up: 'Swipe up for details',
         shop: 'Shop',
 
+        // ── Quick Ask (Nerden Aldın) ──────────────────────────────
+        quick_ask_title: 'Ask about an item',
+        quick_ask_sub: 'Tap an item to send a quick message',
+        quick_ask_msg: 'Hey! Where did you get the {item}? 🛍️',
+        quick_ask_other: 'Other',
+        quick_ask_other_placeholder: 'Ask about something else...',
+        quick_ask_sent: 'Message sent!',
+
         // ── Discover ────────────────────────────────────────────
         discover: 'Discover',
         search_placeholder: 'Search styles, trends, users...',
@@ -183,6 +191,14 @@ export const translations = {
         close: 'Kapat',
         swipe_up: 'Detaylar için yukarı kaydır',
         shop: 'Satın Al',
+
+        // ── Quick Ask (Nerden Aldın) ──────────────────────────────
+        quick_ask_title: 'Parça hakkında sor',
+        quick_ask_sub: 'Hızlı mesaj göndermek için bir parçaya dokun',
+        quick_ask_msg: 'Selam! {item} nereden aldın? 🛍️',
+        quick_ask_other: 'Diğer',
+        quick_ask_other_placeholder: 'Başka bir şey sor...',
+        quick_ask_sent: 'Mesaj gönderildi!',
 
         // ── Discover ────────────────────────────────────────────
         discover: 'Keşfet',

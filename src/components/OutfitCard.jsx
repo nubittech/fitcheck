@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import ActionButtons from './ActionButtons'
 import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
-import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, getComments, addComment } from '../lib/api'
+import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
@@ -20,6 +20,13 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
   const panelRef = useRef(null)
   const [inputValue, setInputValue] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // ── Quick Ask (Nerden Aldın) ──
+  const [showQuickAsk, setShowQuickAsk] = useState(false)
+  const [quickAskOther, setQuickAskOther] = useState(false)
+  const [quickAskInput, setQuickAskInput] = useState('')
+  const [quickAskSending, setQuickAskSending] = useState(false)
+  const [quickAskSent, setQuickAskSent] = useState(null) // item name or true
 
   // ── Outfit-level vote state ──
   const [outfitVotes, setOutfitVotes] = useState({ likes: 0, dislikes: 0, likePct: null, myVote: null, total: 0 })
@@ -126,6 +133,45 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
         }
       })
     }
+  }
+
+  // ── Quick Ask: send auto-message about an item ──
+  const handleQuickAsk = async (itemName) => {
+    if (!currentUser?.id || !outfit?.user?.id || quickAskSending) return
+    if (currentUser.id === outfit.user.id) return
+    setQuickAskSending(true)
+    const msg = t('quick_ask_msg').replace('{item}', itemName)
+    const { data: conv } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    if (conv) {
+      await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text: msg })
+      setQuickAskSent(itemName)
+      setTimeout(() => {
+        setQuickAskSent(null)
+        setShowQuickAsk(false)
+        setQuickAskOther(false)
+        setQuickAskInput('')
+      }, 1200)
+    }
+    setQuickAskSending(false)
+  }
+
+  const handleQuickAskCustom = async () => {
+    const text = quickAskInput.trim()
+    if (!text || !currentUser?.id || !outfit?.user?.id || quickAskSending) return
+    if (currentUser.id === outfit.user.id) return
+    setQuickAskSending(true)
+    const { data: conv } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    if (conv) {
+      await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text })
+      setQuickAskSent(true)
+      setTimeout(() => {
+        setQuickAskSent(null)
+        setShowQuickAsk(false)
+        setQuickAskOther(false)
+        setQuickAskInput('')
+      }, 1200)
+    }
+    setQuickAskSending(false)
   }
 
   // Card swipe only works when panel is collapsed
@@ -365,11 +411,87 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
 
             {/* Nerden aldin */}
             <div className="panel-section">
-              <button className="nerden-btn">
+              <button className="nerden-btn" onClick={() => setShowQuickAsk(true)}>
                 {t('where_bought')}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" /></svg>
               </button>
             </div>
+
+            {/* Quick Ask Sheet */}
+            {showQuickAsk && (
+              <div className="quick-ask-overlay" onClick={() => { setShowQuickAsk(false); setQuickAskOther(false); setQuickAskInput('') }}>
+                <div className="quick-ask-sheet" onClick={(e) => e.stopPropagation()}>
+                  {quickAskSent ? (
+                    <div className="quick-ask-success">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success, #22c55e)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <span>{t('quick_ask_sent')}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="quick-ask-header">
+                        <h4>{t('quick_ask_title')}</h4>
+                        <p>{t('quick_ask_sub')}</p>
+                      </div>
+
+                      {/* Item list — each arrow auto-sends the message */}
+                      <div className="quick-ask-items">
+                        {outfit.items.map((item, i) => (
+                          <button
+                            key={i}
+                            className="quick-ask-item"
+                            onClick={(e) => { e.stopPropagation(); handleQuickAsk(item.name) }}
+                            disabled={quickAskSending}
+                          >
+                            <div className="quick-ask-item-info">
+                              <span className="quick-ask-item-name">{item.name}</span>
+                              {item.brand && item.brand !== 'Unknown' && (
+                                <span className="quick-ask-item-brand">{item.brand}</span>
+                              )}
+                            </div>
+                            {quickAskSending ? (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
+                              </svg>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="quick-ask-divider" />
+
+                      {/* Custom message — always visible */}
+                      <div className="quick-ask-custom">
+                        <input
+                          type="text"
+                          placeholder={t('quick_ask_other_placeholder')}
+                          value={quickAskInput}
+                          onChange={(e) => setQuickAskInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAskCustom() }}
+                        />
+                        <button
+                          className={`quick-ask-send ${quickAskInput.trim() ? 'active' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); handleQuickAskCustom() }}
+                          disabled={!quickAskInput.trim() || quickAskSending}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Comments */}
             <div className="panel-section">

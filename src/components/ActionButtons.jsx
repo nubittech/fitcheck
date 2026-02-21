@@ -1,10 +1,17 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import '../styles/ActionButtons.css'
+
+const THROTTLE_MS = 600
 
 const ActionButtons = ({ myVote, onDislike, onMessage, onLike }) => {
   const [animating, setAnimating] = useState(null)
+  const lastCall = useRef(0)
 
   const handleVote = (type, handler) => {
+    const now = Date.now()
+    if (now - lastCall.current < THROTTLE_MS) return // throttle — prevent spam
+    lastCall.current = now
+
     setAnimating(type)
     handler?.()
     setTimeout(() => setAnimating(null), 600)

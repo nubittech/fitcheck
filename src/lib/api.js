@@ -1,5 +1,12 @@
 import { supabase } from './supabase'
 
+// ---- SANITIZATION ----
+// Trim whitespace and enforce max length on all user-submitted strings
+function sanitize(str, maxLen = 500) {
+  if (typeof str !== 'string') return ''
+  return str.trim().slice(0, maxLen)
+}
+
 // ---- OUTFITS ----
 
 export async function getOutfits({ limit = 20, offset = 0, vibe = null } = {}) {
@@ -57,16 +64,21 @@ export async function getOutfitsByUser(userId) {
 }
 
 export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin, ageRangeMax, items, isBoosted }) {
+  const sanitizedItems = (items || []).map(item => ({
+    ...item,
+    name: sanitize(item.name, 100),
+    brand: sanitize(item.brand, 60),
+  }))
   const { data, error } = await supabase
     .from('outfits')
     .insert({
       user_id: userId,
-      caption,
+      caption: sanitize(caption, 280),
       gender,
       vibe,
       age_range_min: ageRangeMin,
       age_range_max: ageRangeMax,
-      items,
+      items: sanitizedItems,
       is_boosted: isBoosted
     })
     .select()
@@ -161,9 +173,12 @@ export async function getComments(outfitId) {
 }
 
 export async function addComment({ outfitId, userId, text }) {
+  const cleanText = sanitize(text, 500)
+  if (!cleanText) return { data: null, error: new Error('Comment cannot be empty') }
+
   const { data, error } = await supabase
     .from('comments')
-    .insert({ outfit_id: outfitId, user_id: userId, text })
+    .insert({ outfit_id: outfitId, user_id: userId, text: cleanText })
     .select(`
       *,
       profiles:user_id ( id, full_name, username, avatar_url )

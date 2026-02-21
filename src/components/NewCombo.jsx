@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import MediaCarousel from './MediaCarousel'
-import { createOutfit, uploadMedia, insertOutfitMedia } from '../lib/api'
+import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import '../styles/NewCombo.css'
 import { STYLE_TYPES } from '../constants/styleTypes'
@@ -121,8 +121,18 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const [showPreview, setShowPreview] = useState(false)
   const [tagDots, setTagDots] = useState([])
   const [boostEnabled, setBoostEnabled] = useState(false)
+  const [boostStatus, setBoostStatus] = useState({ boostsUsed: 0, maxBoosts: 1 })
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  const isPremium = Boolean(currentUser?.is_premium)
+  const boostRemaining = Math.max(0, boostStatus.maxBoosts - boostStatus.boostsUsed)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      getBoostStatus(session.user.id).then(setBoostStatus)
+    }
+  }, [session?.user?.id])
   const imageContainerRef = useRef(null)
 
   const videoCount = mediaFiles.filter(m => m.type === 'video').length
@@ -180,6 +190,14 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       })
 
       if (outfitError) throw outfitError
+
+      // Activate boost via RPC if enabled (sets boosted_at, decrements quota)
+      if (boostEnabled) {
+        const { data: boostResult } = await activateBoost(session.user.id)
+        if (!boostResult?.success) {
+          console.warn('Boost activation failed:', boostResult?.error)
+        }
+      }
 
       // Upload media files and create outfit_media rows
       for (let i = 0; i < mediaFiles.length; i++) {
@@ -305,7 +323,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           </div>
 
           {/* Premium Boost */}
-          <div className="boost-card">
+          <div className={`boost-card ${boostRemaining === 0 ? 'boost-disabled' : ''}`}>
             <div className="boost-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z" />
@@ -313,14 +331,24 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             </div>
             <div className="boost-info">
               <div className="boost-title-row">
-                <span className="boost-title">{tr ? 'Premium Öne Çıkarma' : 'Premium Boost'}</span>
-                <span className="boost-pro-tag">PRO</span>
+                <span className="boost-title">{tr ? 'Öne Çıkar' : 'Boost'}</span>
+                <span className="boost-pro-tag">{boostRemaining}/{boostStatus.maxBoosts}</span>
               </div>
-              <span className="boost-desc">{tr ? 'Topluluk akışında 2 kat daha fazla görünür ol' : 'Get 2x more visibility in community feed'}</span>
+              <span className="boost-desc">
+                {boostRemaining > 0
+                  ? (tr ? '2 saat boyunca 2.5x görünürlük' : '2.5x visibility for 2 hours')
+                  : (tr
+                    ? (isPremium ? 'Bu ay için boost hakkın bitti' : 'Bu hafta için boost hakkın bitti')
+                    : (isPremium ? 'No boosts left this month' : 'No boosts left this week'))
+                }
+              </span>
             </div>
             <button
               className={`boost-toggle ${boostEnabled ? 'on' : ''}`}
-              onClick={() => setBoostEnabled(!boostEnabled)}
+              onClick={() => {
+                if (boostRemaining > 0) setBoostEnabled(!boostEnabled)
+              }}
+              disabled={boostRemaining === 0}
             >
               <div className="boost-toggle-knob" />
             </button>

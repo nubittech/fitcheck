@@ -13,27 +13,8 @@ import ProfileSetup from './components/ProfileSetup'
 import DailyLimitDemo from './components/DailyLimitDemo'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
+import { supabase } from './lib/supabase'
 import './styles/App.css'
-
-const DAILY_SWIPE_LIMIT = 75
-const SWIPE_STORAGE_KEY = 'fitcheck_daily_swipes'
-
-function getTodayKey() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-function getDailySwipes() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(SWIPE_STORAGE_KEY) || '{}')
-    const today = getTodayKey()
-    if (stored.date === today) return stored.count || 0
-    return 0
-  } catch { return 0 }
-}
-
-function setDailySwipes(count) {
-  localStorage.setItem(SWIPE_STORAGE_KEY, JSON.stringify({ date: getTodayKey(), count }))
-}
 
 function transformOutfit(raw) {
   const profile = raw.profiles || {}
@@ -93,7 +74,7 @@ function App() {
   const [viewingProfile, setViewingProfile] = useState(null)
   const [feedLoading, setFeedLoading] = useState(false)
   const [signupName, setSignupName] = useState('')
-  const [swipeCount, setSwipeCount] = useState(() => getDailySwipes())
+  const [swipeLimitReached, setSwipeLimitReached] = useState(false)
   const [showDailyLimit, setShowDailyLimit] = useState(false)
   const [pendingChat, setPendingChat] = useState(null)
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
@@ -189,21 +170,34 @@ function App() {
     }
   }, [selectedVibe])
 
-  const incrementSwipe = () => {
-    if (isPremiumUser) return true
-    const newCount = swipeCount + 1
-    setSwipeCount(newCount)
-    setDailySwipes(newCount)
-    if (newCount >= DAILY_SWIPE_LIMIT) {
+  // Server-side swipe counter — bypass-proof
+  const incrementSwipe = useCallback(async () => {
+    if (!session) return false
+    if (swipeLimitReached) {
       setShowDailyLimit(true)
       return false
     }
-    return true
-  }
+    try {
+      const { data, error } = await supabase.rpc('increment_swipe')
+      if (error) {
+        console.warn('Swipe RPC error:', error.message)
+        return true // fail open — don't block user on network error
+      }
+      if (!data?.allowed) {
+        setSwipeLimitReached(true)
+        setShowDailyLimit(true)
+        return false
+      }
+      return true
+    } catch {
+      return true // fail open
+    }
+  }, [session, swipeLimitReached])
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < outfits.length) {
-      if (!incrementSwipe()) return
+      const allowed = await incrementSwipe()
+      if (!allowed) return
       setCurrentIndex(prev => prev + 1)
     }
   }
@@ -421,7 +415,7 @@ function App() {
     if (showDailyLimit) {
       return (
         <DailyLimitDemo
-          swipeCount={swipeCount}
+          swipeCount={0}
           onBack={() => setShowDailyLimit(false)}
           onGoHome={() => {
             setShowDailyLimit(false)
