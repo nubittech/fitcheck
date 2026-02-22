@@ -24,7 +24,7 @@
 .login-brand-name {
   font-size: 36px;
   font-weight: 900;
-  color: #1a1a24;
+  color: #28253B;
   letter-spacing: -0.5px;
 }
 
@@ -164,8 +164,8 @@
   font-weight: 800;
   color: #F08076;
   /* Matched from the image */
-  margin-top: 32px;
-  margin-bottom: 16px;
+  margin-top: 24px;
+  margin-bottom: 12px;
 }
 
 .login-methods {
