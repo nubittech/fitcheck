@@ -1,6 +1,6 @@
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #FDF4EF 0%, #FDE4DF 100%);
+  background: linear-gradient(180deg, #FAEDE6 0%, #F5DBD1 100%);
   color: #262338;
   padding: calc(40px + env(safe-area-inset-top, 0px)) 24px calc(30px + env(safe-area-inset-bottom, 0px));
   display: flex;
@@ -21,12 +21,22 @@
   width: 100%;
   max-width: 340px;
   aspect-ratio: 1;
-  background: rgba(255, 255, 255, 0.4);
   border-radius: 40px;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
+}
+
+.login-illustration-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 40px;
+  transform: rotate(10deg);
+  z-index: -1;
 }
 
 .illustration-inner-card {
@@ -34,7 +44,7 @@
   height: 260px;
   background: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   position: relative;
   border: 2px solid #F6F6F6;
   overflow: hidden;
@@ -65,17 +75,17 @@
   position: absolute;
   width: 50px;
   height: 80px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   top: 20px;
   left: 20px;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
 .illustration-heart-badge {
   position: absolute;
-  left: -20px;
-  bottom: 80px;
+  left: 15px;
+  bottom: 60px;
   width: 60px;
   height: 60px;
   background: #4ADE80;
@@ -85,18 +95,18 @@
   justify-content: center;
   align-items: center;
   color: white;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .illustration-check-badge {
   position: absolute;
-  right: -30px;
-  top: 40px;
+  right: 10px;
+  top: 30px;
   width: 100px;
   height: 120px;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   transform: rotate(10deg);
   display: flex;
   flex-direction: column;
@@ -163,7 +173,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
   color: #111;
 }
 
