@@ -43,7 +43,7 @@ function transformOutfit(raw) {
       name: item.name || '',
       brand: item.brand || 'Unknown',
       link: item.link || null,
-      position: item.position || { x: '50%', y: `${35 + i * 25}%` },
+      position: item.position || null,
       feedbackEnabled: item.feedbackEnabled
     })),
     comments: [],

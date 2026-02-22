@@ -27,6 +27,7 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
   const [quickAskInput, setQuickAskInput] = useState('')
   const [quickAskSending, setQuickAskSending] = useState(false)
   const [quickAskSent, setQuickAskSent] = useState(null) // item name or true
+  const [currentSlide, setCurrentSlide] = useState(0) // tracks active carousel photo
 
   // ── Outfit-level vote state ──
   const [outfitVotes, setOutfitVotes] = useState({ likes: 0, dislikes: 0, likePct: null, myVote: null, total: 0 })
@@ -263,7 +264,7 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
         onTouchEnd={handleCardTouchEnd}
       >
         {/* Media carousel */}
-        <MediaCarousel media={outfit.media} />
+        <MediaCarousel media={outfit.media} onIndexChange={setCurrentSlide} />
         <div className="card-gradient" />
 
         {/* Approval pill — top right, non-obtrusive */}
@@ -286,8 +287,8 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
           </button>
         </div>
 
-        {/* Item dots */}
-        <ItemDots items={outfit.items} />
+        {/* Item dots — only shown on the photo they were tagged on */}
+        <ItemDots items={outfit.items} currentSlide={currentSlide} />
 
         {/* User info */}
         <div className="card-user-bar">

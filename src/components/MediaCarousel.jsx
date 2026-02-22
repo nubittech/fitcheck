@@ -1,46 +1,57 @@
 import React, { useState, useRef, useCallback } from 'react'
 import '../styles/MediaCarousel.css'
 
-const MediaCarousel = ({ media }) => {
+const MediaCarousel = ({ media, onIndexChange }) => {
   const mediaList = Array.isArray(media) ? media : []
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  // Notify parent whenever slide changes
+  const goToIndex = useCallback((idx) => {
+    setCurrentIndex(idx)
+    onIndexChange?.(idx)
+  }, [onIndexChange])
+
   const containerRef = useRef(null)
-  const startXRef = useRef(0)
-  const offsetXRef = useRef(0)
-  const [dragOffset, setDragOffset] = useState(0)
-  const isDragging = useRef(false)
+
+  // Touch tracking — distinguish tap vs drag
+  const touchStartX = useRef(0)
+  const touchStartTime = useRef(0)
+  const hasMoved = useRef(false)
 
   const handleTouchStart = useCallback((e) => {
-    startXRef.current = e.touches[0].clientX
-    isDragging.current = true
-    setDragOffset(0)
+    touchStartX.current = e.touches[0].clientX
+    touchStartTime.current = Date.now()
+    hasMoved.current = false
   }, [])
 
   const handleTouchMove = useCallback((e) => {
-    if (!isDragging.current) return
-    const diff = e.touches[0].clientX - startXRef.current
-    offsetXRef.current = diff
-    setDragOffset(diff)
+    const dx = Math.abs(e.touches[0].clientX - touchStartX.current)
+    if (dx > 8) hasMoved.current = true
   }, [])
 
-  const handleTouchEnd = useCallback(() => {
-    if (!isDragging.current) return
-    isDragging.current = false
-    const threshold = 60
+  const handleTouchEnd = useCallback((e) => {
+    const elapsed = Date.now() - touchStartTime.current
+    const dx = e.changedTouches[0].clientX - touchStartX.current
 
-    if (offsetXRef.current < -threshold && currentIndex < mediaList.length - 1) {
-      setCurrentIndex(prev => prev + 1)
-    } else if (offsetXRef.current > threshold && currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1)
+    // Pure tap (< 250ms, moved < 8px) → zone navigation
+    if (!hasMoved.current && elapsed < 250) {
+      const rect = containerRef.current?.getBoundingClientRect()
+      const tapX = e.changedTouches[0].clientX
+      const midX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
+
+      if (tapX > midX) goToIndex(Math.min(currentIndex + 1, mediaList.length - 1))
+      else goToIndex(Math.max(currentIndex - 1, 0))
+      return
     }
 
-    offsetXRef.current = 0
-    setDragOffset(0)
-  }, [currentIndex, mediaList.length])
+    // Swipe gesture fallback (still works for deliberate slow swipes)
+    if (Math.abs(dx) > 60) {
+      if (dx < 0) goToIndex(Math.min(currentIndex + 1, mediaList.length - 1))
+      else goToIndex(Math.max(currentIndex - 1, 0))
+    }
+  }, [currentIndex, mediaList.length, goToIndex])
 
-  const goTo = useCallback((index) => {
-    setCurrentIndex(index)
-  }, [])
+  const goTo = useCallback((index) => goToIndex(index), [goToIndex])
 
   const safeIndex = Math.min(currentIndex, Math.max(mediaList.length - 1, 0))
   const current = mediaList[safeIndex]
@@ -54,13 +65,12 @@ const MediaCarousel = ({ media }) => {
   }
 
   return (
-    <div className="media-carousel">
+    <div className="media-carousel" ref={containerRef}>
       <div
-        ref={containerRef}
         className="carousel-track"
         style={{
-          transform: `translateX(calc(-${safeIndex * 100}% + ${dragOffset}px))`,
-          transition: dragOffset ? 'none' : 'transform 0.3s ease'
+          transform: `translateX(-${safeIndex * 100}%)`,
+          transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -85,18 +95,32 @@ const MediaCarousel = ({ media }) => {
         ))}
       </div>
 
+      {/* Tap zone hints (subtle, invisible touch targets) */}
+      {mediaList.length > 1 && (
+        <>
+          <div
+            className="tap-zone tap-zone-left"
+            onTouchStart={(e) => { e.stopPropagation(); goToIndex(Math.max(currentIndex - 1, 0)) }}
+          />
+          <div
+            className="tap-zone tap-zone-right"
+            onTouchStart={(e) => { e.stopPropagation(); goToIndex(Math.min(currentIndex + 1, mediaList.length - 1)) }}
+          />
+        </>
+      )}
+
       {/* Media type badge */}
       {current.type === 'video' && (
         <div className="media-badge video-badge">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
+            <path d="M8 5v14l11-7z" />
           </svg>
           Video
         </div>
       )}
 
       {/* Counter badge */}
-        <div className="media-counter">
+      <div className="media-counter">
         {safeIndex + 1} / {mediaList.length}
       </div>
 

@@ -387,6 +387,33 @@
   opacity: 0.8;
 }
 
+.piece-input.link-valid {
+  border-color: #22c55e !important;
+  color: #22c55e;
+}
+
+.piece-input.link-error {
+  border-color: #ef4444 !important;
+}
+
+.link-error-msg,
+.link-ok-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  margin: 4px 0 0 2px;
+  font-weight: 600;
+}
+
+.link-error-msg {
+  color: #ef4444;
+}
+
+.link-ok-msg {
+  color: #22c55e;
+}
+
 .add-piece-btn {
   align-self: center;
   padding: 10px 24px;

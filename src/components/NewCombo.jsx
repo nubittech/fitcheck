@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import MediaCarousel from './MediaCarousel'
 import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
+import { validateAffiliateLink, affiliateLinkError } from '../lib/affiliateValidator'
 import '../styles/NewCombo.css'
 import { STYLE_TYPES } from '../constants/styleTypes'
 
@@ -13,6 +14,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const [pieceName, setPieceName] = useState('')
   const [pieceBrand, setPieceBrand] = useState('')
   const [pieceLink, setPieceLink] = useState('')
+  const [pieceLinkError, setPieceLinkError] = useState('')  // '' = no input, 'ok' = valid, error string = invalid
   const [gender, setGender] = useState('unisex')
   const [selectedStyle, setSelectedStyle] = useState('Minimalist')
   const [styleOpen, setStyleOpen] = useState(false)
@@ -47,9 +49,16 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const addPiece = () => {
     if (!pieceName.trim()) return
-    // Normalise link: add https:// if missing
+    // Validate link if provided
     let link = pieceLink.trim()
-    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link
+    if (link) {
+      if (!/^https?:\/\//i.test(link)) link = 'https://' + link
+      const { valid, reason } = validateAffiliateLink(link)
+      if (!valid) {
+        setPieceLinkError(affiliateLinkError(reason, lang))
+        return
+      }
+    }
     setPieces(prev => [...prev, {
       id: Date.now(),
       name: pieceName.trim(),
@@ -60,6 +69,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setPieceName('')
     setPieceBrand('')
     setPieceLink('')
+    setPieceLinkError('')
   }
 
   const removePiece = (id) => {
@@ -173,7 +183,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           brand: piece.brand || 'Unknown',
           link: piece.link || null,
           feedbackEnabled: piece.feedbackEnabled || false,
-          position: dot ? { x: `${dot.x}%`, y: `${dot.y}%` } : { x: '50%', y: `${40 + index * 12}%` }
+          position: dot ? { x: `${dot.x}%`, y: `${dot.y}%` } : null
         }
       })
 
@@ -510,13 +520,34 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
               onChange={(e) => setPieceBrand(e.target.value)}
             />
             <input
-              className="piece-input piece-link-input"
-              placeholder={tr ? '🔗 Satın alma linki (isteğe bağlı)' : '🔗 Shop link (optional — affiliate URL)'}
+              className={`piece-input piece-link-input ${pieceLinkError === 'ok' ? 'link-valid' : pieceLinkError ? 'link-error' : ''}`}
+              placeholder={tr ? '🔗 Satın alma linki (isteğe bağlı — aff/ref link)' : '🔗 Shop link (optional — affiliate URL)'}
               value={pieceLink}
-              onChange={(e) => setPieceLink(e.target.value)}
+              onChange={(e) => { setPieceLink(e.target.value); setPieceLinkError('') }}
+              onBlur={() => {
+                if (!pieceLink.trim()) { setPieceLinkError(''); return }
+                const { valid, reason } = validateAffiliateLink(pieceLink.trim())
+                setPieceLinkError(valid ? 'ok' : affiliateLinkError(reason, lang))
+              }}
               type="url"
               inputMode="url"
             />
+            {pieceLinkError && pieceLinkError !== 'ok' && (
+              <p className="link-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><circle cx="12" cy="16" r="1" fill="currentColor" />
+                </svg>
+                {pieceLinkError}
+              </p>
+            )}
+            {pieceLinkError === 'ok' && (
+              <p className="link-ok-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {tr ? 'Geçerli affiliate linki ✓' : 'Valid affiliate link ✓'}
+              </p>
+            )}
             <button
               className="add-piece-btn"
               onClick={addPiece}
