@@ -63,6 +63,17 @@ export async function getOutfitsByUser(userId) {
   return { data, error }
 }
 
+export async function getDailyPostCount(userId) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const { count, error } = await supabase
+    .from('outfits')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', today.toISOString())
+  return { count: count || 0, error }
+}
+
 export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin, ageRangeMax, items, isBoosted }) {
   const sanitizedItems = (items || []).map(item => ({
     ...item,

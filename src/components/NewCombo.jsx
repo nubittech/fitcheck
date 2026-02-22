@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import MediaCarousel from './MediaCarousel'
-import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus } from '../lib/api'
+import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus, getDailyPostCount } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import { validateAffiliateLink, affiliateLinkError } from '../lib/affiliateValidator'
 import '../styles/NewCombo.css'
@@ -134,6 +134,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const [boostStatus, setBoostStatus] = useState({ boostsUsed: 0, maxBoosts: 1 })
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [dailyPostCount, setDailyPostCount] = useState(0)
+  const FREE_DAILY_POST_LIMIT = 2
 
   const isPremium = Boolean(currentUser?.is_premium)
   const boostRemaining = Math.max(0, boostStatus.maxBoosts - boostStatus.boostsUsed)
@@ -141,6 +143,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   useEffect(() => {
     if (session?.user?.id) {
       getBoostStatus(session.user.id).then(setBoostStatus)
+      getDailyPostCount(session.user.id).then(r => setDailyPostCount(r.count))
     }
   }, [session?.user?.id])
   const imageContainerRef = useRef(null)
@@ -149,6 +152,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const imageCount = mediaFiles.filter(m => m.type === 'image').length
   const canAddMore = mediaFiles.length < 4
   const isValid = mediaFiles.length > 0 && pieces.length > 0
+  const postsRemaining = isPremium ? Infinity : Math.max(0, FREE_DAILY_POST_LIMIT - dailyPostCount)
+  const canPost = isPremium || postsRemaining > 0
 
   const resetForm = () => {
     mediaFiles.forEach((m) => {
@@ -171,6 +176,10 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const handleShareCombo = async () => {
     if (!isValid || !session || submitting) return
+    if (!canPost) {
+      setSubmitError(tr ? 'Günlük kombin paylaşma limitine ulaştın (2/gün). Premium ile sınırsız paylaş!' : 'Daily combo limit reached (2/day). Go Premium for unlimited!')
+      return
+    }
     setSubmitting(true)
     setSubmitError('')
 
@@ -633,7 +642,20 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
         {/* Submit */}
         <div className="newcombo-section newcombo-submit-section">
-          <button className={`newcombo-submit ${isValid ? '' : 'disabled'}`} disabled={!isValid} onClick={() => setShowPreview(true)}>
+          {!isPremium && (
+            <div style={{ textAlign: 'center', marginBottom: '8px', fontSize: '12px', color: canPost ? 'var(--text-secondary)' : '#e53e3e' }}>
+              {canPost
+                ? (tr ? `Bugün ${postsRemaining} kombin daha paylaşabilirsin` : `${postsRemaining} posts remaining today`)
+                : (tr ? 'Günlük limit doldu (2/gün)' : 'Daily limit reached (2/day)')
+              }
+            </div>
+          )}
+          {submitError && (
+            <div style={{ textAlign: 'center', marginBottom: '8px', fontSize: '12px', color: '#e53e3e' }}>
+              {submitError}
+            </div>
+          )}
+          <button className={`newcombo-submit ${isValid && canPost ? '' : 'disabled'}`} disabled={!isValid || !canPost} onClick={() => setShowPreview(true)}>
             {tr ? 'Önizleme' : 'Preview Combination'}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
