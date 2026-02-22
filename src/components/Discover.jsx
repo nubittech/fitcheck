@@ -106,7 +106,6 @@ const Discover = ({ outfits = [], onSelectStyle, onOutfitClick }) => {
     <div className="discover-page">
       <header className="discover-header">
         <h1>{t('discover')}</h1>
-        <button className="icon-btn filter-btn">{ICONS.filter}</button>
       </header>
 
       <div className="search-container">
