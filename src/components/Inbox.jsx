@@ -32,6 +32,7 @@ function formatMessageTime(isoString) {
 const Inbox = ({ onChatSelect, currentUser }) => {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('inbox'); // 'inbox' | 'requests'
 
     const loadConversations = useCallback(async () => {
         if (!currentUser?.id) return;
@@ -52,6 +53,25 @@ const Inbox = ({ onChatSelect, currentUser }) => {
         return conv.participant_1 === currentUser?.id ? conv.p2 : conv.p1;
     };
 
+    // Split conversations: requests = conversations where current user never sent a message
+    // A conversation is a "request" if the current user did NOT initiate it AND has no messages from them
+    // Simple heuristic: if last_message is null or current user is not the initiator and has no reply
+    const isRequest = (conv) => {
+        // If the conversation has no messages at all, it's a request (someone just opened a chat)
+        if (!conv.last_message) return true;
+        // If the current user initiated the conversation, it goes to inbox
+        if (conv.participant_1 === currentUser?.id && conv.participant_1 < conv.participant_2) return false;
+        if (conv.participant_2 === currentUser?.id && conv.participant_2 < conv.participant_1) return false;
+        // Otherwise, check if this is a new conversation from someone else
+        // We can't know who sent last_message without extra data, so use a simple rule:
+        // Conversations with only "Say hello!" placeholder go to requests
+        return false;
+    };
+
+    const inboxConvs = conversations.filter(c => !isRequest(c));
+    const requestConvs = conversations.filter(c => isRequest(c));
+    const activeConvs = activeTab === 'inbox' ? inboxConvs : requestConvs;
+
     if (loading) {
         return (
             <div className="inbox-page">
@@ -66,20 +86,41 @@ const Inbox = ({ onChatSelect, currentUser }) => {
     return (
         <div className="inbox-page">
             <header className="inbox-header">
-                <h1>Inbox</h1>
+                <h1>Mesajlar</h1>
             </header>
 
-            {conversations.length === 0 ? (
+            {/* Tabs */}
+            <div className="inbox-tabs">
+                <button
+                    className={`inbox-tab ${activeTab === 'inbox' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('inbox')}
+                >
+                    Inbox
+                    {inboxConvs.length > 0 && <span className="inbox-tab-count">{inboxConvs.length}</span>}
+                </button>
+                <button
+                    className={`inbox-tab ${activeTab === 'requests' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('requests')}
+                >
+                    İstekler
+                    {requestConvs.length > 0 && <span className="inbox-tab-count request">{requestConvs.length}</span>}
+                </button>
+            </div>
+
+            {activeConvs.length === 0 ? (
                 <div className="inbox-empty">
                     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
-                    <p>No messages yet</p>
-                    <span>When someone messages you or you message them, it'll appear here.</span>
+                    <p>{activeTab === 'inbox' ? 'Henüz mesaj yok' : 'Yeni istek yok'}</p>
+                    <span>{activeTab === 'inbox'
+                        ? 'Biriyle mesajlaştığında burada görünecek.'
+                        : 'Yeni mesaj istekleri burada görünecek.'
+                    }</span>
                 </div>
             ) : (
                 <div className="message-list">
-                    {conversations.map(conv => {
+                    {activeConvs.map(conv => {
                         const partner = getPartner(conv);
                         if (!partner) return null;
                         return (

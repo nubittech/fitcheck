@@ -104,6 +104,46 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
+.inbox-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7d7373;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.inbox-tab.active {
+    background-color: #3e3232;
+    color: #fff;
+}
+
+.inbox-tab-count {
+    background-color: rgba(0, 0, 0, 0.1);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.inbox-tab.active .inbox-tab-count {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.inbox-tab-count.request {
+    background-color: #ff8a80;
+    color: #fff;
+}
+
 .tab-btn {
     flex: 1;
     padding: 10px;
