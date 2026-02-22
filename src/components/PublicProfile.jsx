@@ -42,7 +42,7 @@ const MOCK_USER = {
   ]
 }
 
-const PublicProfile = ({ onBack, onMessage }) => {
+const PublicProfile = ({ onBack, onMessage, onOutfitClick }) => {
   const user = MOCK_USER
 
   return (
@@ -74,7 +74,7 @@ const PublicProfile = ({ onBack, onMessage }) => {
         <h1 className="pp-name">{user.name}</h1>
         <div className="pp-location">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
           </svg>
           <span>{user.location}</span>
         </div>
@@ -98,7 +98,7 @@ const PublicProfile = ({ onBack, onMessage }) => {
         {/* Message Button */}
         <button className="pp-message-btn" onClick={onMessage}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
           </svg>
           Message {user.name.split(' ')[0]}
         </button>
@@ -121,13 +121,13 @@ const PublicProfile = ({ onBack, onMessage }) => {
           </div>
           <div className="pp-looks-grid">
             {user.looks.map(look => (
-              <div key={look.id} className="pp-look-card">
+              <div key={look.id} className="pp-look-card" onClick={() => onOutfitClick?.(look)} style={{ cursor: 'pointer' }}>
                 <div className="pp-look-img-wrapper">
                   <img src={look.image} alt={look.name} className="pp-look-img" />
                   {look.timeLeft && (
                     <div className="pp-look-badge">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z" />
                       </svg>
                       <span>{look.timeLeft}</span>
                     </div>

@@ -56,7 +56,7 @@ function getTimeLeft(createdAt) {
     return `${minutes}m left`;
 }
 
-const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
+const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitClick }) => {
     const { t } = useLang();
     const { handleUpgrade } = usePremium();
     const [showBoost, setShowBoost] = useState(false);
@@ -184,7 +184,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                     </div>
                 ) : activeOutfits.length === 1 ? (
                     <div className="looks-single">
-                        <div className="look-card large">
+                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer' }}>
                             <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
                             <div className="look-overlay">
                                 <div className="timer-badge">
@@ -199,7 +199,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                 ) : activeOutfits.length === 2 ? (
                     <div className="looks-grid">
                         {activeOutfits.slice(0, 2).map(outfit => (
-                            <div className="look-card equal" key={outfit.id}>
+                            <div className="look-card equal" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
                                 <img src={getOutfitImage(outfit)} alt="Look" />
                                 <div className="look-overlay">
                                     <div className="timer-badge">
@@ -214,7 +214,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                     </div>
                 ) : (
                     <div className="looks-grid">
-                        <div className="look-card large">
+                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer' }}>
                             <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
                             <div className="look-overlay">
                                 <div className="timer-badge">
@@ -227,7 +227,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                         </div>
                         <div className="looks-column">
                             {activeOutfits.slice(1, 3).map(outfit => (
-                                <div className="look-card small" key={outfit.id}>
+                                <div className="look-card small" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
                                     <img src={getOutfitImage(outfit)} alt="Look" />
                                     <div className="look-overlay">
                                         <div className="timer-badge">

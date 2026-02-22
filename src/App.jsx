@@ -80,6 +80,7 @@ function App() {
   const [showDailyLimit, setShowDailyLimit] = useState(false)
   const [pendingChat, setPendingChat] = useState(null)
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
+  const [viewingOutfit, setViewingOutfit] = useState(null) // for profile outfit clicks
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
@@ -372,6 +373,24 @@ function App() {
             })
             setActiveTab('inbox')
           }}
+          onOutfitClick={(mockLook) => {
+            // Mock transformation for the hardcoded profile
+            const mockOutfit = {
+              id: mockLook.id,
+              user: {
+                id: 'mock-user',
+                name: 'Sarah Miller',
+                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+                isPremium: true
+              },
+              media: [{ id: 1, type: 'image', url: mockLook.image }],
+              caption: mockLook.name,
+              vibe: 'Style',
+              items: [],
+              stats: { likes: Math.floor(Math.random() * 500) }
+            }
+            setViewingOutfit(mockOutfit)
+          }}
         />
       )
     }
@@ -414,6 +433,7 @@ function App() {
           session={session}
           onLogout={handleLogout}
           onProfileUpdated={handleProfileEditSave}
+          onOutfitClick={(outfit) => setViewingOutfit(transformOutfit(outfit))}
         />
       )
     }
@@ -508,6 +528,46 @@ function App() {
           setActiveTab(tab)
           if (tab !== 'inbox') setSelectedChat(null)
         }} />
+      )}
+
+      {/* Outfit View Overlay */}
+      {viewingOutfit && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#f5f2f0', display: 'flex', flexDirection: 'column' }}>
+          <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(14px, env(safe-area-inset-top)) 16px 14px', background: 'transparent' }}>
+            <button onClick={() => setViewingOutfit(null)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', padding: '8px', cursor: 'pointer' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <span style={{ fontSize: '13px', fontWeight: '700', letterSpacing: '1.5px', color: 'var(--text-primary)' }}>LOOK</span>
+            <div style={{ width: 40 }} />
+          </header>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <OutfitCard
+              outfit={viewingOutfit}
+              currentUser={currentUser}
+              session={session}
+              isLikedByMe={likedOutfitIds.has(viewingOutfit.id)}
+              onNext={() => setViewingOutfit(null)} // dismiss on swipe right
+              onSkip={() => setViewingOutfit(null)} // dismiss on swipe left
+              onLike={async () => {
+                setViewingOutfit(prev => ({ ...prev, stats: { ...prev.stats, likes: prev.stats.likes + 1 } }))
+                setOutfits(prev => prev.map(o => o.id === viewingOutfit.id ? { ...o, stats: { ...o.stats, likes: o.stats.likes + 1 } } : o))
+                setLikedOutfitIds(prev => new Set([...prev, viewingOutfit.id]))
+                await likeOutfit({ outfitId: viewingOutfit.id, userId: session.user.id })
+              }}
+              onItemVote={(itemId, type) => {
+                setViewingOutfit(prev => ({
+                  ...prev, items: prev.items.map(i => i.id === itemId ? { ...i, votes: { ...i.votes, [type]: i.votes[type] + 1 } } : i)
+                }))
+              }}
+              onUserTap={() => { setViewingOutfit(null); setViewingProfile(viewingOutfit.user) }}
+              onOpenChat={(conv) => {
+                setViewingOutfit(null)
+                setSelectedChat(conv)
+                setActiveTab('inbox')
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
