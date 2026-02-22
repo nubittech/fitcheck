@@ -22,7 +22,8 @@
 }
 
 .login-brand-name {
-  font-size: 36px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 38px;
   font-weight: 900;
   color: #F47E7A;
   /* Coral tone from reference image */
