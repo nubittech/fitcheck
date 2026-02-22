@@ -62,7 +62,7 @@ const STYLE_ICON_MAP = {
   )
 }
 
-const Discover = ({ outfits = [], onSelectStyle }) => {
+const Discover = ({ outfits = [], onSelectStyle, onOutfitClick }) => {
   const { t } = useLang()
   const [query, setQuery] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('all')
@@ -91,7 +91,13 @@ const Discover = ({ outfits = [], onSelectStyle }) => {
   }, [outfits, selectedStyle, query])
 
   const trendingOutfits = useMemo(() => {
-    return [...filteredOutfits]
+    const now = Date.now()
+    return filteredOutfits
+      .filter((o) => {
+        if (!o.createdAt) return false
+        const created = new Date(o.createdAt).getTime()
+        return created + 24 * 60 * 60 * 1000 > now
+      })
       .sort((a, b) => (b.stats?.likes || 0) - (a.stats?.likes || 0))
       .slice(0, 8)
   }, [filteredOutfits])
@@ -164,7 +170,7 @@ const Discover = ({ outfits = [], onSelectStyle }) => {
               const preview = firstMedia?.thumbnail || firstMedia?.url
               const likes = outfit.stats?.likes || 0
               return (
-                <div key={outfit.id} className="trending-card">
+                <div key={outfit.id} className="trending-card" onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
                   <div className="trending-image-wrapper">
                     {preview ? (
                       <img src={preview} alt={outfit.caption || outfit.style} className="trending-img" />

@@ -403,6 +403,7 @@ function App() {
             setCurrentIndex(0)
             setActiveTab('home')
           }}
+          onOutfitClick={(outfit) => setViewingOutfit(outfit)}
         />
       )
     }
