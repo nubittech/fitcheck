@@ -45,6 +45,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FitCheck needs access to your camera to let you take photos of your outfits.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FitCheck needs access to your photo library so you can choose an outfit from your gallery.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
