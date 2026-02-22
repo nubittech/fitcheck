@@ -14,6 +14,7 @@ import DailyLimitDemo from './components/DailyLimitDemo'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
 import { supabase } from './lib/supabase'
+import { usePremium } from './lib/usePremium'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -81,6 +82,7 @@ function App() {
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
+  const { handleUpgrade, loading: upgradeLoading } = usePremium()
 
   // Auth listener
   useEffect(() => {
@@ -421,9 +423,9 @@ function App() {
             setShowDailyLimit(false)
             setActiveTab('home')
           }}
-          onUpgrade={() => {
-            alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
-            setShowDailyLimit(false)
+          onUpgrade={async () => {
+            const success = await handleUpgrade()
+            if (success) setShowDailyLimit(false)
           }}
         />
       )

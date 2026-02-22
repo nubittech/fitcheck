@@ -3,3 +3,10 @@ dist
 .DS_Store
 .env
 .env.local
+
+# Capacitor native builds
+ios/App/Pods
+ios/App/build
+android/.gradle
+android/build
+android/app/build

@@ -6,6 +6,7 @@ import EditProfile from './EditProfile';
 import Settings from './Settings';
 import { getOutfitsByUser, getBoostStatus, activateBoost } from '../lib/api';
 import { useLang } from '../i18n/LangContext';
+import { usePremium } from '../lib/usePremium';
 
 const ICONS = {
     settings: (
@@ -57,6 +58,7 @@ function getTimeLeft(createdAt) {
 
 const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
     const { t } = useLang();
+    const { handleUpgrade } = usePremium();
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -164,9 +166,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
             </section>
 
             {/* Premium Promo for Free Users */}
-            {!profile.isPremium && <PremiumPromo onUpgrade={() => {
-                alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
-            }} />}
+            {!profile.isPremium && <PremiumPromo onUpgrade={handleUpgrade} />}
 
             <section className="current-looks">
                 <div className="section-header">
@@ -254,9 +254,9 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated }) => {
                     onClose={() => setShowSettings(false)}
                     onLogout={onLogout}
                     currentUser={currentUser}
-                    onUpgrade={() => {
-                        setShowSettings(false)
-                        alert('Premium abonelik yakinda aktif olacak! App Store entegrasyonu bekleniyor.')
+                    onUpgrade={async () => {
+                        const success = await handleUpgrade()
+                        if (success) setShowSettings(false)
                     }}
                 />
             )}
