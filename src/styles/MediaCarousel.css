@@ -104,22 +104,3 @@
 .carousel-dot.dot-video.active {
   background: #ff3c3c;
 }
-
-/* Tap zones — invisible left/right halves for photo navigation */
-.tap-zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 45%;
-  z-index: 5;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.tap-zone-left {
-  left: 0;
-}
-
-.tap-zone-right {
-  right: 0;
-}
