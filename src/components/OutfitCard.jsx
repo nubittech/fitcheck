@@ -55,17 +55,33 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
     if (!currentUser?.id || votingOutfit) return
     setVotingOutfit(true)
 
-    // Optimistic update
+    // Optimistic update — three cases:
+    // 1. Toggle off (same vote clicked again) → remove vote
+    // 2. Switch vote (dislike→like or like→dislike) → swap counts
+    // 3. Fresh vote (no previous vote) → add 1 to chosen side
     const prev = { ...outfitVotes }
-    const isToggle = prev.myVote === vote
-    const wasOther = prev.myVote && prev.myVote !== vote
+    const isToggle = prev.myVote === vote          // same button tapped again
+    const wasOther = !!prev.myVote && !isToggle   // had a different vote before
+
     const newVote = isToggle ? null : vote
-    const newLikes = vote === 'like'
-      ? prev.likes + (isToggle ? -1 : (wasOther ? 0 : 1))
-      : prev.likes + (wasOther ? -1 : 0)
-    const newDislikes = vote === 'dislike'
-      ? prev.dislikes + (isToggle ? -1 : (wasOther ? 0 : 1))
-      : prev.dislikes + (wasOther ? -1 : 0)
+
+    let newLikes = prev.likes
+    let newDislikes = prev.dislikes
+
+    if (vote === 'like') {
+      if (isToggle) newLikes--              // un-like
+      else {
+        newLikes++              // like (fresh or switched)
+        if (wasOther) newDislikes--           // remove old dislike
+      }
+    } else {
+      if (isToggle) newDislikes--           // un-dislike
+      else {
+        newDislikes++           // dislike (fresh or switched)
+        if (wasOther) newLikes--              // remove old like
+      }
+    }
+
     const total = newLikes + newDislikes
     const likePct = total > 0 ? Math.round((newLikes / total) * 100) : null
     setOutfitVotes({ likes: newLikes, dislikes: newDislikes, likePct, myVote: newVote, total })
@@ -73,7 +89,7 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
     try {
       await voteOutfit({ outfitId: outfit.id, userId: currentUser.id, vote })
     } catch {
-      setOutfitVotes(prev) // rollback
+      setOutfitVotes(prev) // rollback on network error
     }
     setVotingOutfit(false)
   }
@@ -275,17 +291,6 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
           </div>
         )}
 
-        {/* Top bar */}
-        <div className="card-top-bar">
-          <div className="top-avatar-placeholder" />
-          <span className="top-title">OOTD</span>
-          <button className="top-bell">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-            </svg>
-            <div className="bell-dot" />
-          </button>
-        </div>
 
         {/* Item dots — only shown on the photo they were tagged on */}
         <ItemDots items={outfit.items} currentSlide={currentSlide} />
