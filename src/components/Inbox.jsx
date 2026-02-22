@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import '../styles/Inbox.css';
 import { getConversations, getMessages, sendMessage, findOrCreateConversation, subscribeToMessages } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 // ──────────────────────────────────────────
 // Helpers
@@ -32,7 +33,7 @@ function formatMessageTime(isoString) {
 const Inbox = ({ onChatSelect, currentUser }) => {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('inbox'); // 'inbox' | 'requests'
+    const [activeTab, setActiveTab] = useState('inbox');
 
     const loadConversations = useCallback(async () => {
         if (!currentUser?.id) return;
@@ -48,24 +49,23 @@ const Inbox = ({ onChatSelect, currentUser }) => {
         loadConversations();
     }, [loadConversations]);
 
-    // Derive partner profile from conversation row
     const getPartner = (conv) => {
         return conv.participant_1 === currentUser?.id ? conv.p2 : conv.p1;
     };
 
-    // Split conversations: requests = conversations where current user never sent a message
-    // A conversation is a "request" if the current user did NOT initiate it AND has no messages from them
-    // Simple heuristic: if last_message is null or current user is not the initiator and has no reply
     const isRequest = (conv) => {
-        // If the conversation has no messages at all, it's a request (someone just opened a chat)
         if (!conv.last_message) return true;
-        // If the current user initiated the conversation, it goes to inbox
-        if (conv.participant_1 === currentUser?.id && conv.participant_1 < conv.participant_2) return false;
-        if (conv.participant_2 === currentUser?.id && conv.participant_2 < conv.participant_1) return false;
-        // Otherwise, check if this is a new conversation from someone else
-        // We can't know who sent last_message without extra data, so use a simple rule:
-        // Conversations with only "Say hello!" placeholder go to requests
         return false;
+    };
+
+    const handleAccept = (conv) => {
+        const partner = getPartner(conv);
+        onChatSelect({ ...conv, partner });
+    };
+
+    const handleDecline = async (convId) => {
+        await supabase.from('conversations').delete().eq('id', convId);
+        setConversations(prev => prev.filter(c => c.id !== convId));
     };
 
     const inboxConvs = conversations.filter(c => !isRequest(c));
@@ -75,7 +75,7 @@ const Inbox = ({ onChatSelect, currentUser }) => {
     if (loading) {
         return (
             <div className="inbox-page">
-                <header className="inbox-header"><h1>Inbox</h1></header>
+                <header className="inbox-header"><h1>Mesajlar</h1></header>
                 <div className="inbox-loading">
                     <div className="inbox-spinner" />
                 </div>
@@ -89,7 +89,6 @@ const Inbox = ({ onChatSelect, currentUser }) => {
                 <h1>Mesajlar</h1>
             </header>
 
-            {/* Tabs */}
             <div className="inbox-tabs">
                 <button
                     className={`inbox-tab ${activeTab === 'inbox' ? 'active' : ''}`}
@@ -118,7 +117,49 @@ const Inbox = ({ onChatSelect, currentUser }) => {
                         : 'Yeni mesaj istekleri burada görünecek.'
                     }</span>
                 </div>
+            ) : activeTab === 'requests' ? (
+                /* ── Request Items with Accept/Decline ── */
+                <div className="requests-section">
+                    <div className="requests-info">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span>Seni takip etmeyen kişilerden gelen mesaj istekleri burada görünür.</span>
+                    </div>
+                    {activeConvs.map(conv => {
+                        const partner = getPartner(conv);
+                        if (!partner) return null;
+                        return (
+                            <div key={conv.id} className="request-item">
+                                <div className="request-top">
+                                    <div className="avatar-wrapper">
+                                        {partner.avatar_url ? (
+                                            <img src={partner.avatar_url} alt={partner.full_name} className="avatar-img" />
+                                        ) : (
+                                            <div className="avatar-placeholder" style={{ backgroundColor: '#E9D5FF' }}>
+                                                {(partner.full_name || partner.username || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="message-content">
+                                        <span className="user-name">{partner.full_name || partner.username}</span>
+                                        <span className="mutual-info">@{partner.username || '—'}</span>
+                                    </div>
+                                </div>
+                                <div className="request-actions">
+                                    <button className="request-btn decline" onClick={() => handleDecline(conv.id)}>
+                                        Reddet
+                                    </button>
+                                    <button className="request-btn accept" onClick={() => handleAccept(conv)}>
+                                        Kabul Et
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             ) : (
+                /* ── Regular Inbox Items ── */
                 <div className="message-list">
                     {activeConvs.map(conv => {
                         const partner = getPartner(conv);
