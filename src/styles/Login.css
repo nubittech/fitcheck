@@ -34,7 +34,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 50px;
+  /* Increased from 20px */
   margin-bottom: 40px;
 }
 
@@ -117,6 +118,7 @@
   align-items: center;
   color: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  animation: float-badge 3s ease-in-out infinite alternate;
 }
 
 .illustration-check-badge {
@@ -128,11 +130,31 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  transform: rotate(10deg);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 20px;
+  animation: float-check 3.5s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes float-badge {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes float-check {
+  0% {
+    transform: rotate(10deg) translateY(0);
+  }
+
+  100% {
+    transform: rotate(10deg) translateY(-8px);
+  }
 }
 
 .check-line {
