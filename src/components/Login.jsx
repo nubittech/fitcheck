@@ -89,7 +89,6 @@ const Login = ({ onLogin, onGoSignUp }) => {
     <div className="login-page">
       {/* Veylo branding header */}
       <div className="login-brand">
-        <img src={veyloLogo} alt="Veylo" className="login-brand-logo" />
         <span className="login-brand-name">Veylo</span>
       </div>
 
