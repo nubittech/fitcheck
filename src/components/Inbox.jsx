@@ -27,6 +27,20 @@ function formatMessageTime(isoString) {
     return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// Declined conversations stored locally (RLS may block server delete)
+function getDeclinedIds() {
+    try {
+        return JSON.parse(localStorage.getItem('declined_convs') || '[]');
+    } catch { return []; }
+}
+function addDeclinedId(id) {
+    const ids = getDeclinedIds();
+    if (!ids.includes(id)) {
+        ids.push(id);
+        localStorage.setItem('declined_convs', JSON.stringify(ids));
+    }
+}
+
 // ──────────────────────────────────────────
 // Inbox (conversation list)
 // ──────────────────────────────────────────
@@ -40,7 +54,9 @@ const Inbox = ({ onChatSelect, currentUser }) => {
         setLoading(true);
         const { data, error } = await getConversations(currentUser.id);
         if (!error && data) {
-            setConversations(data);
+            // Filter out locally declined conversations
+            const declined = getDeclinedIds();
+            setConversations(data.filter(c => !declined.includes(c.id)));
         }
         setLoading(false);
     }, [currentUser?.id]);
@@ -53,19 +69,42 @@ const Inbox = ({ onChatSelect, currentUser }) => {
         return conv.participant_1 === currentUser?.id ? conv.p2 : conv.p1;
     };
 
+    // A conversation is a "request" if there are no messages exchanged yet
     const isRequest = (conv) => {
-        if (!conv.last_message) return true;
-        return false;
+        return !conv.last_message;
     };
 
-    const handleAccept = (conv) => {
+    // Accept: send a greeting message (this sets last_message and moves to inbox)
+    const handleAccept = async (conv) => {
         const partner = getPartner(conv);
+        // Send an auto-greeting to mark conversation as accepted
+        await sendMessage({
+            conversationId: conv.id,
+            senderId: currentUser.id,
+            text: '👋'
+        });
+        // Update local state immediately
+        setConversations(prev => prev.map(c =>
+            c.id === conv.id ? { ...c, last_message: '👋', last_message_at: new Date().toISOString() } : c
+        ));
+        // Switch to inbox tab and open chat
+        setActiveTab('inbox');
         onChatSelect({ ...conv, partner });
     };
 
+    // Decline: store locally + try to delete from server
     const handleDecline = async (convId) => {
-        await supabase.from('conversations').delete().eq('id', convId);
+        // Remove from UI immediately
         setConversations(prev => prev.filter(c => c.id !== convId));
+        // Persist decline locally
+        addDeclinedId(convId);
+        // Try server delete (may fail due to RLS, that's OK — local storage handles it)
+        try {
+            await supabase.from('messages').delete().eq('conversation_id', convId);
+            await supabase.from('conversations').delete().eq('id', convId);
+        } catch (e) {
+            // Silently handled — declined state is persisted locally
+        }
     };
 
     const inboxConvs = conversations.filter(c => !isRequest(c));
@@ -220,7 +259,6 @@ export const ChatDetail = ({ chat, onBack, currentUser }) => {
 
         // Subscribe to realtime new messages
         channelRef.current = subscribeToMessages(conversationId, (newMsg) => {
-            // Avoid duplicates (we already add our own optimistically)
             setMessages(prev => {
                 if (prev.find(m => m.id === newMsg.id)) return prev;
                 return [...prev, newMsg];
@@ -241,7 +279,6 @@ export const ChatDetail = ({ chat, onBack, currentUser }) => {
         const text = inputText.trim();
         if (!text || !currentUser?.id || sending) return;
 
-        // Optimistic update
         const optimistic = {
             id: `opt-${Date.now()}`,
             sender_id: currentUser.id,
@@ -259,7 +296,6 @@ export const ChatDetail = ({ chat, onBack, currentUser }) => {
         });
 
         if (!error && data) {
-            // Replace optimistic with real
             setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m));
         }
         setSending(false);
@@ -339,7 +375,7 @@ export const ChatDetail = ({ chat, onBack, currentUser }) => {
             <div className="chat-input-area">
                 <input
                     type="text"
-                    placeholder="Type a message..."
+                    placeholder="Mesaj yaz..."
                     className="chat-input"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
