@@ -16,16 +16,16 @@
 }
 
 .login-brand-logo {
-  width: 44px;
-  height: 44px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
 }
 
 .login-brand-name {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: 1px;
+  font-size: 36px;
+  font-weight: 900;
+  color: #1a1a24;
+  letter-spacing: -0.5px;
 }
 
 .login-illustration-container {
@@ -160,9 +160,10 @@
 }
 
 .login-auth-label {
-  font-size: 16px;
-  font-weight: 700;
-  color: #6B7280;
+  font-size: 18px;
+  font-weight: 800;
+  color: #F08076;
+  /* Matched from the image */
   margin-top: 32px;
   margin-bottom: 16px;
 }
