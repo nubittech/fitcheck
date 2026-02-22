@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { signIn } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import { useLang } from '../i18n/LangContext'
 import '../styles/Login.css'
 
@@ -11,6 +12,16 @@ const Login = ({ onLogin, onGoSignUp }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [lastEmail, setLastEmail] = useState('')
+
+  useEffect(() => {
+    // Check if the user has a previously saved email from a past login session
+    const savedEmail = localStorage.getItem('last_login_email')
+    if (savedEmail) {
+      setLastEmail(savedEmail)
+      setEmail(savedEmail)
+    }
+  }, [])
 
   const handleEmailLogin = async (e) => {
     e.preventDefault()
@@ -26,25 +37,40 @@ const Login = ({ onLogin, onGoSignUp }) => {
       )
       return
     }
+    // Save email for next time
+    localStorage.setItem('last_login_email', email)
     onLogin(data.session)
   }
 
-  // Common SVG Icons
+  const handleSocialLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
+    if (error) {
+      console.error('Error logging in with ' + provider, error)
+      setError(error.message)
+    }
+  }
+
+  // Exact Match SVG Icons for the new design
   const AppleIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 20.5362C9.55395 20.5362 7.72752 18.0673 7.72752 15.1764C7.72752 11.4586 10.1558 9.39045 12.5935 9.39045C13.8825 9.39045 14.8858 9.94729 15.6888 10.4607C15.8202 10.5446 15.9392 10.6215 16.0368 10.6866C16.897 11.2335 17.8441 11.8385 18.9959 11.8385C20.6756 11.8385 22.0494 10.7495 22.0494 10.7495C21.4116 13.5607 19.349 15.7533 17.0671 18.2575L16.6433 18.7231C15.0805 20.4431 13.9213 21.7247 12 20.5362ZM16.3473 8.78312C15.9082 8.71182 15.3986 8.5262 14.8865 8.21204C13.8378 7.56812 12.9866 6.55169 12.4468 5.25368C12.3582 5.04018 12.2854 4.81903 12.2285 4.59363C13.313 4.51261 14.6191 4.96023 15.6894 5.76562C16.5866 6.44024 17.2913 7.42398 17.5857 8.51329C17.266 8.65349 16.8525 8.86519 16.3473 8.78312Z" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="black">
+      <path d="M12 20.536C9.554 20.536 7.728 18.067 7.728 15.176C7.728 11.459 10.156 9.39 12.593 9.39C13.882 9.39 14.886 9.947 15.689 10.461C15.82 10.545 15.939 10.622 16.037 10.687C16.897 11.233 17.844 11.838 18.996 11.838C20.676 11.838 22.049 10.749 22.049 10.749C21.412 13.561 19.349 15.753 17.067 18.258L16.643 18.723C15.08 20.443 13.921 21.725 12 20.536ZM16.347 8.783C15.908 8.712 15.399 8.526 14.886 8.212C13.838 7.568 12.987 6.552 12.447 5.254C12.358 5.04 12.285 4.819 12.228 4.594C13.313 4.513 14.619 4.96 15.689 5.766C16.587 6.44 17.291 7.424 17.586 8.513C17.266 8.653 16.852 8.865 16.347 8.783Z" />
     </svg>
   )
 
   const EmailIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-      <path d="M2 6l10 7 10-7"></path>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+      <path d="M2 7l10 7 10-7"></path>
     </svg>
   )
 
   const VKIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="#2787F5">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="#2787F5">
       <path d="M21.547 7.118c.205-.662 0-1.118-.9-1.118h-2.618c-.768 0-1.077.397-1.25.823 0 0-1.332 3.16-3.176 5.247-.6.618-.876.81-1.25.81-.191 0-.48-.192-.48-.81V7.118c0-.768-.216-1.118-.858-1.118H7.669c-.482 0-.767.35-.767.683 0 .71.93.876 1.025 2.875v3.42c0 .97-.179 1.144-.555 1.144-1.002 0-3.418-3.187-4.85-6.84-.287-.803-.574-1.164-1.34-1.164H-1.55c-.85 0-1.02.397-1.02.823 0 .762.984 4.471 4.558 9.38 2.383 3.321 5.674 5.122 8.675 5.122 1.8 0 2.023-.397 2.023-1.076v-2.478c0-.853.18-.853.535-.853.355 0 .964.18 2.388 1.54 1.621 1.62 1.895 2.367 2.808 2.367H21.05c.85 0 1.282-.416 1.05-1.246-.24-.816-1.14-1.92-2.327-3.235-.595-.71-1.488-1.48-1.75-1.853-.356-.474-.253-.683 0-1.097 0 0 3.097-4.246 3.524-5.694z" />
     </svg>
   )
@@ -60,7 +86,6 @@ const Login = ({ onLogin, onGoSignUp }) => {
 
   return (
     <div className="login-page">
-      {/* CSS based empty illustration placeholder per design */}
       <div className="login-illustration-container">
         <div className="login-illustration-card">
           <div className="illustration-inner-card">
@@ -94,29 +119,32 @@ const Login = ({ onLogin, onGoSignUp }) => {
       <div className="login-auth-label">Authorization</div>
 
       <div className="login-methods">
-        <div className="login-method-btn">
+        <button className="login-method-btn" onClick={() => handleSocialLogin('apple')}>
           <div className="login-method-icon"><AppleIcon /></div>
           <span>Apple</span>
-        </div>
+        </button>
 
-        <div className="login-method-btn" onClick={() => setShowEmailForm(true)} style={{ position: 'relative' }}>
-          <div className="login-tooltip">
-            {lang === 'tr' ? 'Daha önceki giriş yöntemin' : 'Previous login method'}
-            <div className="login-tooltip-sub">mertbayrm0@gmail.com</div>
-          </div>
+        <button className="login-method-btn" onClick={() => setShowEmailForm(true)} style={{ position: 'relative' }}>
+          {lastEmail && (
+            <div className="login-tooltip">
+              {lang === 'tr' ? 'Daha önceki giriş yöntemin' : 'Previous login method'}
+              <div className="login-tooltip-sub">{lastEmail}</div>
+            </div>
+          )}
           <div className="login-method-icon"><EmailIcon /></div>
           <span>Email</span>
-        </div>
+        </button>
 
-        <div className="login-method-btn">
+        {/* VK is usually a regional Auth, using discord as a fallback if you need something else or we can keep it strictly VK if you configure it in supabase */}
+        <button className="login-method-btn" onClick={() => console.log("VK Login clicked")}>
           <div className="login-method-icon"><VKIcon /></div>
           <span>VK</span>
-        </div>
+        </button>
 
-        <div className="login-method-btn">
+        <button className="login-method-btn" onClick={() => handleSocialLogin('google')}>
           <div className="login-method-icon"><GoogleIcon /></div>
           <span>Google</span>
-        </div>
+        </button>
       </div>
 
       <div className="login-terms">
