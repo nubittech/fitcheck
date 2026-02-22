@@ -9,6 +9,25 @@
   overflow-x: hidden;
 }
 
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.login-brand-name {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2F2E41;
+  letter-spacing: -0.5px;
+}
+
 .login-illustration-container {
   display: flex;
   justify-content: center;

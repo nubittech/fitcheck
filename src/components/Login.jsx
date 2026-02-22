@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { signIn } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../i18n/LangContext'
+import veyloLogo from '../assets/veylo-logo.png'
 import '../styles/Login.css'
 
 const Login = ({ onLogin, onGoSignUp }) => {
@@ -86,6 +87,12 @@ const Login = ({ onLogin, onGoSignUp }) => {
 
   return (
     <div className="login-page">
+      {/* Veylo branding header */}
+      <div className="login-brand">
+        <img src={veyloLogo} alt="Veylo" className="login-brand-logo" />
+        <span className="login-brand-name">Veylo</span>
+      </div>
+
       <div className="login-illustration-container">
         <div className="login-illustration-card">
           <div className="illustration-inner-card">
