@@ -27,17 +27,16 @@ function formatMessageTime(isoString) {
     return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Declined conversations stored locally (RLS may block server delete)
-function getDeclinedIds() {
-    try {
-        return JSON.parse(localStorage.getItem('declined_convs') || '[]');
-    } catch { return []; }
+// Accept/Decline state stored locally (RLS may block server ops)
+function getStoredIds(key) {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+    catch { return []; }
 }
-function addDeclinedId(id) {
-    const ids = getDeclinedIds();
+function addStoredId(key, id) {
+    const ids = getStoredIds(key);
     if (!ids.includes(id)) {
         ids.push(id);
-        localStorage.setItem('declined_convs', JSON.stringify(ids));
+        localStorage.setItem(key, JSON.stringify(ids));
     }
 }
 
@@ -48,15 +47,16 @@ const Inbox = ({ onChatSelect, currentUser }) => {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('inbox');
+    // Track accepted IDs in state for immediate re-render
+    const [acceptedIds, setAcceptedIds] = useState(() => getStoredIds('accepted_convs'));
+    const [declinedIds, setDeclinedIds] = useState(() => getStoredIds('declined_convs'));
 
     const loadConversations = useCallback(async () => {
         if (!currentUser?.id) return;
         setLoading(true);
         const { data, error } = await getConversations(currentUser.id);
         if (!error && data) {
-            // Filter out locally declined conversations
-            const declined = getDeclinedIds();
-            setConversations(data.filter(c => !declined.includes(c.id)));
+            setConversations(data);
         }
         setLoading(false);
     }, [currentUser?.id]);
@@ -69,46 +69,34 @@ const Inbox = ({ onChatSelect, currentUser }) => {
         return conv.participant_1 === currentUser?.id ? conv.p2 : conv.p1;
     };
 
-    // A conversation is a "request" if there are no messages exchanged yet
+    // A conversation is a "request" if there are no messages AND it hasn't been accepted
     const isRequest = (conv) => {
+        if (acceptedIds.includes(conv.id)) return false;
         return !conv.last_message;
     };
 
-    // Accept: send a greeting message (this sets last_message and moves to inbox)
-    const handleAccept = async (conv) => {
+    // Accept: mark as accepted locally and open chat
+    const handleAccept = (conv) => {
         const partner = getPartner(conv);
-        // Send an auto-greeting to mark conversation as accepted
-        await sendMessage({
-            conversationId: conv.id,
-            senderId: currentUser.id,
-            text: '👋'
-        });
-        // Update local state immediately
-        setConversations(prev => prev.map(c =>
-            c.id === conv.id ? { ...c, last_message: '👋', last_message_at: new Date().toISOString() } : c
-        ));
-        // Switch to inbox tab and open chat
+        // Store in localStorage
+        addStoredId('accepted_convs', conv.id);
+        // Update React state immediately
+        setAcceptedIds(prev => [...prev, conv.id]);
+        // Switch to inbox and open chat
         setActiveTab('inbox');
         onChatSelect({ ...conv, partner });
     };
 
-    // Decline: store locally + try to delete from server
-    const handleDecline = async (convId) => {
-        // Remove from UI immediately
-        setConversations(prev => prev.filter(c => c.id !== convId));
-        // Persist decline locally
-        addDeclinedId(convId);
-        // Try server delete (may fail due to RLS, that's OK — local storage handles it)
-        try {
-            await supabase.from('messages').delete().eq('conversation_id', convId);
-            await supabase.from('conversations').delete().eq('id', convId);
-        } catch (e) {
-            // Silently handled — declined state is persisted locally
-        }
+    // Decline: hide locally
+    const handleDecline = (convId) => {
+        addStoredId('declined_convs', convId);
+        setDeclinedIds(prev => [...prev, convId]);
     };
 
-    const inboxConvs = conversations.filter(c => !isRequest(c));
-    const requestConvs = conversations.filter(c => isRequest(c));
+    // Filter out declined, then split into inbox vs requests
+    const visibleConvs = conversations.filter(c => !declinedIds.includes(c.id));
+    const inboxConvs = visibleConvs.filter(c => !isRequest(c));
+    const requestConvs = visibleConvs.filter(c => isRequest(c));
     const activeConvs = activeTab === 'inbox' ? inboxConvs : requestConvs;
 
     if (loading) {
