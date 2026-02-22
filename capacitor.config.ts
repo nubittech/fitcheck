@@ -1,5 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-
+import { KeyboardResize } from '@capacitor/keyboard';
 const config: CapacitorConfig = {
   appId: 'com.fitcheck.app',
   appName: 'FitCheck',
@@ -17,6 +17,9 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       backgroundColor: '#0f0f0f',
       showSpinner: false,
+    },
+    Keyboard: {
+      resize: KeyboardResize.Native,
     },
   },
 };

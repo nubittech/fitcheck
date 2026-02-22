@@ -223,14 +223,18 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
       if (offsetX > 0) {
         setSwipeDir('right')
         handleOutfitVote('like')
-        setTimeout(() => { setSwipeDir(null); onNext() }, 300)
+        setOffsetX(window.innerWidth) // Throw animation to right
+        setTimeout(() => { setSwipeDir(null); setOffsetX(0); onNext() }, 300)
       } else {
         setSwipeDir('left')
-        setTimeout(() => { setSwipeDir(null); onSkip() }, 300)
+        setOffsetX(-window.innerWidth) // Throw animation to left
+        setTimeout(() => { setSwipeDir(null); setOffsetX(0); onSkip() }, 300)
       }
+    } else {
+      // Snap back if swipe was cancelled
+      setOffsetX(0)
     }
 
-    setOffsetX(0)
     swipeAxis.current = null
   }
 
