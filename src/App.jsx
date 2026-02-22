@@ -427,6 +427,10 @@ function App() {
             const success = await handleUpgrade()
             if (success) setShowDailyLimit(false)
           }}
+          onGoProfile={() => {
+            setShowDailyLimit(false)
+            setActiveTab('profile')
+          }}
         />
       )
     }

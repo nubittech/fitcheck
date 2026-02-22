@@ -348,8 +348,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                 {boostRemaining > 0
                   ? (tr ? '2 saat boyunca 2.5x görünürlük' : '2.5x visibility for 2 hours')
                   : (tr
-                    ? (isPremium ? 'Bu ay için boost hakkın bitti' : 'Bu hafta için boost hakkın bitti')
-                    : (isPremium ? 'No boosts left this month' : 'No boosts left this week'))
+                    ? (isPremium ? 'Bu ay için boost hakkın bitti' : 'Boost hakkın bitti')
+                    : (isPremium ? 'No boosts left this month' : 'No boosts remaining'))
                 }
               </span>
             </div>

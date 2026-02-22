@@ -2,7 +2,7 @@ import '../styles/DailyLimitDemo.css'
 
 const DAILY_LIMIT = 75
 
-const DailyLimitDemo = ({ swipeCount = 75, onBack, onGoHome, onUpgrade }) => {
+const DailyLimitDemo = ({ swipeCount = 75, onBack, onGoHome, onUpgrade, onGoProfile }) => {
   const count = Math.min(swipeCount, DAILY_LIMIT)
 
   return (
@@ -80,7 +80,7 @@ const DailyLimitDemo = ({ swipeCount = 75, onBack, onGoHome, onUpgrade }) => {
               </svg>
             </button>
 
-            <p className="dl-more-link">Daha fazla avantajı gör</p>
+            <p className="dl-more-link" onClick={onGoProfile} style={{ cursor: 'pointer' }}>Daha fazla avantajı gör</p>
           </div>
 
           <button className="dl-dismiss-btn" onClick={onGoHome}>Şimdilik bekleyeceğim</button>

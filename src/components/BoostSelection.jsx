@@ -2,7 +2,7 @@ import { useState } from 'react';
 import '../styles/BoostSelection.css';
 
 const BOOST_LIMITS = {
-  free: { max: 1, period: 'hafta', duration: 2 },
+  free: { max: 2, period: null, duration: 2 },
   premium: { max: 5, period: 'ay', duration: 2 }
 };
 
@@ -72,7 +72,7 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
           <span>
             {isPremium
               ? `Premium · ${limits.max} boost / ${limits.period}`
-              : `Free · ${limits.max} boost / ${limits.period}`
+              : `Free · ${limits.max} boost (toplam)`
             }
           </span>
         </div>
@@ -114,12 +114,13 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
           ) : (
             <>
               <div className="boost-empty-msg">
-                Bu {limits.period} için boost hakkın bitti.
+                Bu {isPremium ? limits.period : ''} için boost hakkın bitti.
                 {!isPremium && ' Premium ile 5 boost / ay kazan!'}
               </div>
               {!isPremium && (
                 <button className="boost-upgrade-btn" onClick={() => {
-                  alert('Premium abonelik yakında aktif olacak! App Store entegrasyonu bekleniyor.');
+                  import('../lib/usePremium').then(m => m.usePremium)
+                  alert('Premium abonelik yakında aktif olacak!')
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
                     <path d="M6 2l-4 8 10 12L22 10 18 2H6zm2.14 2h7.72l2.5 5H5.64l2.5-5z" />

@@ -230,15 +230,21 @@ export async function getBoostStatus(userId) {
     .select('boosts_used, boosts_reset_at, is_premium')
     .eq('id', userId)
     .single()
-  if (error) return { boostsUsed: 0, maxBoosts: 1 }
+  if (error) return { boostsUsed: 0, maxBoosts: 2 }
 
   const isPremium = data.is_premium
-  const maxBoosts = isPremium ? 5 : 1
-  const periodMs = isPremium ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000
+  const maxBoosts = isPremium ? 5 : 2
+
+  // Free users: no reset, 2 total lifetime boosts
+  if (!isPremium) {
+    return { boostsUsed: data.boosts_used || 0, maxBoosts }
+  }
+
+  // Premium users: monthly reset
+  const periodMs = 30 * 24 * 60 * 60 * 1000
   const resetAt = new Date(data.boosts_reset_at).getTime()
   const now = Date.now()
 
-  // If period has passed, boosts are reset
   if (now - resetAt > periodMs) {
     return { boostsUsed: 0, maxBoosts }
   }
