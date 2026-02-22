@@ -19,7 +19,7 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     Keyboard: {
-      resize: KeyboardResize.Native,
+      resize: KeyboardResize.Body,
     },
   },
 };

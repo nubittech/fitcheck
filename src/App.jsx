@@ -15,6 +15,7 @@ import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
 import { supabase } from './lib/supabase'
 import { usePremium } from './lib/usePremium'
+import { Keyboard } from '@capacitor/keyboard'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -86,6 +87,9 @@ function App() {
 
   // Auth listener
   useEffect(() => {
+    // Hide iOS keyboard accessory bar to fix double keyboard issue
+    Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
+
     getSession().then(s => {
       setSession(s)
     })
