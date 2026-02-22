@@ -1,6 +1,6 @@
 export const PRIVACY_POLICY = `
 <h3>1. Introduction</h3>
-<p>Welcome to FitCheck ("we," "our," or "us"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclosure, and safeguard your information when you use our mobile application (the "App").</p>
+<p>Welcome to Veylo ("we," "our," or "us"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclosure, and safeguard your information when you use our mobile application (the "App").</p>
 
 <h3>2. Information We Collect</h3>
 <p>We collect information that you provide directly to us, such as when you create an account, update your profile, or communicate with us. This may include:</p>
@@ -31,7 +31,7 @@ export const PRIVACY_POLICY = `
 
 export const TERMS_OF_SERVICE = `
 <h3>1. Acceptance of Terms</h3>
-<p>By accessing or using FitCheck, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the App.</p>
+<p>By accessing or using Veylo, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the App.</p>
 
 <h3>2. User Accounts</h3>
 <p>You are responsible for safeguarding the password that you use to access the App and for any activities or actions under your password.</p>
@@ -53,7 +53,7 @@ export const TERMS_OF_SERVICE = `
 
 export const COMMUNITY_GUIDELINES = `
 <h3>1. Be Respectful</h3>
-<p>FitCheck is a positive community for style feedback. Treat others with respect and kindness. Constructive criticism is welcome; bullying and harassment are not.</p>
+<p>Veylo is a positive community for style feedback. Treat others with respect and kindness. Constructive criticism is welcome; bullying and harassment are not.</p>
 
 <h3>2. No Hate Speech</h3>
 <p>We have a zero-tolerance policy for hate speech. Do not post content that promotes violence or hatred against individuals or groups based on race, ethnicity, religion, disability, gender, age, or sexual orientation.</p>
@@ -62,7 +62,7 @@ export const COMMUNITY_GUIDELINES = `
 <p>Post only your own photos or photos you have the right to share. Do not impersonate others or post misleading information.</p>
 
 <h3>4. Nudity and Sexual Content</h3>
-<p>We strictly prohibit nudity and sexually explicit content. FitCheck is for fashion and style, not adult content.</p>
+<p>We strictly prohibit nudity and sexually explicit content. Veylo is for fashion and style, not adult content.</p>
 
 <h3>5. Reporting Violations</h3>
 <p>If you see content that violates these guidelines, please report it using the in-app reporting tools. We review reports daily and take appropriate action.</p>
