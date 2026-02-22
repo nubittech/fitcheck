@@ -277,7 +277,7 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
   return (
     <div className="outfit-card-wrapper">
       <div
-        className={`outfit-card ${swipeDir ? `swipe-${swipeDir}` : ''}`}
+        className={`outfit-card ${swipeDir ? `swipe-${swipeDir}` : ''} ${offsetX !== 0 && !swipeDir ? 'is-dragging' : ''}`}
         style={{ transform: offsetX ? `translateX(${offsetX}px) rotate(${offsetX * 0.04}deg)` : undefined }}
         onTouchStart={handleCardTouchStart}
         onTouchMove={handleCardTouchMove}

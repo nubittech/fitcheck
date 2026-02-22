@@ -34,6 +34,10 @@
   will-change: transform;
 }
 
+.outfit-card.is-dragging {
+  transition: none;
+}
+
 .outfit-card.swipe-left {
   transform: translateX(-120%) rotate(-15deg);
   opacity: 0;
