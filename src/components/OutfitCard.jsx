@@ -224,11 +224,15 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
         setSwipeDir('right')
         handleOutfitVote('like')
         setOffsetX(window.innerWidth) // Throw animation to right
-        setTimeout(() => { setSwipeDir(null); setOffsetX(0); onNext() }, 300)
+
+        // Wait for animation to finish, then tell parent to load next.
+        // DO NOT reset offsetX to 0 here because it makes the card snap back 
+        // for a split second before React unmounts it.
+        setTimeout(() => { onNext() }, 250)
       } else {
         setSwipeDir('left')
         setOffsetX(-window.innerWidth) // Throw animation to left
-        setTimeout(() => { setSwipeDir(null); setOffsetX(0); onSkip() }, 300)
+        setTimeout(() => { onSkip() }, 250)
       }
     } else {
       // Snap back if swipe was cancelled
