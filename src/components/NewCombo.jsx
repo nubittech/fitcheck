@@ -528,20 +528,35 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
               value={pieceBrand}
               onChange={(e) => setPieceBrand(e.target.value)}
             />
-            <input
-              className={`piece-input piece-link-input ${pieceLinkError === 'ok' ? 'link-valid' : pieceLinkError ? 'link-error' : ''}`}
-              placeholder={tr ? '🔗 Satın alma linki (isteğe bağlı — aff/ref link)' : '🔗 Shop link (optional — affiliate URL)'}
-              value={pieceLink}
-              onChange={(e) => { setPieceLink(e.target.value); setPieceLinkError('') }}
-              onBlur={() => {
-                if (!pieceLink.trim()) { setPieceLinkError(''); return }
-                const { valid, reason } = validateAffiliateLink(pieceLink.trim())
-                setPieceLinkError(valid ? 'ok' : affiliateLinkError(reason, lang))
-              }}
-              type="url"
-              inputMode="url"
-            />
-            {pieceLinkError && pieceLinkError !== 'ok' && (
+            <div style={{ position: 'relative' }}>
+              {!isPremium && (
+                <div style={{
+                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                  zIndex: 2, background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff',
+                  fontSize: '10px', fontWeight: '700', padding: '3px 10px', borderRadius: '10px',
+                  letterSpacing: '0.5px', pointerEvents: 'none'
+                }}>
+                  ⭐ PREMIUM
+                </div>
+              )}
+              <input
+                className={`piece-input piece-link-input ${pieceLinkError === 'ok' ? 'link-valid' : pieceLinkError ? 'link-error' : ''}`}
+                placeholder={tr ? '🔗 Satın alma linki (aff/ref link)' : '🔗 Shop link (affiliate URL)'}
+                value={isPremium ? pieceLink : ''}
+                onChange={(e) => { if (isPremium) { setPieceLink(e.target.value); setPieceLinkError('') } }}
+                onBlur={() => {
+                  if (!isPremium) return
+                  if (!pieceLink.trim()) { setPieceLinkError(''); return }
+                  const { valid, reason } = validateAffiliateLink(pieceLink.trim())
+                  setPieceLinkError(valid ? 'ok' : affiliateLinkError(reason, lang))
+                }}
+                type="url"
+                inputMode="url"
+                disabled={!isPremium}
+                style={!isPremium ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+              />
+            </div>
+            {isPremium && pieceLinkError && pieceLinkError !== 'ok' && (
               <p className="link-error-msg">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><circle cx="12" cy="16" r="1" fill="currentColor" />
@@ -567,76 +582,93 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           </div>
         </div>
 
-        {/* Who is this for */}
-        <div className="newcombo-section">
-          <h2 className="section-title">{tr ? 'Bu kombin kimin için?' : 'Who is this for?'}</h2>
+        {/* Who is this for — Premium only filters */}
+        <div className="newcombo-section" style={{ position: 'relative' }}>
+          {!isPremium && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 3,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '16px', cursor: 'default'
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff',
+                fontSize: '11px', fontWeight: '700', padding: '5px 14px', borderRadius: '12px',
+                letterSpacing: '0.5px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              }}>
+                ⭐ {tr ? 'Premium Özelliği' : 'Premium Feature'}
+              </div>
+            </div>
+          )}
+          <div style={!isPremium ? { opacity: 0.35, pointerEvents: 'none' } : undefined}>
+            <h2 className="section-title">{tr ? 'Bu kombin kimin için?' : 'Who is this for?'}</h2>
 
-          {/* Gender */}
-          <label className="field-label">{tr ? 'CİNSİYET' : 'GENDER'}</label>
-          <div className="gender-row">
-            {['unisex', 'female', 'male'].map(g => (
-              <button
-                key={g}
-                className={`gender-chip ${gender === g ? 'selected' : ''}`}
-                onClick={() => setGender(g)}
-              >
-                {tr
-                  ? (g === 'unisex' ? 'Unisex' : g === 'female' ? 'Kadın' : 'Erkek')
-                  : g.charAt(0).toUpperCase() + g.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* Style */}
-          <label className="field-label">{tr ? 'STİL' : 'STYLE'}</label>
-          <div className="vibe-select" onClick={() => setStyleOpen(!styleOpen)}>
-            <span>{selectedStyle}</span>
-            <svg className={styleOpen ? 'flipped' : ''} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-          {styleOpen && (
-            <div className="vibe-dropdown">
-              {STYLE_TYPES.map(style => (
+            {/* Gender */}
+            <label className="field-label">{tr ? 'CİNSİYET' : 'GENDER'}</label>
+            <div className="gender-row">
+              {['unisex', 'female', 'male'].map(g => (
                 <button
-                  key={style}
-                  className={`vibe-option ${style === selectedStyle ? 'active' : ''}`}
-                  onClick={() => { setSelectedStyle(style); setStyleOpen(false) }}
+                  key={g}
+                  className={`gender-chip ${gender === g ? 'selected' : ''}`}
+                  onClick={() => setGender(g)}
                 >
-                  {style}
+                  {tr
+                    ? (g === 'unisex' ? 'Unisex' : g === 'female' ? 'Kadın' : 'Erkek')
+                    : g.charAt(0).toUpperCase() + g.slice(1)}
                 </button>
               ))}
             </div>
-          )}
 
-          {/* Age Range */}
-          <div className="age-header">
-            <label className="field-label">{tr ? 'HEDEF YAŞ' : 'TARGET AGE'}</label>
-            <span className="age-value">{ageRange[0]} - {ageRange[1]}</span>
-          </div>
-          <div
-            className="range-slider"
-            ref={sliderRef}
-            onTouchMove={handleSliderTouchMove}
-            onTouchEnd={handleSliderTouchEnd}
-          >
-            <div className="range-track" />
+            {/* Style */}
+            <label className="field-label">{tr ? 'STİL' : 'STYLE'}</label>
+            <div className="vibe-select" onClick={() => isPremium && setStyleOpen(!styleOpen)}>
+              <span>{selectedStyle}</span>
+              <svg className={styleOpen ? 'flipped' : ''} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+            {styleOpen && (
+              <div className="vibe-dropdown">
+                {STYLE_TYPES.map(style => (
+                  <button
+                    key={style}
+                    className={`vibe-option ${style === selectedStyle ? 'active' : ''}`}
+                    onClick={() => { setSelectedStyle(style); setStyleOpen(false) }}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Age Range */}
+            <div className="age-header">
+              <label className="field-label">{tr ? 'HEDEF YAŞ' : 'TARGET AGE'}</label>
+              <span className="age-value">{ageRange[0]} - {ageRange[1]}</span>
+            </div>
             <div
-              className="range-fill"
-              style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
-            />
-            <div
-              className="range-thumb"
-              style={{ left: `${minPct}%` }}
-              onTouchStart={handleSliderTouchStart('min')}
-              onMouseDown={handleSliderMouseDown('min')}
-            />
-            <div
-              className="range-thumb"
-              style={{ left: `${maxPct}%` }}
-              onTouchStart={handleSliderTouchStart('max')}
-              onMouseDown={handleSliderMouseDown('max')}
-            />
+              className="range-slider"
+              ref={sliderRef}
+              onTouchMove={handleSliderTouchMove}
+              onTouchEnd={handleSliderTouchEnd}
+            >
+              <div className="range-track" />
+              <div
+                className="range-fill"
+                style={{ left: `${minPct}%`, width: `${maxPct - minPct}%` }}
+              />
+              <div
+                className="range-thumb"
+                style={{ left: `${minPct}%` }}
+                onTouchStart={handleSliderTouchStart('min')}
+                onMouseDown={handleSliderMouseDown('min')}
+              />
+              <div
+                className="range-thumb"
+                style={{ left: `${maxPct}%` }}
+                onTouchStart={handleSliderTouchStart('max')}
+                onMouseDown={handleSliderMouseDown('max')}
+              />
+            </div>
           </div>
         </div>
 
