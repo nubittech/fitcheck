@@ -160,9 +160,9 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
           </div>
 
           {/* App Info */}
-          <div className="settings-version">
+          <div className="settings-app-info">
             <span className="settings-app-name">Veylo</span>
-            <span className="settings-app-v">v{APP_VERSION}</span>
+            <span className="settings-app-version">Version {APP_VERSION}</span>
             <span className="settings-app-copy">Made with love in Istanbul</span>
           </div>
         </div>
