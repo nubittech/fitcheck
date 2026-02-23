@@ -49,6 +49,32 @@ const Login = ({ onLogin, onGoSignUp }) => {
     setError('')
     try {
       if (Capacitor.isNativePlatform()) {
+        // Native Apple Sign In Flow
+        if (provider === 'apple') {
+          const { SignInWithApple } = await import('@capacitor-community/apple-sign-in')
+          const options = {
+            clientId: 'com.fitcheck.app',
+            redirectURI: 'https://yxgatmrkuaxhlxhgwzsi.supabase.co/auth/v1/callback',
+            scopes: 'email name',
+            state: '12345',
+            nonce: 'nonce',
+          }
+          const result = await SignInWithApple.authorize(options)
+          if (result && result.response && result.response.identityToken) {
+            console.log('[Apple Auth] Received identity token, exchanging with Supabase...')
+            const { data, error: sbError } = await supabase.auth.signInWithIdToken({
+              provider: 'apple',
+              token: result.response.identityToken,
+            })
+            if (sbError) throw sbError
+            setLoading(false)
+            return // success
+          } else {
+            throw new Error('No identity token returned from Apple')
+          }
+        }
+
+        // Other Providers (Google) via OAuth
         const redirectTo = 'com.fitcheck.app://callback'
         const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
