@@ -3,6 +3,7 @@ import ActionButtons from './ActionButtons'
 import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
 import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment } from '../lib/api'
+import { Share } from '@capacitor/share'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
@@ -20,6 +21,20 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
   const panelRef = useRef(null)
   const [inputValue, setInputValue] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // ── Share Logic ──
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        title: 'Veylo Outfit',
+        text: `Check out this outfit by ${outfit.user.name} on Veylo!`,
+        url: `https://veyloapp.com/outfit/${outfit.id}`,
+        dialogTitle: 'Share with friends',
+      })
+    } catch (err) {
+      console.error('Error sharing outfit:', err)
+    }
+  }
 
   // ── Quick Ask (Nerden Aldın) ──
   const [showQuickAsk, setShowQuickAsk] = useState(false)
@@ -315,7 +330,7 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
               </div>
             </div>
           </div>
-          <button className="share-btn">
+          <button className="share-btn" onClick={handleShare}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
               <polyline points="16 6 12 2 8 6" />
