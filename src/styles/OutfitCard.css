@@ -948,9 +948,10 @@
 
 .walkthrough-btn {
   position: absolute;
-  top: 50%;
+  top: calc(30% + 220px);
+  /* Puts it 40px below the swipe/tap zones */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   background: white;
   color: #111;
   border: none;
