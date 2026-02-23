@@ -839,19 +839,16 @@
 /* Bottom Sheet Zone (Step 2) */
 .walkthrough-bottom-zone {
   position: absolute;
-  bottom: 80px;
-  left: 16px;
-  right: 16px;
-  height: 280px;
+  bottom: 140px;
+  left: 20px;
+  right: 20px;
+  height: 120px;
   border: 2px dashed rgba(255, 255, 255, 0.7);
   border-radius: 24px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  /* Push items to bottom */
+  justify-content: center;
   flex-direction: column;
-  padding-bottom: 40px;
-  /* Space for the button */
 }
 
 .walkthrough-text-center {
@@ -861,7 +858,6 @@
   font-size: 14px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   margin-top: 14px;
-  margin-bottom: 24px;
   line-height: 1.4;
 }
 
@@ -952,8 +948,8 @@
 
 .walkthrough-btn {
   position: absolute;
-  bottom: 16%;
-  /* Safer relative positioning */
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  /* Placed safely below the bottom zone */
   left: 50%;
   transform: translateX(-50%);
   background: white;
@@ -966,5 +962,4 @@
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   z-index: 101;
-  /* Ensure button is clickable above the dashed zone */
 }
