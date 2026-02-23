@@ -106,11 +106,12 @@ function App() {
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
 
-    // Handle web OAuth redirect (implicit hash tokens)
+    // Handle web OAuth redirect (PKCE code in query params)
     const url = window.location.href
-    if (url.includes('#access_token=')) {
+    if (url.includes('?code=') || url.includes('&code=')) {
+      // Supabase detectSessionInUrl handles this automatically
       const cleanUrl = window.location.origin + window.location.pathname
-      window.history.replaceState({}, '', cleanUrl)
+      setTimeout(() => window.history.replaceState({}, '', cleanUrl), 1000)
     }
 
     // Native: Listen for deep link callback from OAuth
@@ -119,18 +120,40 @@ function App() {
       deepLinkHandler = CapApp.addListener('appUrlOpen', async ({ url }) => {
         console.log('[OAuth] Deep link received:', url)
         try {
-          if (url.includes('#access_token=')) {
+          // Handle PKCE flow: code in query params  
+          if (url.includes('code=')) {
+            // Extract code from URL (handles both ?code= and &code=)
+            let code = null
+            try {
+              const urlObj = new URL(url)
+              code = urlObj.searchParams.get('code')
+            } catch {
+              // Custom scheme URLs may not parse with new URL()
+              const match = url.match(/[?&]code=([^&#]+)/)
+              if (match) code = match[1]
+            }
+
+            if (code) {
+              console.log('[OAuth] PKCE code found, exchanging for session...')
+              const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+              console.log('[OAuth] exchangeCodeForSession result:', { data: !!data?.session, error })
+              if (data?.session) {
+                setSession(data.session)
+              }
+            }
+          }
+          // Fallback: Handle implicit flow tokens in hash fragment
+          else if (url.includes('#access_token=')) {
             const hashPart = url.split('#')[1]
             const params = new URLSearchParams(hashPart)
             const access_token = params.get('access_token')
             const refresh_token = params.get('refresh_token')
-            console.log('[OAuth] Tokens found, setting session...')
             if (access_token && refresh_token) {
+              console.log('[OAuth] Implicit tokens found, setting session...')
               const { data, error } = await supabase.auth.setSession({
                 access_token,
                 refresh_token,
               })
-              console.log('[OAuth] setSession result:', { data: !!data, error })
               if (data?.session) {
                 setSession(data.session)
               }
