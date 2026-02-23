@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import LegalPage from './LegalPage'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, COMMUNITY_GUIDELINES } from './LegalContent'
 import { useLang } from '../i18n/LangContext'
@@ -11,8 +11,30 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
   const [currentView, setCurrentView] = useState('main')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [swipeX, setSwipeX] = useState(0)
 
   const isPremium = Boolean(currentUser?.is_premium)
+
+  // Swipe-right-to-close (iOS style)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+
+  const handleSwipeStart = (e) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+  const handleSwipeMove = (e) => {
+    const dx = e.touches[0].clientX - touchStartX.current
+    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+    // Only track horizontal swipes starting from left half
+    if (dx > 0 && dx > dy && touchStartX.current < 80) {
+      setSwipeX(dx)
+    }
+  }
+  const handleSwipeEnd = () => {
+    if (swipeX > 100) onClose()
+    setSwipeX(0)
+  }
 
   if (currentView === 'privacy') {
     return <LegalPage title={t('privacy')} content={PRIVACY_POLICY} onBack={() => setCurrentView('main')} />
@@ -25,7 +47,13 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
   }
 
   return (
-    <div className="settings-overlay">
+    <div
+      className="settings-overlay"
+      onTouchStart={handleSwipeStart}
+      onTouchMove={handleSwipeMove}
+      onTouchEnd={handleSwipeEnd}
+      style={swipeX > 0 ? { transform: `translateX(${swipeX}px)`, transition: swipeX > 100 ? 'transform 0.2s ease-out' : 'none' } : undefined}
+    >
       <div className="settings-page">
         <header className="settings-header">
           <button className="settings-back-btn" onClick={onClose}>
