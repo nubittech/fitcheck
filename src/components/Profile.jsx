@@ -56,9 +56,9 @@ function getTimeLeft(createdAt) {
     return `${minutes}m left`;
 }
 
-const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitClick }) => {
+const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitClick, onUpgrade }) => {
     const { t } = useLang();
-    const { handleUpgrade } = usePremium();
+    const handleUpgrade = onUpgrade || (() => { });
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);

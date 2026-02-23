@@ -28,37 +28,38 @@ export function usePremium() {
             // MOCK PURCHASE FLOW FOR TESTING WITHOUT DEVELOPER ACCOUNT
             console.log('[usePremium] MOCK: Initiating fake purchase flow...')
 
-            // At least show a fake delay to mimic network request
+            // Simulate network delay
             await new Promise(resolve => setTimeout(resolve, 1500))
 
-            // Fake a successful response
+            // Persist premium status to Supabase
+            const { Purchases } = await import('@revenuecat/purchases-capacitor')
+            // We don't need RevenueCat for the mock, just update the DB
+            const { supabase } = await import('./supabase')
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.user?.id) {
+                await supabase
+                    .from('profiles')
+                    .update({ is_premium: true, boosts_used: 0 })
+                    .eq('id', session.user.id)
+            }
+
             setIsPremium(true)
-            alert('Mock Test: Premium abonelik başarıyla aktifleştirildi! (Geliştirici hesabı olmadan test modu)')
+            alert('Premium abonelik başarıyla aktifleştirildi! 🎉')
 
             setLoading(false)
             return true
 
-            /* ORIGINAL REVENUECAT CODE OMITTED FOR LOCAL MOCK TESTING
+            /* ORIGINAL REVENUECAT CODE — uncomment when Apple Developer account is ready
             const offerings = await getOfferings()
             if (!offerings?.current?.availablePackages?.length) {
                 alert('Şu anda mevcut paket bulunamadı.')
                 setLoading(false)
                 return false
             }
-
             const pkg = offerings.current.availablePackages[0]
             const result = await purchasePackage(pkg)
-
-            if (result.cancelled) {
-                setLoading(false)
-                return false
-            }
-
-            if (result.isPremium) {
-                setIsPremium(true)
-                setLoading(false)
-                return true
-            }
+            if (result.cancelled) { setLoading(false); return false }
+            if (result.isPremium) { setIsPremium(true); setLoading(false); return true }
             */
         } catch (err) {
             console.error('[usePremium] Purchase error:', err)

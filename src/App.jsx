@@ -86,6 +86,16 @@ function App() {
   const isPremiumUser = Boolean(currentUser?.is_premium)
   const { handleUpgrade, loading: upgradeLoading } = usePremium()
 
+  // Wrapper: upgrade + refresh currentUser so all premium gates unlock
+  const handleUpgradeAndRefresh = useCallback(async () => {
+    const success = await handleUpgrade()
+    if (success && session?.user?.id) {
+      const { data } = await getProfile(session.user.id)
+      if (data) setCurrentUser(data)
+    }
+    return success
+  }, [handleUpgrade, session])
+
   // Auth listener
   useEffect(() => {
     // Hide iOS keyboard accessory bar to fix double keyboard issue
@@ -450,6 +460,7 @@ function App() {
           onLogout={handleLogout}
           onProfileUpdated={handleProfileEditSave}
           onOutfitClick={(outfit) => handleOutfitClickDirect(transformOutfit(outfit))}
+          onUpgrade={handleUpgradeAndRefresh}
         />
       )
     }
@@ -464,7 +475,7 @@ function App() {
             setActiveTab('home')
           }}
           onUpgrade={async () => {
-            const success = await handleUpgrade()
+            const success = await handleUpgradeAndRefresh()
             if (success) setShowDailyLimit(false)
           }}
           onGoProfile={() => {
