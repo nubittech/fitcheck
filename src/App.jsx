@@ -142,21 +142,27 @@ function App() {
       }
       if (data) {
         setCurrentUser(data)
-        // Check legal consent first
-        if (!data.legal_accepted_at) {
+        const profileComplete =
+          data.full_name &&
+          data.bio &&
+          data.vibes &&
+          data.vibes.length > 0
+
+        if (profileComplete) {
+          // Existing user with complete profile → skip both screens
+          setNeedsLegalConsent(false)
+          setNeedsProfileSetup(false)
+        } else if (!data.legal_accepted_at) {
+          // Incomplete profile AND hasn't accepted legal → show consent first
           setNeedsLegalConsent(true)
           setNeedsProfileSetup(false)
         } else {
+          // Accepted legal but profile incomplete → show profile setup
           setNeedsLegalConsent(false)
-          const incomplete =
-            !data.full_name ||
-            !data.bio ||
-            !data.vibes ||
-            data.vibes.length === 0
-          setNeedsProfileSetup(incomplete)
+          setNeedsProfileSetup(true)
         }
       } else {
-        // New user — needs legal consent first
+        // Brand new user — needs legal consent first, then profile setup
         setNeedsLegalConsent(true)
         setNeedsProfileSetup(false)
       }
