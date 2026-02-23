@@ -53,15 +53,7 @@
   z-index: 1;
 }
 
-.login-illustration-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.45);
-  border-radius: 40px;
-  transform: rotate(10deg);
-  z-index: -1;
-}
+
 
 .illustration-inner-card {
   width: 220px;
@@ -344,9 +336,9 @@
   font-weight: 700;
   margin-top: 20px;
 }
+
 @media (max-height: 700px) {
   .illustration-inner-card {
     transform: scale(0.85) rotate(-4deg);
   }
 }
-
