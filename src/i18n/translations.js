@@ -162,6 +162,13 @@ export const translations = {
         // ── BoostSelection ───────────────────────────────────────
         boost_title: 'Boost Your Outfit',
         boost_sub: 'Get more eyes on your fit',
+
+        // ── Walkthrough ──────────────────────────────────────────
+        walk_swipe: 'Swipe Left or Right<br />(Skip to Next)',
+        walk_tap: 'Tap to<br />Change Photo',
+        walk_up: 'Swipe Up From Bottom<br />(See Outfit Details)',
+        walk_got_it: 'Got it',
+        walk_start: 'Start',
     },
 
     tr: {
@@ -322,5 +329,12 @@ export const translations = {
         // ── BoostSelection ───────────────────────────────────────
         boost_title: 'Kombinini Öne Çıkar',
         boost_sub: 'Daha fazla kişiye ulaş',
+
+        // ── Walkthrough ──────────────────────────────────────────
+        walk_swipe: 'Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç)',
+        walk_tap: 'Fotoğraf<br />Değiştir',
+        walk_up: 'Aşağıdan Yukarı Kaydır<br />(Kombin Detaylarını Gör)',
+        walk_got_it: 'Anladım',
+        walk_start: 'Başla',
     }
 }

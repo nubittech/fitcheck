@@ -337,9 +337,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
                 <svg className="linear-hand-swipe" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
                 </svg>
-                <div className="walkthrough-text-center">
-                  Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç)
-                </div>
+                <div className="walkthrough-text-center" dangerouslySetInnerHTML={{ __html: t('walk_swipe') }} />
               </div>
 
               {/* Tap Zone */}
@@ -351,12 +349,10 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
                   <path d="M5.5 12c0-.55-.45-1-1-1S3.5 11.45 3.5 12v4c0 3.32 3 6 6 6s6-1.59 7-4c1.4-2.5-1.07-5.59-3.5-5.59" />
                   <path d="M18 19c-1-1-2-1-4-2" />
                 </svg>
-                <div className="walkthrough-text-small">
-                  Fotoğraf<br />Değiştir
-                </div>
+                <div className="walkthrough-text-small" dangerouslySetInnerHTML={{ __html: t('walk_tap') }} />
               </div>
 
-              <button className="walkthrough-btn" onClick={nextWalkthroughStep}>Anladım</button>
+              <button className="walkthrough-btn" onClick={nextWalkthroughStep}>{t('walk_got_it')}</button>
             </>
           )}
 
@@ -367,12 +363,10 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
                 <svg className="linear-hand-up" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
                 </svg>
-                <div className="walkthrough-text-center">
-                  Aşağıdan Yukarı Kaydır<br />(Kombin Detaylarını Gör)
-                </div>
+                <div className="walkthrough-text-center" dangerouslySetInnerHTML={{ __html: t('walk_up') }} />
               </div>
 
-              <button className="walkthrough-btn" onClick={dismissWalkthrough}>Başla</button>
+              <button className="walkthrough-btn" onClick={dismissWalkthrough}>{t('walk_start')}</button>
             </>
           )}
         </div>
