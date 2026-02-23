@@ -149,8 +149,8 @@ const Login = ({ onLogin, onGoSignUp }) => {
 
       <div className="login-terms">
         {lang === 'tr'
-          ? <> Devam ederek <a href="#">Kullanım Koşullarını</a><br /> ve <a href="#">Gizlilik Politikasını</a> kabul etmiş ve 18 yaşından büyük olduğunuzu onaylamış olursunuz</>
-          : <> By continuing, you accept the <a href="#">Terms of Use</a><br /> and <a href="#">Privacy Policy</a>, and confirm that you are over 18 years old</>
+          ? <> Devam ederek <a href="#">Kullanım Koşullarını</a><br /> ve <a href="#">Gizlilik Politikasını</a> kabul etmiş ve 16 yaşından büyük olduğunuzu onaylamış olursunuz</>
+          : <> By continuing, you accept the <a href="#">Terms of Use</a><br /> and <a href="#">Privacy Policy</a>, and confirm that you are over 16 years old</>
         }
       </div>
 
