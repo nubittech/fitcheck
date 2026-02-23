@@ -808,11 +808,10 @@
 /* Dashed zone for Swiping */
 .walkthrough-swipe-zone {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70%;
-  height: 140px;
+  top: 30%;
+  left: 16px;
+  right: 90px;
+  height: 180px;
   border: 2px dashed rgba(255, 255, 255, 0.7);
   border-radius: 24px;
   display: flex;
@@ -824,10 +823,10 @@
 /* Dashed zone for Tapping */
 .walkthrough-tap-zone {
   position: absolute;
-  top: 40%;
+  top: 30%;
   right: 12px;
-  width: 60px;
-  height: 30%;
+  width: 65px;
+  height: 180px;
   border: 2px dashed rgba(255, 255, 255, 0.7);
   border-radius: 12px;
   display: flex;
@@ -835,6 +834,21 @@
   justify-content: center;
   flex-direction: column;
   text-align: center;
+}
+
+/* Bottom Sheet Zone (Step 2) */
+.walkthrough-bottom-zone {
+  position: absolute;
+  bottom: 120px;
+  left: 20px;
+  right: 20px;
+  height: 120px;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .walkthrough-text-center {
@@ -865,6 +879,12 @@
 
 .linear-hand-tap {
   animation: tap-linear 2s infinite ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  color: white;
+}
+
+.linear-hand-up {
+  animation: swipe-up-linear 2.5s infinite ease-in-out;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   color: white;
 }
@@ -905,9 +925,31 @@
   }
 }
 
+@keyframes swipe-up-linear {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  80% {
+    transform: translateY(-30px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
 .walkthrough-btn {
   position: absolute;
-  bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+  top: 65%;
+  /* Adjusted to stay above the action tabs and well visible */
   left: 50%;
   transform: translateX(-50%);
   background: white;

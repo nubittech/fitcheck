@@ -24,19 +24,23 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
   const [submittingComment, setSubmittingComment] = useState(false)
 
   // ── Walkthrough State ──
-  const [showWalkthrough, setShowWalkthrough] = useState(false)
+  const [walkthroughStep, setWalkthroughStep] = useState(0) // 0: hidden, 1: swipe/tap, 2: bottom sheet
 
   useEffect(() => {
     const checkWalkthrough = async () => {
       if (!isFirstCard) return
       const { value } = await Preferences.get({ key: 'hasSeenWalkthrough' })
-      if (!value) setShowWalkthrough(true)
+      if (!value) setWalkthroughStep(1)
     }
     checkWalkthrough()
   }, [isFirstCard])
 
+  const nextWalkthroughStep = () => {
+    setWalkthroughStep(2)
+  }
+
   const dismissWalkthrough = async () => {
-    setShowWalkthrough(false)
+    setWalkthroughStep(0)
     await Preferences.set({ key: 'hasSeenWalkthrough', value: 'true' })
   }
 
@@ -274,12 +278,12 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
     swipeAxis.current = null
   }
 
-  // Auto-dismiss walkthrough if they actually swipe
+  // Auto-dismiss step 1 if they actually swipe left/right
   useEffect(() => {
-    if ((swipeDir === 'left' || swipeDir === 'right') && showWalkthrough) {
-      dismissWalkthrough()
+    if ((swipeDir === 'left' || swipeDir === 'right') && walkthroughStep === 1) {
+      nextWalkthroughStep()
     }
-  }, [swipeDir, showWalkthrough])
+  }, [swipeDir, walkthroughStep])
 
   const handlePanelTouchStart = (e) => {
     e.stopPropagation()
@@ -306,6 +310,11 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
       // Swipe up → advance state
       if (panelState === 'collapsed') setPanelState('mid')
       else if (panelState === 'mid') setPanelState('full')
+
+      // Dismiss walkthrough step 2 if they actually swiped up the panel
+      if (walkthroughStep === 2) {
+        dismissWalkthrough()
+      }
     } else if (dragY > threshold) {
       // Swipe down → go back
       if (panelState === 'full') setPanelState('mid')
@@ -319,33 +328,53 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
 
   return (
     <div className="outfit-card-wrapper">
-      {showWalkthrough && (
+      {walkthroughStep > 0 && (
         <div className="walkthrough-overlay">
-          {/* Swipe Zone */}
-          <div className="walkthrough-swipe-zone">
-            <svg className="linear-hand-swipe" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
-            </svg>
-            <div className="walkthrough-text-center">
-              Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç)
-            </div>
-          </div>
+          {walkthroughStep === 1 && (
+            <>
+              {/* Swipe Zone */}
+              <div className="walkthrough-swipe-zone">
+                <svg className="linear-hand-swipe" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
+                </svg>
+                <div className="walkthrough-text-center">
+                  Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç)
+                </div>
+              </div>
 
-          {/* Tap Zone */}
-          <div className="walkthrough-tap-zone">
-            <svg className="linear-hand-tap" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4" />
-              <path d="M10 10.5V11" />
-              <path d="M9 10v-1c0-.83-.67-1.5-1.5-1.5S6 8.17 6 9v3" />
-              <path d="M5.5 12c0-.55-.45-1-1-1S3.5 11.45 3.5 12v4c0 3.32 3 6 6 6s6-1.59 7-4c1.4-2.5-1.07-5.59-3.5-5.59" />
-              <path d="M18 19c-1-1-2-1-4-2" />
-            </svg>
-            <div className="walkthrough-text-small">
-              Fotoğraf<br />Değiştir
-            </div>
-          </div>
+              {/* Tap Zone */}
+              <div className="walkthrough-tap-zone">
+                <svg className="linear-hand-tap" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4" />
+                  <path d="M10 10.5V11" />
+                  <path d="M9 10v-1c0-.83-.67-1.5-1.5-1.5S6 8.17 6 9v3" />
+                  <path d="M5.5 12c0-.55-.45-1-1-1S3.5 11.45 3.5 12v4c0 3.32 3 6 6 6s6-1.59 7-4c1.4-2.5-1.07-5.59-3.5-5.59" />
+                  <path d="M18 19c-1-1-2-1-4-2" />
+                </svg>
+                <div className="walkthrough-text-small">
+                  Fotoğraf<br />Değiştir
+                </div>
+              </div>
 
-          <button className="walkthrough-btn" onClick={dismissWalkthrough}>Anladım</button>
+              <button className="walkthrough-btn" onClick={nextWalkthroughStep}>Anladım</button>
+            </>
+          )}
+
+          {walkthroughStep === 2 && (
+            <>
+              {/* Bottom Sheet Swipe Up Zone */}
+              <div className="walkthrough-bottom-zone">
+                <svg className="linear-hand-up" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
+                </svg>
+                <div className="walkthrough-text-center">
+                  Aşağıdan Yukarı Kaydır<br />(Kombin Detaylarını Gör)
+                </div>
+              </div>
+
+              <button className="walkthrough-btn" onClick={dismissWalkthrough}>Başla</button>
+            </>
+          )}
         </div>
       )}
 
