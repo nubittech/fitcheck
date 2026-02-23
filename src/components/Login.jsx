@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { signIn } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../i18n/LangContext'
+import { Browser } from '@capacitor/browser'
+import { App as CapApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import veyloLogo from '../assets/veylo-logo.png'
 import '../styles/Login.css'
 
@@ -16,12 +19,29 @@ const Login = ({ onLogin, onGoSignUp }) => {
   const [lastEmail, setLastEmail] = useState('')
 
   useEffect(() => {
-    // Check if the user has a previously saved email from a past login session
     const savedEmail = localStorage.getItem('last_login_email')
     if (savedEmail) {
       setLastEmail(savedEmail)
       setEmail(savedEmail)
     }
+  }, [])
+
+  // Listen for deep link callback from OAuth on native
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const handler = CapApp.addListener('appUrlOpen', async ({ url }) => {
+      if (url.includes('access_token') && url.includes('refresh_token')) {
+        const hashPart = url.split('#')[1]
+        const params = new URLSearchParams(hashPart)
+        const access_token = params.get('access_token')
+        const refresh_token = params.get('refresh_token')
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token })
+          await Browser.close()
+        }
+      }
+    })
+    return () => { handler.then(h => h.remove()) }
   }, [])
 
   const handleEmailLogin = async (e) => {
@@ -44,16 +64,31 @@ const Login = ({ onLogin, onGoSignUp }) => {
   }
 
   const handleSocialLogin = async (provider) => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: provider,
-      options: {
-        redirectTo: window.location.origin
+    setLoading(true)
+    setError('')
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const redirectTo = 'com.fitcheck.app://callback'
+        const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo, skipBrowserRedirect: true }
+        })
+        if (oauthError) throw oauthError
+        if (data?.url) {
+          await Browser.open({ url: data.url, windowName: '_self' })
+        }
+      } else {
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo: window.location.origin }
+        })
+        if (oauthError) throw oauthError
       }
-    })
-    if (error) {
-      console.error('Error logging in with ' + provider, error)
-      setError(error.message)
+    } catch (err) {
+      console.error('OAuth error:', err)
+      setError(err.message || 'Login failed')
     }
+    setLoading(false)
   }
 
   // Exact Match SVG Icons for the new design
