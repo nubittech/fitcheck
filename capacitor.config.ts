@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 import { KeyboardResize } from '@capacitor/keyboard';
 const config: CapacitorConfig = {
-  appId: 'com.fitcheck.app',
+  appId: 'com.veylo.app',
   appName: 'Veylo',
   webDir: 'dist',
   server: {

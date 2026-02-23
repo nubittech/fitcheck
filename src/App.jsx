@@ -654,6 +654,7 @@ function App() {
           currentUser={currentUser}
           session={session}
           isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
+          isFirstCard={currentIndex === 0 && !selectedVibe}
           onNext={handleNext}
           onSkip={handleSkip}
           onLike={handleLike}

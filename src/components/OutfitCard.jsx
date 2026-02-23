@@ -4,10 +4,11 @@ import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
 import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment } from '../lib/api'
 import { Share } from '@capacitor/share'
+import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
-const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
+const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
   const { t } = useLang()
   // 3-state panel: 'collapsed' | 'mid' | 'full'
   const [panelState, setPanelState] = useState('collapsed')
@@ -21,6 +22,23 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
   const panelRef = useRef(null)
   const [inputValue, setInputValue] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // ── Walkthrough State ──
+  const [showWalkthrough, setShowWalkthrough] = useState(false)
+
+  useEffect(() => {
+    const checkWalkthrough = async () => {
+      if (!isFirstCard) return
+      const { value } = await Preferences.get({ key: 'hasSeenWalkthrough' })
+      if (!value) setShowWalkthrough(true)
+    }
+    checkWalkthrough()
+  }, [isFirstCard])
+
+  const dismissWalkthrough = async () => {
+    setShowWalkthrough(false)
+    await Preferences.set({ key: 'hasSeenWalkthrough', value: 'true' })
+  }
 
   // ── Share Logic ──
   const handleShare = async () => {
@@ -257,6 +275,13 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
     swipeAxis.current = null
   }
 
+  // Auto-dismiss walkthrough if they actually swipe
+  useEffect(() => {
+    if ((swipeDir === 'left' || swipeDir === 'right') && showWalkthrough) {
+      dismissWalkthrough()
+    }
+  }, [swipeDir, showWalkthrough])
+
   const handlePanelTouchStart = (e) => {
     e.stopPropagation()
     startY.current = e.touches[0].clientY
@@ -295,6 +320,23 @@ const OutfitCard = ({ outfit, onNext, onSkip, onLike, onItemVote, onUserTap, cur
 
   return (
     <div className="outfit-card-wrapper">
+      {showWalkthrough && (
+        <div className="walkthrough-overlay">
+          <div className="walkthrough-content">
+            <div className="walkthrough-animation">
+              <svg className="walkthrough-hand" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
+              </svg>
+            </div>
+            <div className="walkthrough-text">
+              <span className="walkthrough-text-left">Sola Kaydır<br />(Geç) ❌</span>
+              <span className="walkthrough-text-right">Sağa Kaydır<br />(Beğen) 🔥</span>
+            </div>
+            <button className="walkthrough-btn" onClick={dismissWalkthrough}>Anladım</button>
+          </div>
+        </div>
+      )}
+
       <div
         className={`outfit-card ${swipeDir ? `swipe-${swipeDir}` : ''} ${offsetX !== 0 && !swipeDir ? 'is-dragging' : ''}`}
         style={{ transform: offsetX ? `translateX(${offsetX}px) rotate(${offsetX * 0.04}deg)` : undefined }}

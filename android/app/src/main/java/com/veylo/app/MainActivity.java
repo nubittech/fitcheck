@@ -1,4 +1,4 @@
-package com.fitcheck.app;
+package com.veylo.app;
 
 import com.getcapacitor.BridgeActivity;
 
