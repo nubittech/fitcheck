@@ -122,7 +122,7 @@ const Login = ({ onLogin, onGoSignUp }) => {
         <h1>{lang === 'tr' ? 'birlikte karar verelim.' : 'let\'s decide together.'}</h1>
       </div>
 
-      <div className="login-auth-label">Authorization</div>
+      <div className="login-auth-label">{lang === 'tr' ? 'Giriş Yap' : 'Authorization'}</div>
 
       <div className="login-methods">
         <button className="login-method-btn" onClick={() => handleSocialLogin('apple')}>
@@ -148,11 +148,13 @@ const Login = ({ onLogin, onGoSignUp }) => {
       </div>
 
       <div className="login-terms">
-        By continuing, you accept the <a href="#">Terms of Use</a><br />
-        and <a href="#">Privacy Policy</a>, and confirm that you are over 18 years old
+        {lang === 'tr'
+          ? <> Devam ederek <a href="#">Kullanım Koşullarını</a><br /> ve <a href="#">Gizlilik Politikasını</a> kabul etmiş ve 18 yaşından büyük olduğunuzu onaylamış olursunuz</>
+          : <> By continuing, you accept the <a href="#">Terms of Use</a><br /> and <a href="#">Privacy Policy</a>, and confirm that you are over 18 years old</>
+        }
       </div>
 
-      <button className="login-cant">Can't login?</button>
+      <button className="login-cant">{lang === 'tr' ? 'Giriş yapamıyor musun?' : "Can't login?"}</button>
 
 
       {/* Fallback Email Login Form Overlay */}
