@@ -81,25 +81,17 @@ const Login = ({ onLogin, onGoSignUp }) => {
     setError('')
     try {
       if (Capacitor.isNativePlatform()) {
-        // Use implicit flow for native — PKCE code_verifier can't be shared
-        // between the Capacitor WebView and Safari
         const redirectTo = 'com.fitcheck.app://callback'
         const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
             redirectTo,
             skipBrowserRedirect: true,
-            queryParams: { flowType: 'implicit' }
           }
         })
         if (oauthError) throw oauthError
         if (data?.url) {
-          // Force implicit flow by modifying the URL
-          let oauthUrl = data.url
-          if (oauthUrl.includes('response_type=code')) {
-            oauthUrl = oauthUrl.replace('response_type=code', 'response_type=token')
-          }
-          await Browser.open({ url: oauthUrl, windowName: '_self' })
+          await Browser.open({ url: data.url, windowName: '_self' })
         }
       } else {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
