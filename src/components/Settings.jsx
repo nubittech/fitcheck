@@ -69,7 +69,7 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
           {/* Language */}
           <div className="settings-section">
             <span className="settings-section-label">{t('language')}</span>
-            <div className="settings-item">
+            <div className="settings-item" onClick={toggleLang} style={{ cursor: 'pointer' }}>
               <div className="settings-item-left">
                 <div className="settings-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,21 +80,18 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
                 </div>
                 <span>{lang === 'tr' ? 'Türkçe' : 'English'}</span>
               </div>
-              <button
-                onClick={toggleLang}
+              <span
                 style={{
                   background: 'var(--accent, #E07A5F)',
                   color: '#fff',
-                  border: 'none',
                   borderRadius: '14px',
                   padding: '5px 14px',
                   fontSize: '13px',
                   fontWeight: '700',
-                  cursor: 'pointer'
                 }}
               >
                 {lang === 'tr' ? 'EN' : 'TR'}
-              </button>
+              </span>
             </div>
           </div>
 

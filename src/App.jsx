@@ -11,6 +11,7 @@ import SignUp from './components/SignUp'
 import NoMoreContent from './components/NoMoreContent'
 import ProfileSetup from './components/ProfileSetup'
 import DailyLimitDemo from './components/DailyLimitDemo'
+import LegalConsent from './components/LegalConsent'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
 import { supabase } from './lib/supabase'
@@ -65,6 +66,7 @@ function App() {
   const [session, setSession] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
+  const [needsLegalConsent, setNeedsLegalConsent] = useState(false)
   const [profileChecked, setProfileChecked] = useState(false)
   const [lockProfileSetup, setLockProfileSetup] = useState(false)
   const [authScreen, setAuthScreen] = useState('login')
@@ -140,14 +142,23 @@ function App() {
       }
       if (data) {
         setCurrentUser(data)
-        const incomplete =
-          !data.full_name ||
-          !data.bio ||
-          !data.vibes ||
-          data.vibes.length === 0
-        setNeedsProfileSetup(incomplete)
+        // Check legal consent first
+        if (!data.legal_accepted_at) {
+          setNeedsLegalConsent(true)
+          setNeedsProfileSetup(false)
+        } else {
+          setNeedsLegalConsent(false)
+          const incomplete =
+            !data.full_name ||
+            !data.bio ||
+            !data.vibes ||
+            data.vibes.length === 0
+          setNeedsProfileSetup(incomplete)
+        }
       } else {
-        setNeedsProfileSetup(true)
+        // New user — needs legal consent first
+        setNeedsLegalConsent(true)
+        setNeedsProfileSetup(false)
       }
       setProfileChecked(true)
     })
@@ -373,6 +384,33 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Preparing your profile...</p>
         </div>
+      )
+    }
+    if (needsLegalConsent) {
+      return (
+        <LegalConsent
+          onAccept={async () => {
+            // Persist acceptance to Supabase
+            if (session?.user?.id) {
+              await supabase
+                .from('profiles')
+                .update({ legal_accepted_at: new Date().toISOString() })
+                .eq('id', session.user.id)
+            }
+            setNeedsLegalConsent(false)
+            // Now check if profile setup is needed
+            if (currentUser) {
+              const incomplete =
+                !currentUser.full_name ||
+                !currentUser.bio ||
+                !currentUser.vibes ||
+                currentUser.vibes?.length === 0
+              setNeedsProfileSetup(incomplete)
+            } else {
+              setNeedsProfileSetup(true)
+            }
+          }}
+        />
       )
     }
     if (needsProfileSetup) {
