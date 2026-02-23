@@ -30,15 +30,28 @@ const Login = ({ onLogin, onGoSignUp }) => {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     const handler = CapApp.addListener('appUrlOpen', async ({ url }) => {
-      if (url.includes('access_token') && url.includes('refresh_token')) {
-        const hashPart = url.split('#')[1]
-        const params = new URLSearchParams(hashPart)
-        const access_token = params.get('access_token')
-        const refresh_token = params.get('refresh_token')
-        if (access_token && refresh_token) {
-          await supabase.auth.setSession({ access_token, refresh_token })
-          await Browser.close()
+      try {
+        // Handle implicit flow: tokens in hash fragment
+        if (url.includes('#access_token=')) {
+          const hashPart = url.split('#')[1]
+          const params = new URLSearchParams(hashPart)
+          const access_token = params.get('access_token')
+          const refresh_token = params.get('refresh_token')
+          if (access_token && refresh_token) {
+            await supabase.auth.setSession({ access_token, refresh_token })
+          }
         }
+        // Handle PKCE flow: code in query params
+        else if (url.includes('code=')) {
+          const urlObj = new URL(url)
+          const code = urlObj.searchParams.get('code')
+          if (code) {
+            await supabase.auth.exchangeCodeForSession(code)
+          }
+        }
+        await Browser.close().catch(() => { })
+      } catch (err) {
+        console.error('OAuth callback error:', err)
       }
     })
     return () => { handler.then(h => h.remove()) }
@@ -68,14 +81,25 @@ const Login = ({ onLogin, onGoSignUp }) => {
     setError('')
     try {
       if (Capacitor.isNativePlatform()) {
+        // Use implicit flow for native — PKCE code_verifier can't be shared
+        // between the Capacitor WebView and Safari
         const redirectTo = 'com.fitcheck.app://callback'
         const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
-          options: { redirectTo, skipBrowserRedirect: true }
+          options: {
+            redirectTo,
+            skipBrowserRedirect: true,
+            queryParams: { flowType: 'implicit' }
+          }
         })
         if (oauthError) throw oauthError
         if (data?.url) {
-          await Browser.open({ url: data.url, windowName: '_self' })
+          // Force implicit flow by modifying the URL
+          let oauthUrl = data.url
+          if (oauthUrl.includes('response_type=code')) {
+            oauthUrl = oauthUrl.replace('response_type=code', 'response_type=token')
+          }
+          await Browser.open({ url: oauthUrl, windowName: '_self' })
         }
       } else {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({

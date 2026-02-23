@@ -103,6 +103,16 @@ function App() {
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
 
+    // Handle web OAuth redirect (PKCE code or implicit hash tokens)
+    const url = window.location.href
+    if (url.includes('code=') || url.includes('#access_token=')) {
+      // Supabase client auto-detects hash fragments on init
+      // For PKCE code, we need to let getSession handle it
+      // Clean URL after processing
+      const cleanUrl = window.location.origin + window.location.pathname
+      window.history.replaceState({}, '', cleanUrl)
+    }
+
     getSession().then(s => {
       setSession(s)
     })
