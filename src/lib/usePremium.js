@@ -23,13 +23,22 @@ export function usePremium() {
     }, [])
 
     const handleUpgrade = useCallback(async () => {
-        if (!Capacitor.isNativePlatform()) {
-            alert('Abonelik yalnızca mobil uygulamada kullanılabilir.')
-            return false
-        }
-
         setLoading(true)
         try {
+            // MOCK PURCHASE FLOW FOR TESTING WITHOUT DEVELOPER ACCOUNT
+            console.log('[usePremium] MOCK: Initiating fake purchase flow...')
+
+            // At least show a fake delay to mimic network request
+            await new Promise(resolve => setTimeout(resolve, 1500))
+
+            // Fake a successful response
+            setIsPremium(true)
+            alert('Mock Test: Premium abonelik başarıyla aktifleştirildi! (Geliştirici hesabı olmadan test modu)')
+
+            setLoading(false)
+            return true
+
+            /* ORIGINAL REVENUECAT CODE OMITTED FOR LOCAL MOCK TESTING
             const offerings = await getOfferings()
             if (!offerings?.current?.availablePackages?.length) {
                 alert('Şu anda mevcut paket bulunamadı.')
@@ -50,6 +59,7 @@ export function usePremium() {
                 setLoading(false)
                 return true
             }
+            */
         } catch (err) {
             console.error('[usePremium] Purchase error:', err)
             alert('Satın alma sırasında bir hata oluştu.')
