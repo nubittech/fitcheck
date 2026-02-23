@@ -6,11 +6,12 @@ import '../styles/Settings.css'
 
 const APP_VERSION = '1.0.0'
 
-const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
+const Settings = ({ onClose, onLogout, currentUser, onUpgrade, session }) => {
   const { t, lang, toggleLang } = useLang()
   const [currentView, setCurrentView] = useState('main')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [swipeX, setSwipeX] = useState(0)
 
   const isPremium = Boolean(currentUser?.is_premium)
@@ -229,7 +230,23 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade }) => {
             <p>{t('delete_confirm_msg')}</p>
             <div className="settings-modal-actions">
               <button className="modal-btn cancel" onClick={() => setShowDeleteConfirm(false)}>{t('keep_account')}</button>
-              <button className="modal-btn confirm delete" onClick={() => { setShowDeleteConfirm(false); onLogout(); }}>{t('delete_forever')}</button>
+              <button className="modal-btn confirm delete" disabled={deleting} onClick={async () => {
+                setDeleting(true)
+                try {
+                  const { deleteAccount } = await import('../lib/api')
+                  const result = await deleteAccount(session?.user?.id || currentUser?.id)
+                  if (result.success) {
+                    setShowDeleteConfirm(false)
+                    // Auth signout already handled inside deleteAccount
+                  } else {
+                    alert(tr ? 'Hesap silinemedi. Tekrar deneyin.' : 'Could not delete account. Please try again.')
+                  }
+                } catch (e) {
+                  console.error(e)
+                  alert(tr ? 'Bir hata oluştu.' : 'An error occurred.')
+                }
+                setDeleting(false)
+              }}>{deleting ? (tr ? 'Siliniyor...' : 'Deleting...') : t('delete_forever')}</button>
             </div>
           </div>
         </div>

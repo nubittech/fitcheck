@@ -495,3 +495,65 @@ export async function getItemVotes({ outfitId, userId }) {
 
   return result
 }
+
+// ---- ACCOUNT DELETION ----
+
+export async function deleteAccount(userId) {
+  try {
+    // 1. Get user's outfit IDs to delete their media references
+    const { data: userOutfits } = await supabase
+      .from('outfits')
+      .select('id')
+      .eq('user_id', userId)
+
+    const outfitIds = (userOutfits || []).map(o => o.id)
+
+    // 2. Delete outfit_media for user's outfits
+    if (outfitIds.length > 0) {
+      await supabase.from('outfit_media').delete().in('outfit_id', outfitIds)
+    }
+
+    // 3. Delete votes on user's outfits + votes cast by user
+    if (outfitIds.length > 0) {
+      await supabase.from('outfit_votes').delete().in('outfit_id', outfitIds)
+      await supabase.from('item_votes').delete().in('outfit_id', outfitIds)
+    }
+    await supabase.from('outfit_votes').delete().eq('user_id', userId)
+    await supabase.from('item_votes').delete().eq('user_id', userId)
+
+    // 4. Delete likes (given and received)
+    await supabase.from('likes').delete().eq('user_id', userId)
+    if (outfitIds.length > 0) {
+      await supabase.from('likes').delete().in('outfit_id', outfitIds)
+    }
+
+    // 5. Delete comments
+    await supabase.from('comments').delete().eq('user_id', userId)
+
+    // 6. Delete messages & conversations
+    await supabase.from('messages').delete().eq('sender_id', userId)
+    await supabase.from('conversations').delete().eq('user1_id', userId)
+    await supabase.from('conversations').delete().eq('user2_id', userId)
+
+    // 7. Delete outfits
+    await supabase.from('outfits').delete().eq('user_id', userId)
+
+    // 8. Delete storage files
+    const { data: files } = await supabase.storage.from('media').list(userId)
+    if (files && files.length > 0) {
+      const paths = files.map(f => `${userId}/${f.name}`)
+      await supabase.storage.from('media').remove(paths)
+    }
+
+    // 9. Delete profile
+    await supabase.from('profiles').delete().eq('id', userId)
+
+    // 10. Sign out
+    await supabase.auth.signOut()
+
+    return { success: true }
+  } catch (err) {
+    console.error('[deleteAccount] Error:', err)
+    return { success: false, error: err.message }
+  }
+}

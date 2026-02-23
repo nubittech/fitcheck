@@ -254,6 +254,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     onClose={() => setShowSettings(false)}
                     onLogout={onLogout}
                     currentUser={currentUser}
+                    session={session}
                     onUpgrade={async () => {
                         const success = await handleUpgrade()
                         if (success) setShowSettings(false)
