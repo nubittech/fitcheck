@@ -255,7 +255,6 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
     if (swipeAxis.current === 'x' && Math.abs(offsetX) > 100) {
       if (offsetX > 0) {
         setSwipeDir('right')
-        handleOutfitVote('like')
         setOffsetX(window.innerWidth) // Throw animation to right
 
         // Wait for animation to finish, then tell parent to load next.
@@ -328,9 +327,8 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
                 <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
               </svg>
             </div>
-            <div className="walkthrough-text">
-              <span className="walkthrough-text-left">Sola Kaydır<br />(Geç) ❌</span>
-              <span className="walkthrough-text-right">Sağa Kaydır<br />(Beğen) 🔥</span>
+            <div className="walkthrough-text" style={{ justifyContent: 'center', color: '#fff' }}>
+              <span className="walkthrough-text-center">Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç) 👉</span>
             </div>
             <button className="walkthrough-btn" onClick={dismissWalkthrough}>Anladım</button>
           </div>
