@@ -321,32 +321,31 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
     <div className="outfit-card-wrapper">
       {showWalkthrough && (
         <div className="walkthrough-overlay">
-          <div className="walkthrough-content">
-            <div className="walkthrough-animation">
-              <svg className="walkthrough-hand" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
-              </svg>
+          {/* Swipe Zone */}
+          <div className="walkthrough-swipe-zone">
+            <svg className="linear-hand-swipe" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-4 0v4M14 11V4a2 2 0 0 0-4 0v6M10 11V5a2 2 0 0 0-4 0v8.6M6 14v-2c0-1.1-.9-2-2-2S2 10.9 2 12v4.8c0 3.3 2.7 6 6 6h4.5c2.6 0 4.8-1.8 5.4-4.3l1-4.7c.3-1.6-.9-3.1-2.5-3.1H14M14 11h4" />
+            </svg>
+            <div className="walkthrough-text-center">
+              Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç)
             </div>
-            <div className="walkthrough-text" style={{ justifyContent: 'center', color: '#fff' }}>
-              <span className="walkthrough-text-center">Sola veya Sağa Kaydır<br />(Sonraki Kombine Geç) 👉</span>
-            </div>
-
-            {/* Tap Animation on the side */}
-            <div className="walkthrough-tap-animation">
-              <svg className="walkthrough-tap-hand" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4" />
-                <path d="M10 10.5V11" />
-                <path d="M9 10v-1c0-.83-.67-1.5-1.5-1.5S6 8.17 6 9v3" />
-                <path d="M5.5 12c0-.55-.45-1-1-1S3.5 11.45 3.5 12v4c0 3.32 3 6 6 6s6-1.59 7-4c1.4-2.5-1.07-5.59-3.5-5.59" />
-                <path d="M18 19c-1-1-2-1-4-2" />
-              </svg>
-              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', fontSize: '11px', marginTop: '4px', textShadow: '0 2px 4px rgba(0,0,0,0.5)', fontWeight: 'bold' }}>
-                Fotoğraf Değiştir
-              </div>
-            </div>
-
-            <button className="walkthrough-btn" onClick={dismissWalkthrough}>Anladım</button>
           </div>
+
+          {/* Tap Zone */}
+          <div className="walkthrough-tap-zone">
+            <svg className="linear-hand-tap" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v4" />
+              <path d="M10 10.5V11" />
+              <path d="M9 10v-1c0-.83-.67-1.5-1.5-1.5S6 8.17 6 9v3" />
+              <path d="M5.5 12c0-.55-.45-1-1-1S3.5 11.45 3.5 12v4c0 3.32 3 6 6 6s6-1.59 7-4c1.4-2.5-1.07-5.59-3.5-5.59" />
+              <path d="M18 19c-1-1-2-1-4-2" />
+            </svg>
+            <div className="walkthrough-text-small">
+              Fotoğraf<br />Değiştir
+            </div>
+          </div>
+
+          <button className="walkthrough-btn" onClick={dismissWalkthrough}>Anladım</button>
         </div>
       )}
 

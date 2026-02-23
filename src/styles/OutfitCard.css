@@ -794,129 +794,129 @@
   cursor: default;
 }
 
-/* ── Walkthrough Overlay ── */
+/* ── Walkthrough Overlay (Minimalist & Dashed) ── */
 .walkthrough-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
   pointer-events: auto;
 }
 
-.walkthrough-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-}
-
-.walkthrough-animation {
-  position: relative;
-  width: 120px;
-  height: 80px;
-}
-
-.walkthrough-hand {
+/* Dashed zone for Swiping */
+.walkthrough-swipe-zone {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  animation: swipe-hand 2.5s infinite ease-in-out;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 140px;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
-.walkthrough-text {
+/* Dashed zone for Tapping */
+.walkthrough-tap-zone {
+  position: absolute;
+  top: 40%;
+  right: 12px;
+  width: 60px;
+  height: 30%;
+  border: 2px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
   display: flex;
-  justify-content: space-between;
-  width: 280px;
-  font-size: 16px;
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
   text-align: center;
 }
 
-.walkthrough-text-left {
-  color: #ff4b4b;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.walkthrough-text-right {
-  color: #4cd964;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.walkthrough-btn {
-  margin-top: 40px;
-  background: white;
-  color: #111;
-  border: none;
-  padding: 12px 32px;
-  border-radius: 24px;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-@keyframes swipe-hand {
-  0% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-
-  20% {
-    transform: translateX(30px) rotate(10deg);
-  }
-
-  40% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-
-  60% {
-    transform: translateX(-80px) rotate(-10deg);
-  }
-
-  80% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-
-  100% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-}
-
-.walkthrough-tap-animation {
-  position: absolute;
-  top: 50%;
-  right: 20px;
-  width: 40px;
-  height: 40px;
-  transform: translateY(-50%);
-}
-
-.walkthrough-tap-hand {
-  animation: tap-photo 2s infinite ease-in-out;
+.walkthrough-text-center {
   color: white;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 14px;
+  line-height: 1.4;
 }
 
-@keyframes tap-photo {
+.walkthrough-text-small {
+  color: white;
+  font-weight: 600;
+  font-size: 11px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 12px;
+  line-height: 1.2;
+}
+
+/* Linear Hand Animations */
+.linear-hand-swipe {
+  animation: swipe-linear 2.5s infinite ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  color: white;
+}
+
+.linear-hand-tap {
+  animation: tap-linear 2s infinite ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  color: white;
+}
+
+@keyframes swipe-linear {
   0% {
-    transform: scale(1) translateY(0);
-    opacity: 0.7;
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(30px);
   }
 
   50% {
-    transform: scale(0.8) translateY(10px);
-    opacity: 1;
+    transform: translateX(0);
+  }
+
+  75% {
+    transform: translateX(-30px);
   }
 
   100% {
-    transform: scale(1) translateY(0);
-    opacity: 0.7;
+    transform: translateX(0);
   }
+}
+
+@keyframes tap-linear {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.8);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.walkthrough-btn {
+  position: absolute;
+  bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: #111;
+  border: none;
+  padding: 14px 44px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
