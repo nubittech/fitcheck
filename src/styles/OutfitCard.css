@@ -888,3 +888,35 @@
     transform: translateX(-50%) rotate(0deg);
   }
 }
+
+.walkthrough-tap-animation {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+.walkthrough-tap-hand {
+  animation: tap-photo 2s infinite ease-in-out;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes tap-photo {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(0.8) translateY(10px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.7;
+  }
+}
