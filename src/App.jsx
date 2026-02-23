@@ -503,6 +503,7 @@ function App() {
           </div>
         )}
         <OutfitCard
+          key={currentOutfit.id}
           outfit={currentOutfit}
           currentUser={currentUser}
           session={session}
@@ -543,6 +544,7 @@ function App() {
           </header>
           <div style={{ flex: 1, position: 'relative' }}>
             <OutfitCard
+              key={viewingOutfit.id}
               outfit={viewingOutfit}
               currentUser={currentUser}
               session={session}
