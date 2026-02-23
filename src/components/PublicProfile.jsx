@@ -4,6 +4,7 @@ import '../styles/PublicProfile.css'
 const MOCK_USER = {
   name: 'Sarah Miller',
   username: 'sarah_miller',
+  instagram_handle: 'sarahmiller',
   avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
   location: 'Brooklyn, NY',
   bio: 'Thrifting enthusiast & lover of earth tones. Always looking for the perfect vintage denim. Let\'s swap style tips! ✨',
@@ -81,6 +82,20 @@ const PublicProfile = ({ onBack, onMessage, onOutfitClick }) => {
 
         {/* Bio */}
         <p className="pp-bio">{user.bio}</p>
+
+        {/* Instagram */}
+        {user.instagram_handle && (
+          <div className="pp-instagram-wrap">
+            <a href={`https://instagram.com/${user.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="pp-instagram">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+              @{user.instagram_handle}
+            </a>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="pp-stats">

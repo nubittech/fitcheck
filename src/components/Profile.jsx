@@ -74,6 +74,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
         avatar: currentUser?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
         styles: currentUser?.vibes || [],
         bio: currentUser?.bio || '',
+        instagram_handle: currentUser?.instagram_handle || '',
         isPremium: Boolean(currentUser?.is_premium),
     }), [currentUser]);
 
@@ -143,6 +144,16 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 <h2 className="user-name">{profile.name}</h2>
                 <p className="user-location">{profile.age} / {profile.city}</p>
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
+                {profile.instagram_handle && (
+                    <a href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="profile-instagram">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                        @{profile.instagram_handle}
+                    </a>
+                )}
             </section>
 
             <section className="stats-row">

@@ -401,7 +401,7 @@ function App() {
     setActiveTab('home')
   }
 
-  const handleProfileEditSave = async ({ name, bio, city, age, styles, avatarFile, avatarPreview }) => {
+  const handleProfileEditSave = async ({ name, bio, city, age, styles, avatarFile, avatarPreview, instagram_handle }) => {
     if (!session?.user?.id) return
 
     let avatarUrl = avatarPreview || currentUser?.avatar_url || DEFAULT_AVATAR
@@ -416,7 +416,8 @@ function App() {
       city,
       age,
       vibes: styles,
-      avatar_url: avatarUrl
+      avatar_url: avatarUrl,
+      instagram_handle
     })
 
     if (updated) {
@@ -429,7 +430,8 @@ function App() {
         city,
         age,
         vibes: styles,
-        avatar_url: avatarUrl
+        avatar_url: avatarUrl,
+        instagram_handle
       }))
     }
   }

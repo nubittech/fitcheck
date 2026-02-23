@@ -11,6 +11,7 @@ const EditProfile = ({ onClose, profile, onSave }) => {
   const [selectedVibes, setSelectedVibes] = useState(profile?.styles?.length ? profile.styles : [])
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400')
   const [avatarFile, setAvatarFile] = useState(null)
+  const [instagramHandle, setInstagramHandle] = useState(profile?.instagram_handle || '')
 
   const toggleVibe = (vibe) => {
     setSelectedVibes((prev) => {
@@ -35,7 +36,8 @@ const EditProfile = ({ onClose, profile, onSave }) => {
       age: Number(age) || null,
       styles: selectedVibes,
       avatarPreview,
-      avatarFile
+      avatarFile,
+      instagram_handle: instagramHandle.trim().replace(/^@/, '')
     })
     onClose()
   }
@@ -107,6 +109,20 @@ const EditProfile = ({ onClose, profile, onSave }) => {
             <div>
               <label className="field-label">Age</label>
               <input className="field-input age-input" value={age} onChange={(e) => setAge(e.target.value)} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <label className="field-label">Instagram Username</label>
+            <div className="field-with-icon">
+              <span style={{ color: '#9CA3AF', fontWeight: 'bold' }}>@</span>
+              <input
+                className="field-input"
+                placeholder="username"
+                value={instagramHandle}
+                onChange={(e) => setInstagramHandle(e.target.value)}
+                style={{ paddingLeft: '32px' }}
+              />
             </div>
           </div>
         </section>

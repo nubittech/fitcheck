@@ -95,6 +95,33 @@
   margin-bottom: 20px;
 }
 
+.pp-instagram-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.pp-instagram {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E1306C;
+  text-decoration: none;
+  background: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #f2e9e4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease;
+}
+
+.pp-instagram:active {
+  transform: scale(0.96);
+}
+
 /* Stats */
 .pp-stats {
   display: flex;

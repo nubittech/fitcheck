@@ -99,6 +99,27 @@
   color: #171215;
 }
 
+.profile-page .profile-instagram {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #E1306C;
+  text-decoration: none;
+  background: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #f2e9e4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.15s ease;
+}
+
+.profile-page .profile-instagram:active {
+  transform: scale(0.96);
+}
+
 .profile-page .user-location {
   margin: 6px 0 0;
   font-size: 14px;
