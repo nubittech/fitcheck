@@ -106,12 +106,19 @@ function App() {
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
 
-    // Handle web OAuth redirect (PKCE code in query params)
+    // Detect OAuth errors from the URL
     const url = window.location.href
-    if (url.includes('?code=') || url.includes('&code=')) {
-      // Supabase detectSessionInUrl handles this automatically
-      const cleanUrl = window.location.origin + window.location.pathname
-      setTimeout(() => window.history.replaceState({}, '', cleanUrl), 1000)
+    if (url.includes('error=')) {
+      try {
+        const urlObj = new URL(url)
+        const errorDesc = urlObj.searchParams.get('error_description')
+        if (errorDesc) {
+          console.error('[OAuth] Server Error:', errorDesc)
+          // Don't show an intrusive alert, but clear the URL so it doesn't loop
+          const cleanUrl = window.location.origin + window.location.pathname
+          window.history.replaceState({}, '', cleanUrl)
+        }
+      } catch (e) { }
     }
 
     // Native: Listen for deep link callback from OAuth

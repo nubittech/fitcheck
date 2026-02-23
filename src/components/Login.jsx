@@ -55,6 +55,10 @@ const Login = ({ onLogin, onGoSignUp }) => {
           options: {
             redirectTo,
             skipBrowserRedirect: true,
+            queryParams: provider === 'google' ? {
+              access_type: 'offline',
+              prompt: 'consent'
+            } : undefined
           }
         })
         if (oauthError) throw oauthError
@@ -64,7 +68,13 @@ const Login = ({ onLogin, onGoSignUp }) => {
       } else {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
-          options: { redirectTo: window.location.origin }
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: provider === 'google' ? {
+              access_type: 'offline',
+              prompt: 'consent'
+            } : undefined
+          }
         })
         if (oauthError) throw oauthError
       }
