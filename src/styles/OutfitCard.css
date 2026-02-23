@@ -948,10 +948,9 @@
 
 .walkthrough-btn {
   position: absolute;
-  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
-  /* Placed safely below the bottom zone */
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   background: white;
   color: #111;
   border: none;
@@ -960,6 +959,6 @@
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   z-index: 101;
 }
