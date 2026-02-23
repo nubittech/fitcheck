@@ -141,12 +141,6 @@ const Login = ({ onLogin, onGoSignUp }) => {
           <span>Email</span>
         </button>
 
-        {/* VK is usually a regional Auth, using discord as a fallback if you need something else or we can keep it strictly VK if you configure it in supabase */}
-        <button className="login-method-btn" onClick={() => console.log("VK Login clicked")}>
-          <div className="login-method-icon"><VKIcon /></div>
-          <span>VK</span>
-        </button>
-
         <button className="login-method-btn" onClick={() => handleSocialLogin('google')}>
           <div className="login-method-icon"><GoogleIcon /></div>
           <span>Google</span>
