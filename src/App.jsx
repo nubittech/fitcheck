@@ -17,6 +17,9 @@ import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, upload
 import { supabase } from './lib/supabase'
 import { usePremium } from './lib/usePremium'
 import { Keyboard } from '@capacitor/keyboard'
+import { Browser } from '@capacitor/browser'
+import { App as CapApp } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -98,28 +101,59 @@ function App() {
     return success
   }, [handleUpgrade, session])
 
-  // Auth listener
+  // Auth listener + OAuth deep link handler
   useEffect(() => {
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
 
-    // Handle web OAuth redirect (PKCE code or implicit hash tokens)
+    // Handle web OAuth redirect (implicit hash tokens)
     const url = window.location.href
-    if (url.includes('code=') || url.includes('#access_token=')) {
-      // Supabase client auto-detects hash fragments on init
-      // For PKCE code, we need to let getSession handle it
-      // Clean URL after processing
+    if (url.includes('#access_token=')) {
       const cleanUrl = window.location.origin + window.location.pathname
       window.history.replaceState({}, '', cleanUrl)
+    }
+
+    // Native: Listen for deep link callback from OAuth
+    let deepLinkHandler = null
+    if (Capacitor.isNativePlatform()) {
+      deepLinkHandler = CapApp.addListener('appUrlOpen', async ({ url }) => {
+        console.log('[OAuth] Deep link received:', url)
+        try {
+          if (url.includes('#access_token=')) {
+            const hashPart = url.split('#')[1]
+            const params = new URLSearchParams(hashPart)
+            const access_token = params.get('access_token')
+            const refresh_token = params.get('refresh_token')
+            console.log('[OAuth] Tokens found, setting session...')
+            if (access_token && refresh_token) {
+              const { data, error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              })
+              console.log('[OAuth] setSession result:', { data: !!data, error })
+              if (data?.session) {
+                setSession(data.session)
+              }
+            }
+          }
+          await Browser.close().catch(() => { })
+        } catch (err) {
+          console.error('[OAuth] Deep link error:', err)
+        }
+      })
     }
 
     getSession().then(s => {
       setSession(s)
     })
     const { data: { subscription } } = onAuthStateChange((_event, s) => {
+      console.log('[Auth] State changed:', _event)
       setSession(s)
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      if (deepLinkHandler) deepLinkHandler.then(h => h.remove())
+    }
   }, [])
 
   // Fetch profile when session changes

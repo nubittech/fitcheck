@@ -3,7 +3,6 @@ import { signIn } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../i18n/LangContext'
 import { Browser } from '@capacitor/browser'
-import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import veyloLogo from '../assets/veylo-logo.png'
 import '../styles/Login.css'
@@ -24,37 +23,6 @@ const Login = ({ onLogin, onGoSignUp }) => {
       setLastEmail(savedEmail)
       setEmail(savedEmail)
     }
-  }, [])
-
-  // Listen for deep link callback from OAuth on native
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return
-    const handler = CapApp.addListener('appUrlOpen', async ({ url }) => {
-      try {
-        // Handle implicit flow: tokens in hash fragment
-        if (url.includes('#access_token=')) {
-          const hashPart = url.split('#')[1]
-          const params = new URLSearchParams(hashPart)
-          const access_token = params.get('access_token')
-          const refresh_token = params.get('refresh_token')
-          if (access_token && refresh_token) {
-            await supabase.auth.setSession({ access_token, refresh_token })
-          }
-        }
-        // Handle PKCE flow: code in query params
-        else if (url.includes('code=')) {
-          const urlObj = new URL(url)
-          const code = urlObj.searchParams.get('code')
-          if (code) {
-            await supabase.auth.exchangeCodeForSession(code)
-          }
-        }
-        await Browser.close().catch(() => { })
-      } catch (err) {
-        console.error('OAuth callback error:', err)
-      }
-    })
-    return () => { handler.then(h => h.remove()) }
   }, [])
 
   const handleEmailLogin = async (e) => {
