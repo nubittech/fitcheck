@@ -18,6 +18,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const [gender, setGender] = useState('unisex')
   const [selectedStyle, setSelectedStyle] = useState('Minimalist')
   const [styleOpen, setStyleOpen] = useState(false)
+  const [postType, setPostType] = useState('single') // 'single' | 'ab_test'
   const [ageRange, setAgeRange] = useState([18, 35])
   const [draggingThumb, setDraggingThumb] = useState(null)
   const [caption, setCaption] = useState('')
@@ -26,7 +27,11 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
-    if (mediaFiles.length + files.length > 4) return
+    const maxFiles = postType === 'ab_test' ? 2 : 4
+    if (mediaFiles.length + files.length > maxFiles) {
+      alert(tr ? `En fazla ${maxFiles} dosya seçebilirsin.` : `You can select up to ${maxFiles} files.`)
+      return
+    }
 
     const newMedia = files.map(file => ({
       id: Date.now() + Math.random(),
@@ -150,8 +155,11 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const videoCount = mediaFiles.filter(m => m.type === 'video').length
   const imageCount = mediaFiles.filter(m => m.type === 'image').length
-  const canAddMore = mediaFiles.length < 4
-  const isValid = mediaFiles.length > 0 && pieces.length > 0
+  const maxAllowed = postType === 'ab_test' ? 2 : 4
+  const canAddMore = mediaFiles.length < maxAllowed
+  const isValid = postType === 'ab_test'
+    ? (mediaFiles.length === 2)
+    : (mediaFiles.length > 0 && pieces.length > 0)
   const postsRemaining = isPremium ? Infinity : Math.max(0, FREE_DAILY_POST_LIMIT - dailyPostCount)
   const canPost = isPremium || postsRemaining > 0
 
@@ -164,6 +172,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setPieceName('')
     setPieceBrand('')
     setPieceLink('')
+    setPostType('single')
     setGender('unisex')
     setSelectedStyle('Minimalist')
     setStyleOpen(false)
@@ -184,6 +193,18 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setSubmitError('')
 
     try {
+      // 1. Upload media files first to get URLs
+      const uploadedMedia = []
+      for (let i = 0; i < mediaFiles.length; i++) {
+        const mf = mediaFiles[i]
+        const { data: uploaded, error: uploadErr } = await uploadMedia(session.user.id, mf.file)
+        if (uploadErr) throw uploadErr
+        uploadedMedia.push({ ...mf, url: uploaded.url, sortOrder: i })
+      }
+
+      const isAbTest = postType === 'ab_test'
+      const imageUrlB = isAbTest && uploadedMedia.length > 1 ? uploadedMedia[1].url : null
+
       // Build items with tag positions
       const itemsData = pieces.map((piece, index) => {
         const dot = tagDots[index]
@@ -205,7 +226,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         ageRangeMin: ageRange[0],
         ageRangeMax: ageRange[1],
         items: itemsData,
-        isBoosted: boostEnabled
+        isBoosted: boostEnabled,
+        postType,
+        imageUrlB
       })
 
       if (outfitError) throw outfitError
@@ -218,17 +241,14 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         }
       }
 
-      // Upload media files and create outfit_media rows
-      for (let i = 0; i < mediaFiles.length; i++) {
-        const mf = mediaFiles[i]
-        const { data: uploaded, error: uploadErr } = await uploadMedia(session.user.id, mf.file)
-        if (uploadErr) throw uploadErr
-
+      // Create outfit_media rows
+      for (let i = 0; i < uploadedMedia.length; i++) {
+        const um = uploadedMedia[i]
         await insertOutfitMedia({
           outfitId: outfit.id,
-          mediaUrl: uploaded.url,
-          mediaType: mf.type,
-          sortOrder: i
+          mediaUrl: um.url,
+          mediaType: um.type,
+          sortOrder: um.sortOrder
         })
       }
 
@@ -271,75 +291,90 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         </div>
 
         <div className="preview-card-container">
-          {/* Taggable image */}
-          <div
-            className="tag-image-container"
-            ref={imageContainerRef}
-            onClick={handleImageTap}
-          >
-            {previewMedia.length > 0 && previewMedia[0].type === 'image' ? (
-              <img className="tag-image" src={previewMedia[0].url} alt="combo" />
-            ) : previewMedia.length > 0 ? (
-              <video className="tag-image" src={previewMedia[0].url} muted />
-            ) : null}
-
-            {/* Placed tag dots */}
-            {tagDots.map((dot, i) => (
-              <div
-                key={i}
-                className="tag-dot-placed"
-                style={{ left: `${dot.x}%`, top: `${dot.y}%` }}
-              >
-                <div className="tag-dot-inner" />
+          {postType === 'ab_test' ? (
+            <div className="ab-preview-container" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, position: 'relative', aspectRatio: '3/4', backgroundColor: '#eee', borderRadius: '12px', overflow: 'hidden' }}>
+                <img src={previewMedia[0]?.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="A" />
+                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', fontSize: '14px' }}>A</div>
               </div>
-            ))}
-
-            {/* Hint at bottom */}
-            {tagDots.length < pieces.length && (
-              <div className="tag-hint-bar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.8">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
-                </svg>
-                <span>{tr ? 'Fotoğrafa dokun, etiket ekle' : 'Tap photo to tag items'}</span>
+              <div style={{ flex: 1, position: 'relative', aspectRatio: '3/4', backgroundColor: '#eee', borderRadius: '12px', overflow: 'hidden' }}>
+                <img src={previewMedia[1]?.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="B" />
+                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', fontSize: '14px' }}>B</div>
               </div>
-            )}
-          </div>
-
-          {/* Tagged items list */}
-          <div className="tagged-items-section">
-            <div className="tagged-items-header">
-              <span className="tagged-items-label">{tr ? 'ETİKETLENEN PARÇALAR' : 'TAGGED ITEMS'}</span>
-              {tagDots.length > 0 && (
-                <button className="tagged-edit-btn" onClick={() => setTagDots([])}>{tr ? 'Düzenle' : 'Edit'}</button>
-              )}
             </div>
+          ) : (
+            <>
+              {/* Taggable image */}
+              <div
+                className="tag-image-container"
+                ref={imageContainerRef}
+                onClick={handleImageTap}
+              >
+                {previewMedia.length > 0 && previewMedia[0].type === 'image' ? (
+                  <img className="tag-image" src={previewMedia[0].url} alt="combo" />
+                ) : previewMedia.length > 0 ? (
+                  <video className="tag-image" src={previewMedia[0].url} muted />
+                ) : null}
 
-            {pieces.map((piece, index) => (
-              <div key={piece.id} className="tagged-item-card">
-                <div className="tagged-item-number">
-                  <span>{index + 1}</span>
-                </div>
-                <div className="tagged-item-info">
-                  <span className="tagged-item-brand">{piece.brand}</span>
-                  <span className="tagged-item-name">{piece.name}</span>
-                </div>
-                {piece.link && (
-                  <div className="tagged-item-link-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" /></svg>
-                    {tr ? 'Satın Al' : 'Shop'}
+                {/* Placed tag dots */}
+                {tagDots.map((dot, i) => (
+                  <div
+                    key={i}
+                    className="tag-dot-placed"
+                    style={{ left: `${dot.x}%`, top: `${dot.y}%` }}
+                  >
+                    <div className="tag-dot-inner" />
+                  </div>
+                ))}
+
+                {/* Hint at bottom */}
+                {tagDots.length < pieces.length && (
+                  <div className="tag-hint-bar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.8">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                    </svg>
+                    <span>{tr ? 'Fotoğrafa dokun, etiket ekle' : 'Tap photo to tag items'}</span>
                   </div>
                 )}
               </div>
-            ))}
 
-            {/* Add another item hint */}
-            <div className="add-tag-hint" onClick={() => setShowPreview(false)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
-              <span>{tr ? 'Başka parça eklemek için fotoğrafa dokun' : 'Tap photo to add another item'}</span>
-            </div>
-          </div>
+              {/* Tagged items list */}
+              <div className="tagged-items-section">
+                <div className="tagged-items-header">
+                  <span className="tagged-items-label">{tr ? 'ETİKETLENEN PARÇALAR' : 'TAGGED ITEMS'}</span>
+                  {tagDots.length > 0 && (
+                    <button className="tagged-edit-btn" onClick={() => setTagDots([])}>{tr ? 'Düzenle' : 'Edit'}</button>
+                  )}
+                </div>
+
+                {pieces.map((piece, index) => (
+                  <div key={piece.id} className="tagged-item-card">
+                    <div className="tagged-item-number">
+                      <span>{index + 1}</span>
+                    </div>
+                    <div className="tagged-item-info">
+                      <span className="tagged-item-brand">{piece.brand}</span>
+                      <span className="tagged-item-name">{piece.name}</span>
+                    </div>
+                    {piece.link && (
+                      <div className="tagged-item-link-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z" /></svg>
+                        {tr ? 'Satın Al' : 'Shop'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add another item hint */}
+                <div className="add-tag-hint" onClick={() => setShowPreview(false)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                  <span>{tr ? 'Başka parça eklemek için fotoğrafa dokun' : 'Tap photo to add another item'}</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Premium Boost */}
           <div className={`boost-card ${boostRemaining === 0 ? 'boost-disabled' : ''}`}>
@@ -395,6 +430,35 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       </div>
 
       <div className="newcombo-scroll">
+        {/* Post Type Selection */}
+        <div className="newcombo-section">
+          <label className="field-label">{tr ? 'GÖNDERİ TİPİ' : 'POST TYPE'}</label>
+          <div className="gender-row" style={{ marginTop: '8px' }}>
+            <button
+              className={`gender-chip ${postType === 'single' ? 'selected' : ''}`}
+              onClick={() => {
+                setPostType('single')
+              }}
+            >
+              {tr ? 'Kombini Paylaş' : 'Share Look'}
+            </button>
+            <button
+              className={`gender-chip ${postType === 'ab_test' ? 'selected' : ''}`}
+              onClick={() => {
+                setPostType('ab_test')
+                if (mediaFiles.length > 2) setMediaFiles(mediaFiles.slice(0, 2))
+              }}
+            >
+              {tr ? 'Kombin Kıyaslat' : 'Versus Battle'}
+            </button>
+          </div>
+          {postType === 'ab_test' && (
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px', lineHeight: 1.4 }}>
+              {tr ? 'Kararsız kaldığın 2 kombini yükle, hangisinin daha iyi olduğuna topluluk karar versin!' : 'Upload 2 outfits you are unsure about and let the community decide!'}
+            </div>
+          )}
+        </div>
+
         {/* Media Upload Area */}
         <div className="newcombo-section">
           <div className="media-upload-area" onClick={() => canAddMore && fileInputRef.current?.click()}>
@@ -433,7 +497,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
-                    <span>{tr ? `${4 - mediaFiles.length} kaldı` : `${4 - mediaFiles.length} left`}</span>
+                    <span>{tr ? `${maxAllowed - mediaFiles.length} kaldı` : `${maxAllowed - mediaFiles.length} left`}</span>
                   </button>
                 )}
               </div>
@@ -451,7 +515,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             <div className="media-info-bar">
               <span>{imageCount} {tr ? `fotoğraf` : `photo${imageCount !== 1 ? 's' : ''}`}</span>
               {videoCount > 0 && <span>{videoCount} video</span>}
-              <span className="media-limit">{mediaFiles.length}/4</span>
+              <span className="media-limit">{mediaFiles.length}/{maxAllowed}</span>
             </div>
           )}
         </div>
@@ -469,118 +533,120 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           <div className="caption-counter">{caption.length}/280</div>
         </div>
 
-        {/* Tag Pieces */}
-        <div className="newcombo-section">
-          <div className="section-header">
-            <h2 className="section-title">{t('tag_pieces')}</h2>
-            {pieces.length > 0 && (
-              <span className="section-badge">{pieces.length} {tr ? 'parça eklendi' : `item${pieces.length !== 1 ? 's' : ''} added`}</span>
-            )}
-          </div>
-
-          {pieces.map(piece => (
-            <div key={piece.id} className="piece-card">
-              <div className="piece-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.38 3.46L16 2 12 5.69 8 2 3.62 3.46 2 8l3.69 4L2 16l1.62 4.54L8 22l4-3.69L16 22l4.38-1.46L22 16l-3.69-4L22 8z" />
-                </svg>
-              </div>
-              <div className="piece-info">
-                <span className="piece-name">{piece.name}</span>
-                <span className="piece-brand">{piece.brand}</span>
-              </div>
-              <button
-                className={`piece-feedback ${piece.feedbackEnabled ? 'active' : ''}`}
-                onClick={() => toggleFeedback(piece.id)}
-              >
-                {tr ? 'GERİ BİLDİRİM' : 'FEEDBACK'}
-                <div className={`feedback-toggle ${piece.feedbackEnabled ? 'on' : ''}`}>
-                  {piece.feedbackEnabled ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  )}
-                </div>
-              </button>
-              <button className="piece-remove" onClick={() => removePiece(piece.id)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-          ))}
-
-          {/* Add piece inline */}
-          <div className="add-piece-form">
-            <input
-              className="piece-input"
-              placeholder={tr ? 'Ürün adı (ör. Beyaz T-shirt)' : 'Item name (e.g. White T-shirt)'}
-              value={pieceName}
-              onChange={(e) => setPieceName(e.target.value)}
-            />
-            <input
-              className="piece-input small"
-              placeholder={tr ? 'Marka (isteğe bağlı)' : 'Brand (optional)'}
-              value={pieceBrand}
-              onChange={(e) => setPieceBrand(e.target.value)}
-            />
-            <div style={{ position: 'relative' }}>
-              {!isPremium && (
-                <div style={{
-                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                  zIndex: 2, background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff',
-                  fontSize: '10px', fontWeight: '700', padding: '3px 10px', borderRadius: '10px',
-                  letterSpacing: '0.5px', pointerEvents: 'none'
-                }}>
-                  ⭐ PREMIUM
-                </div>
+        {/* Tag Pieces (Hide for A/B Test or make optional) */}
+        {postType !== 'ab_test' && (
+          <div className="newcombo-section">
+            <div className="section-header">
+              <h2 className="section-title">{t('tag_pieces')}</h2>
+              {pieces.length > 0 && (
+                <span className="section-badge">{pieces.length} {tr ? 'parça eklendi' : `item${pieces.length !== 1 ? 's' : ''} added`}</span>
               )}
-              <input
-                className={`piece-input piece-link-input ${pieceLinkError === 'ok' ? 'link-valid' : pieceLinkError ? 'link-error' : ''}`}
-                placeholder={tr ? '🔗 Satın alma linki (aff/ref link)' : '🔗 Shop link (affiliate URL)'}
-                value={isPremium ? pieceLink : ''}
-                onChange={(e) => { if (isPremium) { setPieceLink(e.target.value); setPieceLinkError('') } }}
-                onBlur={() => {
-                  if (!isPremium) return
-                  if (!pieceLink.trim()) { setPieceLinkError(''); return }
-                  const { valid, reason } = validateAffiliateLink(pieceLink.trim())
-                  setPieceLinkError(valid ? 'ok' : affiliateLinkError(reason, lang))
-                }}
-                type="url"
-                inputMode="url"
-                disabled={!isPremium}
-                style={!isPremium ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
-              />
             </div>
-            {isPremium && pieceLinkError && pieceLinkError !== 'ok' && (
-              <p className="link-error-msg">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><circle cx="12" cy="16" r="1" fill="currentColor" />
-                </svg>
-                {pieceLinkError}
-              </p>
-            )}
-            {pieceLinkError === 'ok' && (
-              <p className="link-ok-msg">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                {tr ? 'Geçerli affiliate linki ✓' : 'Valid affiliate link ✓'}
-              </p>
-            )}
-            <button
-              className="add-piece-btn"
-              onClick={addPiece}
-              disabled={!pieceName.trim()}
-            >
-              + {tr ? 'Parça ekle' : 'Add piece'}
-            </button>
+
+            {pieces.map(piece => (
+              <div key={piece.id} className="piece-card">
+                <div className="piece-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.38 3.46L16 2 12 5.69 8 2 3.62 3.46 2 8l3.69 4L2 16l1.62 4.54L8 22l4-3.69L16 22l4.38-1.46L22 16l-3.69-4L22 8z" />
+                  </svg>
+                </div>
+                <div className="piece-info">
+                  <span className="piece-name">{piece.name}</span>
+                  <span className="piece-brand">{piece.brand}</span>
+                </div>
+                <button
+                  className={`piece-feedback ${piece.feedbackEnabled ? 'active' : ''}`}
+                  onClick={() => toggleFeedback(piece.id)}
+                >
+                  {tr ? 'GERİ BİLDİRİM' : 'FEEDBACK'}
+                  <div className={`feedback-toggle ${piece.feedbackEnabled ? 'on' : ''}`}>
+                    {piece.feedbackEnabled ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+                <button className="piece-remove" onClick={() => removePiece(piece.id)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+
+            {/* Add piece inline */}
+            <div className="add-piece-form">
+              <input
+                className="piece-input"
+                placeholder={tr ? 'Ürün adı (ör. Beyaz T-shirt)' : 'Item name (e.g. White T-shirt)'}
+                value={pieceName}
+                onChange={(e) => setPieceName(e.target.value)}
+              />
+              <input
+                className="piece-input small"
+                placeholder={tr ? 'Marka (isteğe bağlı)' : 'Brand (optional)'}
+                value={pieceBrand}
+                onChange={(e) => setPieceBrand(e.target.value)}
+              />
+              <div style={{ position: 'relative' }}>
+                {!isPremium && (
+                  <div style={{
+                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                    zIndex: 2, background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff',
+                    fontSize: '10px', fontWeight: '700', padding: '3px 10px', borderRadius: '10px',
+                    letterSpacing: '0.5px', pointerEvents: 'none'
+                  }}>
+                    ⭐ PREMIUM
+                  </div>
+                )}
+                <input
+                  className={`piece-input piece-link-input ${pieceLinkError === 'ok' ? 'link-valid' : pieceLinkError ? 'link-error' : ''}`}
+                  placeholder={tr ? '🔗 Satın alma linki (aff/ref link)' : '🔗 Shop link (affiliate URL)'}
+                  value={isPremium ? pieceLink : ''}
+                  onChange={(e) => { if (isPremium) { setPieceLink(e.target.value); setPieceLinkError('') } }}
+                  onBlur={() => {
+                    if (!isPremium) return
+                    if (!pieceLink.trim()) { setPieceLinkError(''); return }
+                    const { valid, reason } = validateAffiliateLink(pieceLink.trim())
+                    setPieceLinkError(valid ? 'ok' : affiliateLinkError(reason, lang))
+                  }}
+                  type="url"
+                  inputMode="url"
+                  disabled={!isPremium}
+                  style={!isPremium ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
+                />
+              </div>
+              {isPremium && pieceLinkError && pieceLinkError !== 'ok' && (
+                <p className="link-error-msg">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  {pieceLinkError}
+                </p>
+              )}
+              {pieceLinkError === 'ok' && (
+                <p className="link-ok-msg">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  {tr ? 'Geçerli affiliate linki ✓' : 'Valid affiliate link ✓'}
+                </p>
+              )}
+              <button
+                className="add-piece-btn"
+                onClick={addPiece}
+                disabled={!pieceName.trim()}
+              >
+                + {tr ? 'Parça ekle' : 'Add piece'}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Who is this for — Premium only filters */}
         <div className="newcombo-section" style={{ position: 'relative' }}>

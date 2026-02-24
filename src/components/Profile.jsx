@@ -195,8 +195,11 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     </div>
                 ) : activeOutfits.length === 1 ? (
                     <div className="looks-single">
-                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer' }}>
+                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer', position: 'relative' }}>
                             <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
+                            {activeOutfits[0].post_type === 'ab_test' && (
+                                <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
+                            )}
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
@@ -210,8 +213,11 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 ) : activeOutfits.length === 2 ? (
                     <div className="looks-grid">
                         {activeOutfits.slice(0, 2).map(outfit => (
-                            <div className="look-card equal" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
+                            <div className="look-card equal" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer', position: 'relative' }}>
                                 <img src={getOutfitImage(outfit)} alt="Look" />
+                                {outfit.post_type === 'ab_test' && (
+                                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
+                                )}
                                 <div className="look-overlay">
                                     <div className="timer-badge">
                                         {ICONS.clock} {getTimeLeft(outfit.created_at)}
@@ -225,8 +231,11 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     </div>
                 ) : (
                     <div className="looks-grid">
-                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer' }}>
+                        <div className="look-card large" onClick={() => onOutfitClick?.(activeOutfits[0])} style={{ cursor: 'pointer', position: 'relative' }}>
                             <img src={getOutfitImage(activeOutfits[0])} alt="Look" />
+                            {activeOutfits[0].post_type === 'ab_test' && (
+                                <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
+                            )}
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
@@ -238,8 +247,11 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                         </div>
                         <div className="looks-column">
                             {activeOutfits.slice(1, 3).map(outfit => (
-                                <div className="look-card small" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
+                                <div className="look-card small" key={outfit.id} onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer', position: 'relative' }}>
                                     <img src={getOutfitImage(outfit)} alt="Look" />
+                                    {outfit.post_type === 'ab_test' && (
+                                        <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
+                                    )}
                                     <div className="look-overlay">
                                         <div className="timer-badge">
                                             {ICONS.clock} {getTimeLeft(outfit.created_at)}

@@ -75,6 +75,12 @@ export const translations = {
         tagged_items: 'Tagged items',
         no_tagged: 'No items tagged yet',
 
+        // ── A/B Voting ────────────────────────────────────────────
+        ab_left: 'Left',
+        ab_right: 'Right',
+        ab_tap_hint: 'Tap a side to vote!',
+        ab_votes: 'votes',
+
         // ── Profile ─────────────────────────────────────────────
         profile: 'Profile',
         total_likes: 'TOTAL LIKES',
@@ -241,6 +247,12 @@ export const translations = {
         tap_to_tag: 'Etiketlemek için görsele dokun',
         tagged_items: 'Etiketlenen parçalar',
         no_tagged: 'Henüz etiketlenen parça yok',
+
+        // ── A/B Voting ────────────────────────────────────────────
+        ab_left: 'Sol',
+        ab_right: 'Sağ',
+        ab_tap_hint: 'Birini seç! Dokun ve oyunu ver',
+        ab_votes: 'oy',
 
         // ── Profile ─────────────────────────────────────────────
         profile: 'Profil',

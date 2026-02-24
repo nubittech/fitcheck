@@ -6,6 +6,7 @@ import Profile from './components/Profile'
 import Inbox, { ChatDetail } from './components/Inbox'
 import NewCombo from './components/NewCombo'
 import Login from './components/Login'
+import ABCard from './components/ABCard'
 import PublicProfile from './components/PublicProfile'
 import SignUp from './components/SignUp'
 import NoMoreContent from './components/NoMoreContent'
@@ -60,7 +61,9 @@ function transformOutfit(raw) {
     },
     isBoosted: raw.is_boosted || false,
     boostedAt: raw.boosted_at || null,
-    createdAt: raw.created_at || null
+    createdAt: raw.created_at || null,
+    postType: raw.post_type || 'single',
+    imageUrlB: raw.image_url_b || null
   }
 }
 
@@ -648,23 +651,40 @@ function App() {
             </div>
           </div>
         )}
-        <OutfitCard
-          key={currentOutfit.id}
-          outfit={currentOutfit}
-          currentUser={currentUser}
-          session={session}
-          isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
-          isFirstCard={currentIndex === 0 && !selectedVibe}
-          onNext={handleNext}
-          onSkip={handleSkip}
-          onLike={handleLike}
-          onItemVote={handleItemVote}
-          onUserTap={() => setViewingProfile(currentOutfit.user)}
-          onOpenChat={(conv) => {
-            setSelectedChat(conv)
-            setActiveTab('inbox')
-          }}
-        />
+        {currentOutfit.postType === 'ab_test' ? (
+          <ABCard
+            key={`ab-${currentOutfit.id}`}
+            outfit={currentOutfit}
+            currentUser={currentUser}
+            session={session}
+            isFirstCard={currentIndex === 0 && !selectedVibe}
+            onNext={handleNext}
+            onSkip={handleSkip}
+            onUserTap={() => setViewingProfile(currentOutfit.user)}
+            onOpenChat={(conv) => {
+              setSelectedChat(conv)
+              setActiveTab('inbox')
+            }}
+          />
+        ) : (
+          <OutfitCard
+            key={currentOutfit.id}
+            outfit={currentOutfit}
+            currentUser={currentUser}
+            session={session}
+            isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
+            isFirstCard={currentIndex === 0 && !selectedVibe}
+            onNext={handleNext}
+            onSkip={handleSkip}
+            onLike={handleLike}
+            onItemVote={handleItemVote}
+            onUserTap={() => setViewingProfile(currentOutfit.user)}
+            onOpenChat={(conv) => {
+              setSelectedChat(conv)
+              setActiveTab('inbox')
+            }}
+          />
+        )}
       </>
     )
   }

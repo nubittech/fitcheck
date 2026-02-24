@@ -17,6 +17,8 @@ const Login = ({ onLogin, onGoSignUp }) => {
   const [error, setError] = useState('')
   const [lastEmail, setLastEmail] = useState('')
 
+  const isAndroid = Capacitor.getPlatform() === 'android'
+
   useEffect(() => {
     const savedEmail = localStorage.getItem('last_login_email')
     if (savedEmail) {
@@ -180,10 +182,12 @@ const Login = ({ onLogin, onGoSignUp }) => {
       <div className="login-auth-label">{lang === 'tr' ? 'Giriş Yap' : 'Authorization'}</div>
 
       <div className="login-methods">
-        <button className="login-method-btn" onClick={() => handleSocialLogin('apple')}>
-          <div className="login-method-icon"><AppleIcon /></div>
-          <span>Apple</span>
-        </button>
+        {!isAndroid && (
+          <button className="login-method-btn" onClick={() => handleSocialLogin('apple')}>
+            <div className="login-method-icon"><AppleIcon /></div>
+            <span>Apple</span>
+          </button>
+        )}
 
         <button className="login-method-btn" onClick={() => setShowEmailForm(true)} style={{ position: 'relative' }}>
           {lastEmail && (

@@ -74,7 +74,7 @@ export async function getDailyPostCount(userId) {
   return { count: count || 0, error }
 }
 
-export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin, ageRangeMax, items, isBoosted }) {
+export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin, ageRangeMax, items, isBoosted, postType = 'single', imageUrlB = null }) {
   const sanitizedItems = (items || []).map(item => ({
     ...item,
     name: sanitize(item.name, 100),
@@ -90,7 +90,9 @@ export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin,
       age_range_min: ageRangeMin,
       age_range_max: ageRangeMax,
       items: sanitizedItems,
-      is_boosted: isBoosted
+      is_boosted: isBoosted,
+      post_type: postType,
+      image_url_b: imageUrlB
     })
     .select()
     .single()
@@ -380,6 +382,34 @@ export function subscribeToMessages(conversationId, onNewMessage) {
 }
 
 // ---- OUTFIT VOTES (like / dislike) ----
+
+export async function voteAbTest({ outfitId, userId, voteChoice }) {
+  try {
+    const { data, error } = await supabase
+      .from('ab_votes')
+      .upsert({ outfit_id: outfitId, user_id: userId, vote_choice: voteChoice }, { onConflict: 'outfit_id,user_id' })
+      .select()
+      .single()
+    return { data, error }
+  } catch (err) {
+    console.warn('[voteAbTest] ab_votes table may not exist:', err.message)
+    return { data: null, error: err }
+  }
+}
+
+export async function getAbVoteStats(outfitId) {
+  try {
+    const { data, error } = await supabase.rpc('get_ab_vote_stats', { post_id: outfitId })
+    if (error) {
+      console.warn('[getAbVoteStats] RPC may not exist:', error.message)
+      return { data: { count_a: 0, count_b: 0, percentage_a: 0, percentage_b: 0, total: 0 }, error: null }
+    }
+    return { data, error }
+  } catch (err) {
+    console.warn('[getAbVoteStats] RPC error:', err.message)
+    return { data: { count_a: 0, count_b: 0, percentage_a: 0, percentage_b: 0, total: 0 }, error: null }
+  }
+}
 
 /**
  * Cast or change a like/dislike vote on an outfit.
