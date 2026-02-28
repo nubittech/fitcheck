@@ -49,16 +49,16 @@ export async function getDashboardStats() {
 export async function getUsers({ page = 0, limit = 20, search = '' } = {}) {
     let query = supabase
         .from('profiles')
-        .select('id, full_name, username, email, avatar_url, city, age, role, is_premium, status, created_at', { count: 'exact' })
+        .select('id, full_name, username, avatar_url, city, age, role, is_premium, status, created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(page * limit, (page + 1) * limit - 1)
 
     if (search) {
-        query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,email.ilike.%${search}%`)
+        query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%`)
     }
 
     const { data, error, count } = await query
-    return { data, error, count }
+    return { data: data || [], error, count: count || 0 }
 }
 
 export async function updateUserStatus(userId, status) {
