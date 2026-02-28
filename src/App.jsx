@@ -13,6 +13,8 @@ import NoMoreContent from './components/NoMoreContent'
 import ProfileSetup from './components/ProfileSetup'
 import DailyLimitDemo from './components/DailyLimitDemo'
 import LegalConsent from './components/LegalConsent'
+import AdminLogin from './components/AdminLogin'
+import AdminPanel from './components/AdminPanel'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
 import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
 import { supabase } from './lib/supabase'
@@ -68,6 +70,25 @@ function transformOutfit(raw) {
 }
 
 function App() {
+  // ── Admin Mode ──
+  const isAdminRoute = window.location.hash === '#admin'
+  const [adminSession, setAdminSession] = useState(null)
+  const [adminUser, setAdminUser] = useState(null)
+
+  if (isAdminRoute) {
+    const handleAdminLogout = async () => {
+      await supabase.auth.signOut()
+      setAdminSession(null)
+      setAdminUser(null)
+    }
+
+    if (!adminSession) {
+      return <AdminLogin onLogin={(session, user) => { setAdminSession(session); setAdminUser(user) }} />
+    }
+    return <AdminPanel session={adminSession} onLogout={handleAdminLogout} />
+  }
+
+  // ── Normal App ──
   const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'
   const [session, setSession] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)

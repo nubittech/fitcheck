@@ -3,6 +3,7 @@ import ActionButtons from './ActionButtons'
 import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
 import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment } from '../lib/api'
+import { reportPost } from '../lib/adminApi'
 import { Share } from '@capacitor/share'
 import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
@@ -22,6 +23,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
   const panelRef = useRef(null)
   const [inputValue, setInputValue] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [showOptionsArgs, setShowOptionsArgs] = useState(false)
 
   // ── Walkthrough State ──
   const [walkthroughStep, setWalkthroughStep] = useState(0) // 0: hidden, 1: swipe/tap, 2: bottom sheet
@@ -169,6 +171,22 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
     setSubmittingComment(false)
   }
 
+  // ── Report / Block ──
+  const handleReport = async () => {
+    setShowOptionsArgs(false)
+    if (currentUser?.id && outfit?.id) {
+      await reportPost({ outfitId: outfit.id, reporterId: currentUser.id, reason: 'User reported from feed' })
+    }
+    alert(t('report_submitted') || 'Gönderi moderatörlere bildirildi.')
+    if (onSkip) onSkip()
+  }
+
+  const handleBlock = async () => {
+    setShowOptionsArgs(false)
+    alert(t('user_blocked') || 'Kullanıcı engellendi.')
+    if (onSkip) onSkip()
+  }
+
   // ── Message button ──
   const handleMessage = async () => {
     if (!currentUser?.id || !outfit?.user?.id) return
@@ -191,39 +209,73 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
 
   // ── Quick Ask: send auto-message about an item ──
   const handleQuickAsk = async (itemName) => {
-    if (!currentUser?.id || !outfit?.user?.id || quickAskSending) return
-    if (currentUser.id === outfit.user.id) return
+    if (quickAskSending) return
+    if (!currentUser?.id || !outfit?.user?.id) {
+      alert('Kullanıcı bilgisi eksik.')
+      return
+    }
+    if (currentUser.id === outfit.user.id) {
+      alert('Kendi kombininiz için kendinize mesaj atamazsınız.')
+      return
+    }
     setQuickAskSending(true)
     const msg = t('quick_ask_msg').replace('{item}', itemName)
-    const { data: conv } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    const { data: conv, error: convError } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    if (convError) console.error('Conv Error:', convError)
+
     if (conv) {
-      await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text: msg })
-      setQuickAskSent(itemName)
-      setTimeout(() => {
-        setQuickAskSent(null)
-        setShowQuickAsk(false)
-        setQuickAskOther(false)
-        setQuickAskInput('')
-      }, 1200)
+      const { error: msgErr } = await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text: msg })
+      if (msgErr) console.error('Msg Error:', msgErr)
+
+      if (!msgErr) {
+        setQuickAskSent(itemName)
+        setTimeout(() => {
+          setQuickAskSent(null)
+          setShowQuickAsk(false)
+          setQuickAskOther(false)
+          setQuickAskInput('')
+        }, 1200)
+      } else {
+        alert('Mesaj gönderilemedi: ' + msgErr.message)
+      }
+    } else {
+      alert('Sohbet oluşturulamadı.')
     }
     setQuickAskSending(false)
   }
 
   const handleQuickAskCustom = async () => {
     const text = quickAskInput.trim()
-    if (!text || !currentUser?.id || !outfit?.user?.id || quickAskSending) return
-    if (currentUser.id === outfit.user.id) return
+    if (!text || quickAskSending) return
+    if (!currentUser?.id || !outfit?.user?.id) {
+      alert('Kullanıcı bilgisi eksik.')
+      return
+    }
+    if (currentUser.id === outfit.user.id) {
+      alert('Kendi kombininiz için kendinize mesaj atamazsınız.')
+      return
+    }
     setQuickAskSending(true)
-    const { data: conv } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    const { data: conv, error: convError } = await findOrCreateConversation(currentUser.id, outfit.user.id)
+    if (convError) console.error('Conv Error:', convError)
+
     if (conv) {
-      await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text })
-      setQuickAskSent(true)
-      setTimeout(() => {
-        setQuickAskSent(null)
-        setShowQuickAsk(false)
-        setQuickAskOther(false)
-        setQuickAskInput('')
-      }, 1200)
+      const { error: msgErr } = await sendMessage({ conversationId: conv.id, senderId: currentUser.id, text })
+      if (msgErr) console.error('Msg Error:', msgErr)
+
+      if (!msgErr) {
+        setQuickAskSent(true)
+        setTimeout(() => {
+          setQuickAskSent(null)
+          setShowQuickAsk(false)
+          setQuickAskOther(false)
+          setQuickAskInput('')
+        }, 1200)
+      } else {
+        alert('Mesaj gönderilemedi: ' + msgErr.message)
+      }
+    } else {
+      alert('Sohbet oluşturulamadı.')
     }
     setQuickAskSending(false)
   }
@@ -407,13 +459,22 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
               </div>
             </div>
           </div>
-          <button className="share-btn" onClick={handleShare}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className="share-btn" onClick={handleShare}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
+            <button className="share-btn" onClick={() => setShowOptionsArgs(true)} style={{ opacity: 0.8 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Caption */}
@@ -522,81 +583,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
               </button>
             </div>
 
-            {/* Quick Ask Sheet */}
-            {showQuickAsk && (
-              <div className="quick-ask-overlay" onClick={() => { setShowQuickAsk(false); setQuickAskOther(false); setQuickAskInput('') }}>
-                <div className="quick-ask-sheet" onClick={(e) => e.stopPropagation()}>
-                  {quickAskSent ? (
-                    <div className="quick-ask-success">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success, #22c55e)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                      </svg>
-                      <span>{t('quick_ask_sent')}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="quick-ask-header">
-                        <h4>{t('quick_ask_title')}</h4>
-                        <p>{t('quick_ask_sub')}</p>
-                      </div>
 
-                      {/* Item list — each arrow auto-sends the message */}
-                      <div className="quick-ask-items">
-                        {outfit.items.map((item, i) => (
-                          <button
-                            key={i}
-                            className="quick-ask-item"
-                            onClick={(e) => { e.stopPropagation(); handleQuickAsk(item.name) }}
-                            disabled={quickAskSending}
-                          >
-                            <div className="quick-ask-item-info">
-                              <span className="quick-ask-item-name">{item.name}</span>
-                              {item.brand && item.brand !== 'Unknown' && (
-                                <span className="quick-ask-item-brand">{item.brand}</span>
-                              )}
-                            </div>
-                            {quickAskSending ? (
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
-                              </svg>
-                            ) : (
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13" />
-                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="quick-ask-divider" />
-
-                      {/* Custom message — always visible */}
-                      <div className="quick-ask-custom">
-                        <input
-                          type="text"
-                          placeholder={t('quick_ask_other_placeholder')}
-                          value={quickAskInput}
-                          onChange={(e) => setQuickAskInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAskCustom() }}
-                        />
-                        <button
-                          className={`quick-ask-send ${quickAskInput.trim() ? 'active' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); handleQuickAskCustom() }}
-                          disabled={!quickAskInput.trim() || quickAskSending}
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13" />
-                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                          </svg>
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Comments */}
             <div className="panel-section">
@@ -659,6 +646,117 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
           </div>
         </div>
       </div>
+
+      {/* Quick Ask Sheet (Moved to root level to avoid CSS transform bugs) */}
+      {showQuickAsk && (
+        <div className="quick-ask-overlay" onClick={() => { setShowQuickAsk(false); setQuickAskOther(false); setQuickAskInput('') }}>
+          <div className="quick-ask-sheet" onClick={(e) => e.stopPropagation()}>
+            {quickAskSent ? (
+              <div className="quick-ask-success">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success, #22c55e)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <span>{t('quick_ask_sent')}</span>
+              </div>
+            ) : (
+              <>
+                <div className="quick-ask-header">
+                  <h4>{t('quick_ask_title')}</h4>
+                  <p>{t('quick_ask_sub')}</p>
+                </div>
+
+                <div className="quick-ask-items">
+                  {outfit.items.map((item, i) => (
+                    <button
+                      key={i}
+                      className="quick-ask-item"
+                      onClick={(e) => { e.stopPropagation(); handleQuickAsk(item.name) }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleQuickAsk(item.name)
+                      }}
+                      disabled={quickAskSending}
+                    >
+                      <div className="quick-ask-item-info">
+                        <span className="quick-ask-item-name">{item.name}</span>
+                        {item.brand && item.brand !== 'Unknown' && (
+                          <span className="quick-ask-item-brand">{item.brand}</span>
+                        )}
+                      </div>
+                      {quickAskSending ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13" />
+                          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="quick-ask-divider" />
+
+                <div className="quick-ask-custom">
+                  <input
+                    type="text"
+                    placeholder={t('quick_ask_other_placeholder')}
+                    value={quickAskInput}
+                    onChange={(e) => setQuickAskInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAskCustom() }}
+                  />
+                  <button
+                    className={`quick-ask-send ${quickAskInput.trim() ? 'active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); handleQuickAskCustom() }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleQuickAskCustom()
+                    }}
+                    disabled={!quickAskInput.trim() || quickAskSending}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Options Modal (Report / Block) */}
+      {showOptionsArgs && (
+        <div className="quick-ask-overlay" onClick={() => setShowOptionsArgs(false)}>
+          <div className="quick-ask-sheet" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)' }}>
+            <div className="quick-ask-header">
+              <h4>{t('options') || 'Options'}</h4>
+            </div>
+            <div className="quick-ask-items">
+              <button className="quick-ask-item" onClick={handleReport} style={{ color: '#ef4444' }}>
+                <div className="quick-ask-item-info">
+                  <span style={{ fontWeight: 600 }}>{t('report_post') || 'Report Post'}</span>
+                </div>
+              </button>
+              <button className="quick-ask-item" onClick={handleBlock} style={{ color: '#ef4444' }}>
+                <div className="quick-ask-item-info">
+                  <span style={{ fontWeight: 600 }}>{t('block_user') || 'Block User'}</span>
+                </div>
+              </button>
+              <button className="quick-ask-item" onClick={() => setShowOptionsArgs(false)}>
+                <div className="quick-ask-item-info">
+                  <span style={{ fontWeight: 500 }}>{t('cancel') || 'Cancel'}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

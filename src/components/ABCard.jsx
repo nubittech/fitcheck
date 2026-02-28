@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { getAbVoteStats, voteAbTest, findOrCreateConversation, getComments, addComment } from '../lib/api'
+import { reportPost } from '../lib/adminApi'
 import { supabase } from '../lib/supabase'
 import { Share } from '@capacitor/share'
 import { useLang } from '../i18n/LangContext'
@@ -28,6 +29,9 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
     const [inputValue, setInputValue] = useState('')
     const [submittingComment, setSubmittingComment] = useState(false)
 
+    // Report / Block state
+    const [showOptionsArgs, setShowOptionsArgs] = useState(false)
+
     // Load votes & comments
     useEffect(() => {
         if (!outfit?.id || !currentUser?.id) return
@@ -41,15 +45,15 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
             .then(({ data }) => {
                 if (data) setMyVote(data.vote_choice)
             })
-            .catch(() => {})
+            .catch(() => { })
 
         getAbVoteStats(outfit.id)
             .then(({ data }) => { if (data) setAbStats(data) })
-            .catch(() => {})
+            .catch(() => { })
 
         getComments(outfit.id)
             .then(({ data }) => { if (data) setComments(data) })
-            .catch(() => {})
+            .catch(() => { })
     }, [outfit?.id, currentUser?.id])
 
     const handleVote = async (choice) => {
@@ -133,6 +137,22 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
         const { data } = await addComment({ outfitId: outfit.id, userId: currentUser.id, text })
         if (data) setComments(prev => [...prev, data])
         setSubmittingComment(false)
+    }
+
+    // Report / Block actions
+    const handleReport = async () => {
+        setShowOptionsArgs(false)
+        if (currentUser?.id && outfit?.id) {
+            await reportPost({ outfitId: outfit.id, reporterId: currentUser.id, reason: 'User reported from feed' })
+        }
+        alert(t('report_submitted') || 'Gönderi moderatörlere bildirildi.')
+        if (onSkip) onSkip()
+    }
+
+    const handleBlock = async () => {
+        setShowOptionsArgs(false)
+        alert(t('user_blocked') || 'Kullanıcı engellendi.')
+        if (onSkip) onSkip()
     }
 
     // Card swipe handlers
@@ -235,11 +255,14 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
                     >
                         <div className="ab-side-label left">{t('ab_left')}</div>
                         {imageA ? (
-                            outfit.media[0]?.type === 'video' ? (
-                                <video src={imageA} autoPlay loop muted playsInline />
-                            ) : (
-                                <img src={imageA} alt="A" />
-                            )
+                            <div className="ab-media-wrapper">
+                                <div className="ab-media-blur" style={{ backgroundImage: `url(${imageA})` }}></div>
+                                {outfit.media[0]?.type === 'video' ? (
+                                    <video src={imageA} autoPlay loop muted playsInline />
+                                ) : (
+                                    <img src={imageA} alt="A" />
+                                )}
+                            </div>
                         ) : null}
                         {myVote && (
                             <div className={`ab-pct-badge left ${isWinnerA ? 'winner' : ''}`}>
@@ -262,11 +285,14 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
                     >
                         <div className="ab-side-label right">{t('ab_right')}</div>
                         {imageB ? (
-                            outfit.media[1]?.type === 'video' ? (
-                                <video src={imageB} autoPlay loop muted playsInline />
-                            ) : (
-                                <img src={imageB} alt="B" />
-                            )
+                            <div className="ab-media-wrapper">
+                                <div className="ab-media-blur" style={{ backgroundImage: `url(${imageB})` }}></div>
+                                {outfit.media[1]?.type === 'video' ? (
+                                    <video src={imageB} autoPlay loop muted playsInline />
+                                ) : (
+                                    <img src={imageB} alt="B" />
+                                )}
+                            </div>
                         ) : null}
                         {myVote && (
                             <div className={`ab-pct-badge right ${isWinnerB ? 'winner' : ''}`}>
@@ -300,13 +326,22 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
                             )}
                         </div>
                     </div>
-                    <button className="share-btn" onClick={handleShare}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                            <polyline points="16 6 12 2 8 6" />
-                            <line x1="12" y1="2" x2="12" y2="15" />
-                        </svg>
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="share-btn" onClick={handleShare}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                                <polyline points="16 6 12 2 8 6" />
+                                <line x1="12" y1="2" x2="12" y2="15" />
+                            </svg>
+                        </button>
+                        <button className="share-btn" onClick={() => setShowOptionsArgs(true)} style={{ opacity: 0.8 }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Caption */}
@@ -425,6 +460,34 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
                     </div>
                 </div>
             </div>
+
+            {/* Options Modal (Report / Block) */}
+            {showOptionsArgs && (
+                <div className="quick-ask-overlay" onClick={() => setShowOptionsArgs(false)}>
+                    <div className="quick-ask-sheet" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)' }}>
+                        <div className="quick-ask-header">
+                            <h4>{t('options') || 'Options'}</h4>
+                        </div>
+                        <div className="quick-ask-items">
+                            <button className="quick-ask-item" onClick={handleReport} style={{ color: '#ef4444' }}>
+                                <div className="quick-ask-item-info">
+                                    <span style={{ fontWeight: 600 }}>{t('report_post') || 'Report Post'}</span>
+                                </div>
+                            </button>
+                            <button className="quick-ask-item" onClick={handleBlock} style={{ color: '#ef4444' }}>
+                                <div className="quick-ask-item-info">
+                                    <span style={{ fontWeight: 600 }}>{t('block_user') || 'Block User'}</span>
+                                </div>
+                            </button>
+                            <button className="quick-ask-item" onClick={() => setShowOptionsArgs(false)}>
+                                <div className="quick-ask-item-info">
+                                    <span style={{ fontWeight: 500 }}>{t('cancel') || 'Cancel'}</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

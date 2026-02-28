@@ -83,6 +83,12 @@
   overflow: hidden;
 }
 
+.media-upload-area.has-media-ab {
+  border: none;
+  background: transparent;
+  min-height: auto;
+}
+
 .media-upload-area:active {
   background: rgba(245, 241, 237, 0.6);
 }

@@ -5,6 +5,7 @@ import { useLang } from '../i18n/LangContext'
 import { validateAffiliateLink, affiliateLinkError } from '../lib/affiliateValidator'
 import '../styles/NewCombo.css'
 import { STYLE_TYPES } from '../constants/styleTypes'
+import imageCompression from 'browser-image-compression'
 
 const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const { t, lang } = useLang()
@@ -193,11 +194,26 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setSubmitError('')
 
     try {
-      // 1. Upload media files first to get URLs
+      // 1. Upload media files first to get URLs (with compression for images)
       const uploadedMedia = []
       for (let i = 0; i < mediaFiles.length; i++) {
         const mf = mediaFiles[i]
-        const { data: uploaded, error: uploadErr } = await uploadMedia(session.user.id, mf.file)
+
+        let fileToUpload = mf.file
+        if (mf.type === 'image') {
+          try {
+            const options = {
+              maxSizeMB: 0.5, // 500KB limit
+              maxWidthOrHeight: 1280, // Cap at 1280px to save network bandwidth
+              useWebWorker: true
+            }
+            fileToUpload = await imageCompression(mf.file, options)
+          } catch (compErr) {
+            console.warn('Image compression failed, using original file:', compErr)
+          }
+        }
+
+        const { data: uploaded, error: uploadErr } = await uploadMedia(session.user.id, fileToUpload)
         if (uploadErr) throw uploadErr
         uploadedMedia.push({ ...mf, url: uploaded.url, sortOrder: i })
       }
@@ -255,6 +271,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       resetForm()
       onOutfitCreated?.()
     } catch (err) {
+      console.error('Submit combo error:', err)
       setSubmitError(err.message || 'Failed to share combo')
       setSubmitting(false)
     }
@@ -292,14 +309,18 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
         <div className="preview-card-container">
           {postType === 'ab_test' ? (
-            <div className="ab-preview-container" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, position: 'relative', aspectRatio: '3/4', backgroundColor: '#eee', borderRadius: '12px', overflow: 'hidden' }}>
-                <img src={previewMedia[0]?.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="A" />
-                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', fontSize: '14px' }}>A</div>
+            <div className="ab-preview-container" style={{ display: 'flex', width: '200px', height: '355px', flexShrink: 0, margin: '0 auto 24px auto', backgroundColor: '#111', borderRadius: '16px', overflow: 'hidden', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#222' }}>
+                {previewMedia[0] && (
+                  <img src={previewMedia[0].url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="A" />
+                )}
+                <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 12px', borderRadius: '12px', fontSize: '13px', backdropFilter: 'blur(4px)' }}>Sol</div>
               </div>
-              <div style={{ flex: 1, position: 'relative', aspectRatio: '3/4', backgroundColor: '#eee', borderRadius: '12px', overflow: 'hidden' }}>
-                <img src={previewMedia[1]?.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="B" />
-                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 10px', borderRadius: '8px', fontSize: '14px' }}>B</div>
+              <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#222' }}>
+                {previewMedia[1] && (
+                  <img src={previewMedia[1].url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="B" />
+                )}
+                <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(0,0,0,0.6)', color: 'white', fontWeight: 'bold', padding: '4px 12px', borderRadius: '12px', fontSize: '13px', backdropFilter: 'blur(4px)' }}>Sağ</div>
               </div>
             </div>
           ) : (
@@ -408,12 +429,19 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             </button>
           </div>
 
-          {/* Share button */}
-          <button className="share-combo-btn" onClick={handleShareCombo}>
-            {tr ? 'Kombini Paylaş' : 'Share Combination'}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-            </svg>
+          {/* Share button area with error handling */}
+          {submitError && (
+            <div style={{ textAlign: 'center', marginBottom: '12px', fontSize: '13px', color: '#e53e3e', padding: '0 16px' }}>
+              {submitError}
+            </div>
+          )}
+          <button className={`share-combo-btn ${submitting ? 'disabled' : ''}`} disabled={submitting} onClick={handleShareCombo} style={{ marginTop: 'auto', marginBottom: 'env(safe-area-inset-bottom, 16px)' }}>
+            {submitting ? (tr ? 'Paylaşılıyor...' : 'Sharing...') : (tr ? 'Kombini Paylaş' : 'Share Combination')}
+            {!submitting && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -461,7 +489,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
         {/* Media Upload Area */}
         <div className="newcombo-section">
-          <div className="media-upload-area" onClick={() => canAddMore && fileInputRef.current?.click()}>
+          <div className={`media-upload-area ${mediaFiles.length > 0 && postType === 'ab_test' ? 'has-media-ab' : ''}`} onClick={() => canAddMore && fileInputRef.current?.click()}>
             {mediaFiles.length === 0 ? (
               <div className="upload-placeholder">
                 <div className="upload-icon">
@@ -474,6 +502,49 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                 </div>
                 <span className="upload-text">{tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look'}</span>
                 <span className="upload-sub">{tr ? 'JPG, PNG desteklenir (Maks 5MB)' : 'Supports JPG, PNG (Max 5MB)'}</span>
+              </div>
+            ) : postType === 'ab_test' ? (
+              <div className="media-preview-container" onClick={(e) => e.stopPropagation()} style={{ width: '100%', padding: '16px 0', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', width: '200px', height: '355px', flexShrink: 0, background: '#111', borderRadius: '12px', overflow: 'hidden', gap: '2px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  {/* Left Side (A) */}
+                  <div style={{ flex: 1, position: 'relative', background: '#222' }}>
+                    {mediaFiles[0] ? (
+                      <>
+                        {mediaFiles[0].type === 'video' ? (
+                          <video src={mediaFiles[0].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                        ) : (
+                          <img src={mediaFiles[0].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="A" />
+                        )}
+                        <button className="media-remove" style={{ top: 6, right: 6, width: 24, height: 24 }} onClick={() => removeMedia(mediaFiles[0].id)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>
+                      </>
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                      </div>
+                    )}
+                  </div>
+                  {/* Right Side (B) */}
+                  <div style={{ flex: 1, position: 'relative', background: '#222' }}>
+                    {mediaFiles[1] ? (
+                      <>
+                        {mediaFiles[1].type === 'video' ? (
+                          <video src={mediaFiles[1].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted />
+                        ) : (
+                          <img src={mediaFiles[1].preview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="B" />
+                        )}
+                        <button className="media-remove" style={{ top: 6, right: 6, width: 24, height: 24 }} onClick={() => removeMedia(mediaFiles[1].id)}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                        </button>
+                      </>
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666', cursor: 'pointer' }} onClick={() => fileInputRef.current?.click()}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="media-preview-grid" onClick={(e) => e.stopPropagation()}>

@@ -102,12 +102,18 @@ export async function createOutfit({ userId, caption, gender, vibe, ageRangeMin,
 // ---- MEDIA ----
 
 export async function uploadMedia(userId, file) {
-  const fileExt = file.name.split('.').pop()
+  const fileExt = file.name ? file.name.split('.').pop() : 'jpg'
   const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+
+  // Convert File to ArrayBuffer to avoid iOS WKWebView "Load failed" error with fetch()
+  const arrayBuffer = await file.arrayBuffer()
 
   const { error: uploadError } = await supabase.storage
     .from('media')
-    .upload(filePath, file)
+    .upload(filePath, arrayBuffer, {
+      contentType: file.type || 'image/jpeg',
+      upsert: false
+    })
 
   if (uploadError) return { data: null, error: uploadError }
 

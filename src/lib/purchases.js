@@ -26,6 +26,12 @@ export async function initPurchases(userId) {
         return;
     }
 
+    // Block test keys in production — they trigger the "Wrong API Key" crash dialog
+    if (API_KEY.startsWith('test_')) {
+        console.warn('[Purchases] Test API key detected — skipping init to avoid crash. Use a production key (goog_ or appl_).');
+        return;
+    }
+
     try {
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 

@@ -13,13 +13,39 @@
     overflow: hidden;
     cursor: pointer;
     transition: flex 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    background: #111;
 }
 
+/* New: Media Wrapper for Blurred Background + Contained Media */
+.ab-media-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ab-media-blur {
+    position: absolute;
+    inset: -20px;
+    /* pull past edges to hide blur vignette */
+    background-size: cover;
+    background-position: center;
+    filter: blur(25px);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+.ab-media-wrapper video,
+.ab-media-wrapper img,
 .ab-side video,
 .ab-side img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    z-index: 1;
 }
 
 /* Selected side expands slightly */
