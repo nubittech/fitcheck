@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { checkIsAdmin } from '../lib/adminApi'
 import '../styles/Admin.css'
@@ -6,8 +6,24 @@ import '../styles/Admin.css'
 const AdminLogin = ({ onLogin }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+
+    // Check if user already has an active session (e.g. from Google OAuth)
+    useEffect(() => {
+        const checkExistingSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                const isAdmin = await checkIsAdmin(session.user.id)
+                if (isAdmin) {
+                    onLogin(session, session.user)
+                    return
+                }
+            }
+            setLoading(false)
+        }
+        checkExistingSession()
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -26,7 +42,6 @@ const AdminLogin = ({ onLogin }) => {
                 return
             }
 
-            // Check if user has admin role
             const isAdmin = await checkIsAdmin(data.user.id)
             if (!isAdmin) {
                 setError('Bu hesap yönetici yetkisine sahip değil.')
@@ -42,11 +57,28 @@ const AdminLogin = ({ onLogin }) => {
         setLoading(false)
     }
 
+    if (loading) {
+        return (
+            <div className="admin-login-wrapper">
+                <div className="admin-login-card">
+                    <div className="admin-login-logo">Veylo</div>
+                    <div className="admin-login-subtitle">YÖNETİM PANELİ</div>
+                    <p style={{ color: 'var(--admin-text-secondary)', fontSize: 14, marginTop: 20 }}>Oturum kontrol ediliyor...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="admin-login-wrapper">
             <form className="admin-login-card" onSubmit={handleSubmit}>
                 <div className="admin-login-logo">Veylo</div>
                 <div className="admin-login-subtitle">YÖNETİM PANELİ</div>
+
+                <p style={{ color: 'var(--admin-text-secondary)', fontSize: 12, marginBottom: 24 }}>
+                    Önce ana uygulamadan giriş yapın, ardından bu sayfayı yenileyin.<br />
+                    Veya e-posta/şifre ile giriş yapın.
+                </p>
 
                 <div className="admin-login-field">
                     <label>E-posta</label>
