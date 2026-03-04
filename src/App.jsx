@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import OutfitCard from './components/OutfitCard'
 import BottomNav from './components/BottomNav'
 import Discover from './components/Discover'
@@ -110,6 +110,7 @@ function App() {
   const [pendingChat, setPendingChat] = useState(null)
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
   const [viewingOutfit, setViewingOutfit] = useState(null) // kept for compatibility but overlay is removed
+  const preloadedMediaRef = useRef(new Set())
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
@@ -301,6 +302,47 @@ function App() {
       fetchFeed()
     }
   }, [selectedVibe])
+
+  const preloadMedia = useCallback((url, type = 'image') => {
+    if (!url || preloadedMediaRef.current.has(url)) return
+    preloadedMediaRef.current.add(url)
+
+    if (type === 'video') {
+      const video = document.createElement('video')
+      video.preload = 'auto'
+      video.src = url
+      video.load()
+      return
+    }
+
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = url
+  }, [])
+
+  const preloadOutfit = useCallback((outfit) => {
+    if (!outfit) return
+
+    if (outfit.user?.avatar) preloadMedia(outfit.user.avatar, 'image')
+    for (const mediaItem of outfit.media || []) {
+      if (!mediaItem?.url) continue
+      preloadMedia(mediaItem.url, mediaItem.type)
+      if (mediaItem.type === 'video' && mediaItem.thumbnail) {
+        preloadMedia(mediaItem.thumbnail, 'image')
+      }
+    }
+  }, [preloadMedia])
+
+  // Keep current + upcoming cards warm in cache for smoother swipes.
+  useEffect(() => {
+    if (!outfits.length) return
+    const preloadTargets = [
+      outfits[currentIndex],
+      outfits[currentIndex + 1],
+      outfits[currentIndex + 2]
+    ].filter(Boolean)
+    preloadTargets.forEach(preloadOutfit)
+  }, [outfits, currentIndex, preloadOutfit])
 
   // Direct outfit redirection
   const handleOutfitClickDirect = useCallback((outfit) => {
@@ -676,6 +718,7 @@ function App() {
           <ABCard
             key={`ab-${currentOutfit.id}`}
             outfit={currentOutfit}
+            nextOutfit={outfits[currentIndex + 1] || null}
             currentUser={currentUser}
             session={session}
             isFirstCard={currentIndex === 0 && !selectedVibe}
@@ -691,6 +734,7 @@ function App() {
           <OutfitCard
             key={currentOutfit.id}
             outfit={currentOutfit}
+            nextOutfit={outfits[currentIndex + 1] || null}
             currentUser={currentUser}
             session={session}
             isLikedByMe={likedOutfitIds.has(currentOutfit.id)}

@@ -34,6 +34,34 @@
   will-change: transform;
 }
 
+.next-card-underlay {
+  z-index: 0;
+  pointer-events: none;
+  transform: scale(1.01);
+}
+
+.next-card-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.next-card-underlay .card-user-bar,
+.next-card-underlay .card-caption-bar {
+  opacity: 0.95;
+}
+
+.next-card-underlay .share-btn {
+  pointer-events: none;
+}
+
+.next-card-panel {
+  z-index: 3;
+  pointer-events: none;
+}
+
 .outfit-card.is-dragging {
   transition: none;
 }
