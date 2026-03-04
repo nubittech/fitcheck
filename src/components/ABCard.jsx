@@ -7,7 +7,7 @@ import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 import '../styles/ABCard.css'
 
-const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat }) => {
+const ABCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat }) => {
     const { t } = useLang()
     const [panelState, setPanelState] = useState('collapsed')
     const [swipeDir, setSwipeDir] = useState(null)
@@ -236,9 +236,63 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
     const imageB = outfit.imageUrlB || outfit.media[1]?.url
     const isWinnerA = abStats.percentage_a >= abStats.percentage_b && abStats.total > 0
     const isWinnerB = abStats.percentage_b > abStats.percentage_a && abStats.total > 0
+    const nextPrimaryMedia = nextOutfit?.media?.[0]
+    const nextPrimarySrc = nextPrimaryMedia?.thumbnail || nextPrimaryMedia?.url || null
 
     return (
         <div className="outfit-card-wrapper">
+            {nextOutfit && nextPrimarySrc && (
+                <div className="outfit-card next-card-underlay" aria-hidden="true">
+                    {nextPrimaryMedia?.type === 'video' ? (
+                        <video
+                            className="next-card-media"
+                            src={nextPrimaryMedia.url}
+                            poster={nextPrimaryMedia.thumbnail || nextPrimaryMedia.url}
+                            muted
+                            loop
+                            playsInline
+                            autoPlay
+                        />
+                    ) : (
+                        <img className="next-card-media" src={nextPrimarySrc} alt="" />
+                    )}
+
+                    <div className="card-gradient" />
+
+                    <div className="card-user-bar">
+                        <div className="user-info">
+                            <img className="user-avatar" src={nextOutfit.user?.avatar} alt={nextOutfit.user?.name || 'user'} />
+                            <div>
+                                <div className="user-name">{nextOutfit.user?.name}, {nextOutfit.user?.age}</div>
+                                {nextOutfit.user?.location && (
+                                    <div className="user-location">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" /></svg>
+                                        {nextOutfit.user.location}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <button className="share-btn" tabIndex={-1}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                                <polyline points="16 6 12 2 8 6" />
+                                <line x1="12" y1="2" x2="12" y2="15" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {nextOutfit.caption && (
+                        <div className="card-caption-bar">
+                            <p className="card-caption">{nextOutfit.caption}</p>
+                        </div>
+                    )}
+
+                    <div className="slide-panel next-card-panel">
+                        <div className="panel-handle" />
+                    </div>
+                </div>
+            )}
+
             <div
                 className={`outfit-card ${swipeDir ? `swipe-${swipeDir}` : ''} ${offsetX !== 0 && !swipeDir ? 'is-dragging' : ''}`}
                 style={{ transform: offsetX ? `translateX(${offsetX}px) rotate(${offsetX * 0.04}deg)` : undefined }}
