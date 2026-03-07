@@ -241,23 +241,45 @@ const ABCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onUserTap, cu
 
     return (
         <div className="outfit-card-wrapper">
-            {nextOutfit && nextPrimarySrc && (
+            {nextOutfit && (
                 <div className="outfit-card next-card-underlay" aria-hidden="true">
-                    {nextPrimaryMedia?.type === 'video' ? (
-                        <video
-                            className="next-card-media"
-                            src={nextPrimaryMedia.url}
-                            poster={nextPrimaryMedia.thumbnail || nextPrimaryMedia.url}
-                            muted
-                            loop
-                            playsInline
-                            autoPlay
-                        />
-                    ) : (
-                        <img className="next-card-media" src={nextPrimarySrc} alt="" />
-                    )}
-
-                    <div className="card-gradient" />
+                    {nextOutfit.postType === 'ab_test' ? (
+                        <>
+                            <div className="ab-split-container">
+                                <div className="ab-side">
+                                    {nextOutfit.media?.[0]?.url && (
+                                        <img src={nextOutfit.media[0].url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    )}
+                                </div>
+                                <div className="ab-divider-line">
+                                    <div className="ab-vs-circle"><span className="ab-vs-text">VS</span></div>
+                                </div>
+                                <div className="ab-side">
+                                    {(nextOutfit.imageUrlB || nextOutfit.media?.[1]?.url) && (
+                                        <img src={nextOutfit.imageUrlB || nextOutfit.media[1]?.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="card-gradient" />
+                        </>
+                    ) : nextPrimarySrc ? (
+                        <>
+                            {nextPrimaryMedia?.type === 'video' ? (
+                                <video
+                                    className="next-card-media"
+                                    src={nextPrimaryMedia.url}
+                                    poster={nextPrimaryMedia.thumbnail || nextPrimaryMedia.url}
+                                    muted
+                                    loop
+                                    playsInline
+                                    autoPlay
+                                />
+                            ) : (
+                                <img className="next-card-media" src={nextPrimarySrc} alt="" />
+                            )}
+                            <div className="card-gradient" />
+                        </>
+                    ) : null}
 
                     <div className="card-user-bar">
                         <div className="user-info">
@@ -272,13 +294,6 @@ const ABCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onUserTap, cu
                                 )}
                             </div>
                         </div>
-                        <button className="share-btn" tabIndex={-1}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                                <polyline points="16 6 12 2 8 6" />
-                                <line x1="12" y1="2" x2="12" y2="15" />
-                            </svg>
-                        </button>
                     </div>
 
                     {nextOutfit.caption && (
@@ -286,10 +301,6 @@ const ABCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onUserTap, cu
                             <p className="card-caption">{nextOutfit.caption}</p>
                         </div>
                     )}
-
-                    <div className="slide-panel next-card-panel">
-                        <div className="panel-handle" />
-                    </div>
                 </div>
             )}
 

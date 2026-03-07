@@ -57,8 +57,11 @@
   pointer-events: none;
 }
 
-.next-card-panel {
-  z-index: 3;
+.next-card-underlay .ab-side {
+  transition: none;
+}
+
+.next-card-underlay .ab-divider-line {
   pointer-events: none;
 }
 

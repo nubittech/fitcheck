@@ -331,6 +331,10 @@ function App() {
         preloadMedia(mediaItem.thumbnail, 'image')
       }
     }
+    // A/B kartlar için imageUrlB'yi de önceden yükle
+    if (outfit.postType === 'ab_test' && outfit.imageUrlB) {
+      preloadMedia(outfit.imageUrlB, 'image')
+    }
   }, [preloadMedia])
 
   // Keep current + upcoming cards warm in cache for smoother swipes.
