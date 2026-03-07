@@ -8,9 +8,8 @@ import { Share } from '@capacitor/share'
 import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
-import '../styles/ABCard.css'
 
-const OutfitCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
+const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
   const { t } = useLang()
   // 3-state panel: 'collapsed' | 'mid' | 'full'
   const [panelState, setPanelState] = useState('collapsed')
@@ -378,74 +377,9 @@ const OutfitCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onLike, o
   }
 
   const { likePct, total: voteTotal } = outfitVotes
-  const nextPrimaryMedia = nextOutfit?.media?.[0]
-  const nextPrimarySrc = nextPrimaryMedia?.thumbnail || nextPrimaryMedia?.url || null
 
   return (
-    <div className="outfit-card-wrapper">
-      {nextOutfit && (
-        <div className="outfit-card next-card-underlay" aria-hidden="true">
-          {nextOutfit.postType === 'ab_test' ? (
-            <>
-              <div className="ab-split-container">
-                <div className="ab-side">
-                  {nextOutfit.media?.[0]?.url && (
-                    <img src={nextOutfit.media[0].url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                  )}
-                </div>
-                <div className="ab-divider-line">
-                  <div className="ab-vs-circle"><span className="ab-vs-text">VS</span></div>
-                </div>
-                <div className="ab-side">
-                  {(nextOutfit.imageUrlB || nextOutfit.media?.[1]?.url) && (
-                    <img src={nextOutfit.imageUrlB || nextOutfit.media[1]?.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                  )}
-                </div>
-              </div>
-              <div className="card-gradient" />
-            </>
-          ) : nextPrimarySrc ? (
-            <>
-              {nextPrimaryMedia?.type === 'video' ? (
-                <video
-                  className="next-card-media"
-                  src={nextPrimaryMedia.url}
-                  poster={nextPrimaryMedia.thumbnail || nextPrimaryMedia.url}
-                  muted
-                  loop
-                  playsInline
-                  autoPlay
-                />
-              ) : (
-                <img className="next-card-media" src={nextPrimarySrc} alt="" />
-              )}
-              <div className="card-gradient" />
-            </>
-          ) : null}
-
-          <div className="card-user-bar">
-            <div className="user-info">
-              <img className="user-avatar" src={nextOutfit.user?.avatar} alt={nextOutfit.user?.name || 'user'} />
-              <div>
-                <div className="user-name">{nextOutfit.user?.name}, {nextOutfit.user?.age}</div>
-                {nextOutfit.user?.location && (
-                  <div className="user-location">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" /></svg>
-                    {nextOutfit.user.location}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {nextOutfit.caption && (
-            <div className="card-caption-bar">
-              <p className="card-caption">{nextOutfit.caption}</p>
-            </div>
-          )}
-        </div>
-      )}
-
+    <>
       {walkthroughStep > 0 && (
         <div className="walkthrough-overlay">
           {walkthroughStep === 1 && (
@@ -823,7 +757,7 @@ const OutfitCard = ({ outfit, nextOutfit, isFirstCard, onNext, onSkip, onLike, o
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
