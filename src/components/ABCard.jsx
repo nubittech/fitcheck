@@ -188,11 +188,11 @@ const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, cur
             if (offsetX > 0) {
                 setSwipeDir('right')
                 setOffsetX(window.innerWidth)
-                setTimeout(() => { onSkip?.() }, 250)
+                setTimeout(() => { onSkip?.() }, 350)
             } else {
                 setSwipeDir('left')
                 setOffsetX(-window.innerWidth)
-                setTimeout(() => { onSkip?.() }, 250)
+                setTimeout(() => { onSkip?.() }, 350)
             }
         } else {
             setOffsetX(0)

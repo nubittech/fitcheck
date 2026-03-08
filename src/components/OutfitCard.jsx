@@ -316,11 +316,11 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
         // Wait for animation to finish, then tell parent to load next.
         // DO NOT reset offsetX to 0 here because it makes the card snap back 
         // for a split second before React unmounts it.
-        setTimeout(() => { onNext() }, 250)
+        setTimeout(() => { onNext() }, 350)
       } else {
         setSwipeDir('left')
         setOffsetX(-window.innerWidth) // Throw animation to left
-        setTimeout(() => { onSkip() }, 250)
+        setTimeout(() => { onSkip() }, 350)
       }
     } else {
       // Snap back if swipe was cancelled

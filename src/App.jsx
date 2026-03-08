@@ -725,16 +725,19 @@ function App() {
           {nextOutfit && (
             nextOutfit.postType === 'ab_test' ? (
               <ABCard
-                key={nextOutfit.id}
+                key={`ab-${nextOutfit.id}`}
                 outfit={nextOutfit}
                 isPreview
                 currentUser={currentUser}
                 session={session}
                 isFirstCard={false}
-                onNext={() => {}}
-                onSkip={() => {}}
-                onUserTap={() => {}}
-                onOpenChat={() => {}}
+                onNext={handleNext}
+                onSkip={handleSkip}
+                onUserTap={() => setViewingProfile(nextOutfit.user)}
+                onOpenChat={(conv) => {
+                  setSelectedChat(conv)
+                  setActiveTab('inbox')
+                }}
               />
             ) : (
               <OutfitCard
@@ -744,12 +747,15 @@ function App() {
                 currentUser={currentUser}
                 session={session}
                 isFirstCard={false}
-                onNext={() => {}}
-                onSkip={() => {}}
-                onLike={() => {}}
-                onItemVote={() => {}}
-                onUserTap={() => {}}
-                onOpenChat={() => {}}
+                onNext={handleNext}
+                onSkip={handleSkip}
+                onLike={handleLike}
+                onItemVote={handleItemVote}
+                onUserTap={() => setViewingProfile(nextOutfit.user)}
+                onOpenChat={(conv) => {
+                  setSelectedChat(conv)
+                  setActiveTab('inbox')
+                }}
               />
             )
           )}
