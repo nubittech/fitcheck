@@ -158,24 +158,23 @@ export async function reportPost({ outfitId, reporterId, reason = '' }) {
 }
 
 export async function deleteOutfit(outfitId) {
-    // Delete all related records first (foreign key constraints)
-    const tables = [
-        'outfit_media',
-        'comments',
-        'likes',
-        'outfit_votes',
-        'item_votes',
-        'ab_votes',
-        'reported_posts',
-    ]
+    // Use server-side RPC function that runs with SECURITY DEFINER
+    // This bypasses RLS so admins can delete any outfit
+    const { data, error } = await supabase.rpc('admin_delete_outfit', {
+        outfit_id_param: outfitId,
+    })
 
-    for (const table of tables) {
-        const { error } = await supabase.from(table).delete().eq('outfit_id', outfitId)
-        if (error) console.warn(`[deleteOutfit] Failed to delete from ${table}:`, error.message)
+    if (error) {
+        console.error('[deleteOutfit] RPC failed:', error.message)
+        return { error }
     }
 
-    // Finally delete the outfit itself
-    const { error } = await supabase.from('outfits').delete().eq('id', outfitId)
-    if (error) console.error('[deleteOutfit] Failed to delete outfit:', error.message)
-    return { error }
+    // The RPC returns { success, error? }
+    if (data && !data.success) {
+        const rpcError = { message: data.error || 'Unknown RPC error' }
+        console.error('[deleteOutfit] RPC returned error:', rpcError.message)
+        return { error: rpcError }
+    }
+
+    return { error: null }
 }
