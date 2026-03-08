@@ -9,7 +9,7 @@ import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
-const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
+const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
   const { t } = useLang()
   // 3-state panel: 'collapsed' | 'mid' | 'full'
   const [panelState, setPanelState] = useState('collapsed')
@@ -282,7 +282,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
 
   // Card swipe only works when panel is collapsed
   const handleCardTouchStart = (e) => {
-    if (panelState !== 'collapsed') return
+    if (isPreview || panelState !== 'collapsed') return
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     isDragging.current = true
@@ -379,8 +379,8 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
   const { likePct, total: voteTotal } = outfitVotes
 
   return (
-    <>
-      {walkthroughStep > 0 && (
+    <div className={`outfit-card-shell${isPreview ? ' is-preview' : ''}`}>
+      {walkthroughStep > 0 && !isPreview && (
         <div className="walkthrough-overlay">
           {walkthroughStep === 1 && (
             <>
@@ -648,7 +648,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
       </div>
 
       {/* Quick Ask Sheet (Moved to root level to avoid CSS transform bugs) */}
-      {showQuickAsk && (
+      {!isPreview && showQuickAsk && (
         <div className="quick-ask-overlay" onClick={() => { setShowQuickAsk(false); setQuickAskOther(false); setQuickAskInput('') }}>
           <div className="quick-ask-sheet" onClick={(e) => e.stopPropagation()}>
             {quickAskSent ? (
@@ -731,7 +731,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
         </div>
       )}
       {/* Options Modal (Report / Block) */}
-      {showOptionsArgs && (
+      {!isPreview && showOptionsArgs && (
         <div className="quick-ask-overlay" onClick={() => setShowOptionsArgs(false)}>
           <div className="quick-ask-sheet" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)' }}>
             <div className="quick-ask-header">
@@ -757,7 +757,7 @@ const OutfitCard = ({ outfit, isFirstCard, onNext, onSkip, onLike, onItemVote, o
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

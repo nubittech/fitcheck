@@ -7,7 +7,7 @@ import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 import '../styles/ABCard.css'
 
-const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat }) => {
+const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat }) => {
     const { t } = useLang()
     const [panelState, setPanelState] = useState('collapsed')
     const [swipeDir, setSwipeDir] = useState(null)
@@ -157,6 +157,7 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
 
     // Card swipe handlers
     const handleCardTouchStart = (e) => {
+        if (isPreview) return
         if (panelState !== 'collapsed') return
         startX.current = e.touches[0].clientX
         startY.current = e.touches[0].clientY
@@ -238,7 +239,7 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
     const isWinnerB = abStats.percentage_b > abStats.percentage_a && abStats.total > 0
 
     return (
-        <>
+        <div className={`outfit-card-shell${isPreview ? ' is-preview' : ''}`}>
             <div
                 className={`outfit-card ${swipeDir ? `swipe-${swipeDir}` : ''} ${offsetX !== 0 && !swipeDir ? 'is-dragging' : ''}`}
                 style={{ transform: offsetX ? `translateX(${offsetX}px) rotate(${offsetX * 0.04}deg)` : undefined }}
@@ -462,7 +463,7 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
             </div>
 
             {/* Options Modal (Report / Block) */}
-            {showOptionsArgs && (
+            {!isPreview && showOptionsArgs && (
                 <div className="quick-ask-overlay" onClick={() => setShowOptionsArgs(false)}>
                     <div className="quick-ask-sheet" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)' }}>
                         <div className="quick-ask-header">
@@ -488,7 +489,7 @@ const ABCard = ({ outfit, isFirstCard, onNext, onSkip, onUserTap, currentUser, o
                     </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }
 
