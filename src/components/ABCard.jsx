@@ -7,7 +7,7 @@ import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 import '../styles/ABCard.css'
 
-const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat }) => {
+const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, currentUser, onOpenChat, cardDataCache }) => {
     const { t } = useLang()
     const [panelState, setPanelState] = useState('collapsed')
     const [swipeDir, setSwipeDir] = useState(null)
@@ -19,22 +19,34 @@ const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, cur
     const swipeAxis = useRef(null)
     const panelRef = useRef(null)
 
-    // A/B states
-    const [myVote, setMyVote] = useState(null)
-    const [abStats, setAbStats] = useState({ count_a: 0, count_b: 0, percentage_a: 0, percentage_b: 0, total: 0 })
+    // Read pre-fetched data from cache (populated by App.jsx preloadCardData)
+    const cached = (() => {
+        const c = cardDataCache?.current?.get(outfit?.id)
+        return c && c !== 'pending' ? c : null
+    })()
+
+    // A/B states — initialize from cache if available
+    const [myVote, setMyVote] = useState(cached?.myVote || null)
+    const [abStats, setAbStats] = useState(
+        cached?.abStats || { count_a: 0, count_b: 0, percentage_a: 0, percentage_b: 0, total: 0 }
+    )
     const [isVoting, setIsVoting] = useState(false)
 
-    // Comments
-    const [comments, setComments] = useState([])
+    // Comments — initialize from cache if available
+    const [comments, setComments] = useState(cached?.comments || [])
     const [inputValue, setInputValue] = useState('')
     const [submittingComment, setSubmittingComment] = useState(false)
 
     // Report / Block state
     const [showOptionsArgs, setShowOptionsArgs] = useState(false)
 
-    // Load votes & comments
+    // Load votes & comments — skip if we already have cached data
     useEffect(() => {
         if (!outfit?.id || !currentUser?.id) return
+
+        // If cache was available at mount time, skip API calls
+        const c = cardDataCache?.current?.get(outfit.id)
+        if (c && c !== 'pending') return
 
         supabase
             .from('ab_votes')

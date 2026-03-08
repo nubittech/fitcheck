@@ -2,6 +2,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  background: #000;
 }
 
 /* Approval percentage pill — top right corner of card */
@@ -40,6 +41,9 @@
 .outfit-card-shell.is-preview {
   z-index: 0;
   pointer-events: none;
+  will-change: transform, contents;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .outfit-card {

@@ -16,7 +16,7 @@ import LegalConsent from './components/LegalConsent'
 import AdminLogin from './components/AdminLogin'
 import AdminPanel from './components/AdminPanel'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
-import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost } from './lib/api'
+import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost, getOutfitVotes, getItemVotes, getAbVoteStats, getComments } from './lib/api'
 import { supabase } from './lib/supabase'
 import { usePremium } from './lib/usePremium'
 import { Keyboard } from '@capacitor/keyboard'
@@ -111,6 +111,7 @@ function App() {
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
   const [viewingOutfit, setViewingOutfit] = useState(null) // kept for compatibility but overlay is removed
   const preloadedMediaRef = useRef(new Set())
+  const cardDataCacheRef = useRef(new Map())
 
   const isLoggedIn = !!session
   const isPremiumUser = Boolean(currentUser?.is_premium)
@@ -337,6 +338,48 @@ function App() {
     }
   }, [preloadMedia])
 
+  // Pre-fetch card data (votes, comments) for smoother transitions on iOS
+  const preloadCardData = useCallback(async (outfit) => {
+    if (!outfit?.id || !currentUser?.id) return
+    const cache = cardDataCacheRef.current
+    if (cache.has(outfit.id)) return
+
+    cache.set(outfit.id, 'pending')
+
+    try {
+      if (outfit.postType === 'ab_test') {
+        const [voteRes, statsRes, commentsRes] = await Promise.all([
+          supabase
+            .from('ab_votes')
+            .select('vote_choice')
+            .eq('outfit_id', outfit.id)
+            .eq('user_id', currentUser.id)
+            .maybeSingle(),
+          getAbVoteStats(outfit.id),
+          getComments(outfit.id)
+        ])
+        cache.set(outfit.id, {
+          myVote: voteRes.data?.vote_choice || null,
+          abStats: statsRes.data || null,
+          comments: commentsRes.data || []
+        })
+      } else {
+        const [votesRes, itemVotesRes, commentsRes] = await Promise.all([
+          getOutfitVotes({ outfitId: outfit.id, userId: currentUser.id }),
+          getItemVotes({ outfitId: outfit.id, userId: currentUser.id }),
+          getComments(outfit.id)
+        ])
+        cache.set(outfit.id, {
+          outfitVotes: votesRes || null,
+          itemVotes: itemVotesRes || null,
+          comments: commentsRes.data || []
+        })
+      }
+    } catch {
+      cache.delete(outfit.id)
+    }
+  }, [currentUser?.id])
+
   // Keep current + upcoming cards warm in cache for smoother swipes.
   useEffect(() => {
     if (!outfits.length) return
@@ -346,7 +389,8 @@ function App() {
       outfits[currentIndex + 2]
     ].filter(Boolean)
     preloadTargets.forEach(preloadOutfit)
-  }, [outfits, currentIndex, preloadOutfit])
+    preloadTargets.forEach(preloadCardData)
+  }, [outfits, currentIndex, preloadOutfit, preloadCardData])
 
   // Direct outfit redirection
   const handleOutfitClickDirect = useCallback((outfit) => {
@@ -730,6 +774,7 @@ function App() {
                 isPreview
                 currentUser={currentUser}
                 session={session}
+                cardDataCache={cardDataCacheRef}
                 isFirstCard={false}
                 onNext={handleNext}
                 onSkip={handleSkip}
@@ -746,6 +791,7 @@ function App() {
                 isPreview
                 currentUser={currentUser}
                 session={session}
+                cardDataCache={cardDataCacheRef}
                 isFirstCard={false}
                 onNext={handleNext}
                 onSkip={handleSkip}
@@ -766,6 +812,7 @@ function App() {
               outfit={currentOutfit}
               currentUser={currentUser}
               session={session}
+              cardDataCache={cardDataCacheRef}
               isFirstCard={currentIndex === 0 && !selectedVibe}
               onNext={handleNext}
               onSkip={handleSkip}
@@ -781,6 +828,7 @@ function App() {
               outfit={currentOutfit}
               currentUser={currentUser}
               session={session}
+              cardDataCache={cardDataCacheRef}
               isLikedByMe={likedOutfitIds.has(currentOutfit.id)}
               isFirstCard={currentIndex === 0 && !selectedVibe}
               onNext={handleNext}

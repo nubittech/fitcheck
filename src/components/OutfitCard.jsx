@@ -9,8 +9,15 @@ import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
-const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat }) => {
+const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat, cardDataCache }) => {
   const { t } = useLang()
+
+  // Read pre-fetched data from cache (populated by App.jsx preloadCardData)
+  const cached = (() => {
+    const c = cardDataCache?.current?.get(outfit?.id)
+    return c && c !== 'pending' ? c : null
+  })()
+
   // 3-state panel: 'collapsed' | 'mid' | 'full'
   const [panelState, setPanelState] = useState('collapsed')
   const [swipeDir, setSwipeDir] = useState(null)
@@ -68,20 +75,27 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
   const [quickAskSent, setQuickAskSent] = useState(null) // item name or true
   const [currentSlide, setCurrentSlide] = useState(0) // tracks active carousel photo
 
-  // ── Outfit-level vote state ──
-  const [outfitVotes, setOutfitVotes] = useState({ likes: 0, dislikes: 0, likePct: null, myVote: null, total: 0 })
+  // ── Outfit-level vote state — initialize from cache if available ──
+  const [outfitVotes, setOutfitVotes] = useState(
+    cached?.outfitVotes || { likes: 0, dislikes: 0, likePct: null, myVote: null, total: 0 }
+  )
   const [votingOutfit, setVotingOutfit] = useState(false)
 
   // ── Item vote state: { [itemIndex]: { up, down, pct, myVote, total } } ──
-  const [itemVotes, setItemVotes] = useState({})
+  const [itemVotes, setItemVotes] = useState(cached?.itemVotes || {})
   const [votingItem, setVotingItem] = useState({})
 
-  // ── Comments state ──
-  const [comments, setComments] = useState([])
+  // ── Comments state — initialize from cache if available ──
+  const [comments, setComments] = useState(cached?.comments || [])
 
-  // Load votes when card mounts
+  // Load votes when card mounts — skip if cache was available
   useEffect(() => {
     if (!outfit?.id || !currentUser?.id) return
+
+    // If cache was available at mount time, skip API calls
+    const c = cardDataCache?.current?.get(outfit.id)
+    if (c && c !== 'pending') return
+
     getOutfitVotes({ outfitId: outfit.id, userId: currentUser.id }).then(setOutfitVotes)
     getItemVotes({ outfitId: outfit.id, userId: currentUser.id }).then(setItemVotes)
     getComments(outfit.id).then(({ data }) => {
