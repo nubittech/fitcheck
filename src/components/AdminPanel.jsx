@@ -327,7 +327,11 @@ const ContentTab = () => {
 
     const handleDelete = async (outfitId) => {
         if (!confirm('Bu gönderi kalıcı olarak silinecek. Emin misin?')) return
-        await deleteOutfit(outfitId)
+        const { error } = await deleteOutfit(outfitId)
+        if (error) {
+            alert('Silme başarısız: ' + error.message)
+            console.error('[AdminPanel] Delete failed:', error)
+        }
         fetchOutfits()
     }
 

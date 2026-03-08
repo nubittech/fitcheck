@@ -114,18 +114,18 @@ export async function resolveReport(reportId, action) {
         .eq('id', reportId)
         .single()
 
-    if (action === 'remove_post' && report?.outfit_id) {
-        // Delete the outfit and its media
-        await supabase.from('outfit_media').delete().eq('outfit_id', report.outfit_id)
-        await supabase.from('outfits').delete().eq('id', report.outfit_id)
-    }
-
+    // Update report status FIRST (before deleteOutfit removes the record)
     const { data, error } = await supabase
         .from('reported_posts')
         .update({ status: action === 'dismiss' ? 'dismissed' : 'resolved', resolved_at: new Date().toISOString() })
         .eq('id', reportId)
         .select()
         .single()
+
+    if (action === 'remove_post' && report?.outfit_id) {
+        // Full cascade delete (all related tables including reported_posts)
+        await deleteOutfit(report.outfit_id)
+    }
 
     return { data, error }
 }
@@ -158,11 +158,24 @@ export async function reportPost({ outfitId, reporterId, reason = '' }) {
 }
 
 export async function deleteOutfit(outfitId) {
-    await supabase.from('outfit_media').delete().eq('outfit_id', outfitId)
-    await supabase.from('comments').delete().eq('outfit_id', outfitId)
-    await supabase.from('likes').delete().eq('outfit_id', outfitId)
-    await supabase.from('outfit_votes').delete().eq('outfit_id', outfitId)
-    await supabase.from('item_votes').delete().eq('outfit_id', outfitId)
+    // Delete all related records first (foreign key constraints)
+    const tables = [
+        'outfit_media',
+        'comments',
+        'likes',
+        'outfit_votes',
+        'item_votes',
+        'ab_votes',
+        'reported_posts',
+    ]
+
+    for (const table of tables) {
+        const { error } = await supabase.from(table).delete().eq('outfit_id', outfitId)
+        if (error) console.warn(`[deleteOutfit] Failed to delete from ${table}:`, error.message)
+    }
+
+    // Finally delete the outfit itself
     const { error } = await supabase.from('outfits').delete().eq('id', outfitId)
+    if (error) console.error('[deleteOutfit] Failed to delete outfit:', error.message)
     return { error }
 }
