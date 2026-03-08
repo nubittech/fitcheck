@@ -25,42 +25,41 @@ export function usePremium() {
     const handleUpgrade = useCallback(async () => {
         setLoading(true)
         try {
-            // MOCK PURCHASE FLOW FOR TESTING WITHOUT DEVELOPER ACCOUNT
-            console.log('[usePremium] MOCK: Initiating fake purchase flow...')
-
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500))
-
-            // Persist premium status to Supabase
-            const { Purchases } = await import('@revenuecat/purchases-capacitor')
-            // We don't need RevenueCat for the mock, just update the DB
-            const { supabase } = await import('./supabase')
-            const { data: { session } } = await supabase.auth.getSession()
-            if (session?.user?.id) {
-                await supabase
-                    .from('profiles')
-                    .update({ is_premium: true, boosts_used: 0 })
-                    .eq('id', session.user.id)
-            }
-
-            setIsPremium(true)
-            alert('Premium abonelik başarıyla aktifleştirildi! 🎉')
-
-            setLoading(false)
-            return true
-
-            /* ORIGINAL REVENUECAT CODE — uncomment when Apple Developer account is ready
+            // REAL REVENUECAT PURCHASE FLOW
+            // Get available packages
             const offerings = await getOfferings()
             if (!offerings?.current?.availablePackages?.length) {
                 alert('Şu anda mevcut paket bulunamadı.')
                 setLoading(false)
                 return false
             }
+
+            // Purchase the first available package (usually the main subscription)
             const pkg = offerings.current.availablePackages[0]
             const result = await purchasePackage(pkg)
-            if (result.cancelled) { setLoading(false); return false }
-            if (result.isPremium) { setIsPremium(true); setLoading(false); return true }
-            */
+
+            if (result.cancelled) {
+                setLoading(false)
+                return false
+            }
+
+            if (result.isPremium) {
+                // Persist premium status to Supabase
+                const { supabase } = await import('./supabase')
+                const { data: { session } } = await supabase.auth.getSession()
+
+                if (session?.user?.id) {
+                    await supabase
+                        .from('profiles')
+                        .update({ is_premium: true, boosts_used: 0 })
+                        .eq('id', session.user.id)
+                }
+
+                setIsPremium(true)
+                alert('Premium abonelik başarıyla aktifleştirildi! 🎉')
+                setLoading(false)
+                return true
+            }
         } catch (err) {
             console.error('[usePremium] Purchase error:', err)
             alert('Satın alma sırasında bir hata oluştu.')

@@ -55,7 +55,7 @@ const Login = ({ onLogin, onGoSignUp }) => {
         if (provider === 'apple') {
           const { SignInWithApple } = await import('@capacitor-community/apple-sign-in')
           const options = {
-            clientId: 'com.fitcheck.app',
+            clientId: 'com.veylo.app',
             redirectURI: 'https://yxgatmrkuaxhlxhgwzsi.supabase.co/auth/v1/callback',
             scopes: 'email name',
             state: '12345',

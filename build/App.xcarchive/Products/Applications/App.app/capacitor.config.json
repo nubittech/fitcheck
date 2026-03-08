@@ -1,0 +1,34 @@
+{
+	"appId": "com.veylo.app",
+	"appName": "Veylo",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"StatusBar": {
+			"style": "Light",
+			"backgroundColor": "#f5f2f0"
+		},
+		"SplashScreen": {
+			"launchAutoHide": true,
+			"launchShowDuration": 2000,
+			"backgroundColor": "#FAEDE6",
+			"showSpinner": false
+		},
+		"Keyboard": {
+			"resize": "body"
+		}
+	},
+	"packageClassList": [
+		"SignInWithApple",
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"KeyboardPlugin",
+		"PreferencesPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin",
+		"PurchasesPlugin"
+	]
+}
