@@ -23,6 +23,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { Browser } from '@capacitor/browser'
 import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { initPurchases } from './lib/purchases'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -129,6 +130,9 @@ function App() {
 
   // Auth listener + OAuth deep link handler
   useEffect(() => {
+    // Initialize RevenueCat after Capacitor bridge is ready
+    initPurchases().catch(err => console.warn('[App] RevenueCat init skipped:', err))
+
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
 
@@ -524,7 +528,7 @@ function App() {
       if (data?.url) avatarUrl = data.url
     }
 
-    const { data: updated } = await updateProfile(session.user.id, {
+    const { data: updated, error } = await updateProfile(session.user.id, {
       full_name: name,
       bio,
       city,
@@ -534,20 +538,16 @@ function App() {
       instagram_handle
     })
 
+    if (error) {
+      console.error('[Profile] Update failed:', error)
+      alert('Profil güncellenirken bir hata oluştu.')
+      return false
+    }
+
     if (updated) {
       setCurrentUser(updated)
-    } else {
-      setCurrentUser(prev => ({
-        ...(prev || {}),
-        full_name: name,
-        bio,
-        city,
-        age,
-        vibes: styles,
-        avatar_url: avatarUrl,
-        instagram_handle
-      }))
     }
+    return true
   }
 
   const renderContent = () => {

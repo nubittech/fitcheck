@@ -2,11 +2,7 @@ import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { LangProvider } from './i18n/LangContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { initPurchases } from './lib/purchases'
 import './styles/global.css'
-
-// Initialize RevenueCat on native platforms
-initPurchases().catch(err => console.warn('[App] RevenueCat init skipped:', err))
 
 // Code splitting — heavy components load on demand
 const App = lazy(() => import('./App'))

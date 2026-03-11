@@ -9,13 +9,19 @@ import { Capacitor } from '@capacitor/core';
 
 const API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY || '';
 
-let isConfigured = false;
+let _initPromise = null;
 
 /**
  * Initialize RevenueCat SDK.
- * Should be called once on app startup (only on native platforms).
+ * Safe to call multiple times — returns the same promise if already in progress.
  */
-export async function initPurchases(userId) {
+export function initPurchases(userId) {
+    if (_initPromise) return _initPromise;
+    _initPromise = _doInit(userId);
+    return _initPromise;
+}
+
+async function _doInit(userId) {
     if (!Capacitor.isNativePlatform()) {
         console.log('[Purchases] Skipping — not a native platform');
         return;
@@ -26,37 +32,39 @@ export async function initPurchases(userId) {
         return;
     }
 
-    // Block test keys in production — they trigger the "Wrong API Key" crash dialog
     if (API_KEY.startsWith('test_')) {
-        console.warn('[Purchases] Test API key detected — skipping init to avoid crash. Use a production key (goog_ or appl_).');
+        console.warn('[Purchases] Test API key detected — skipping init.');
         return;
     }
 
     try {
-        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+        // setLogLevel is CAPPluginReturnNone — ignore failures
+        try { await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG }); } catch (_) {}
 
         const config = { apiKey: API_KEY };
-        if (userId) {
-            config.appUserID = userId;
-        }
+        if (userId) config.appUserID = userId;
 
+        // configure is CAPPluginReturnNone — resolves immediately on native
         await Purchases.configure(config);
-        isConfigured = true;
         console.log('[Purchases] Configured successfully');
     } catch (err) {
         console.error('[Purchases] Configuration failed:', err);
     }
 }
 
+/** Ensures initPurchases has been called, then calls SDK directly */
+async function _callSDK(fn) {
+    if (!_initPromise) initPurchases();
+    try { await _initPromise; } catch (_) { /* init failed, still try SDK */ }
+    return fn();
+}
+
 /**
  * Check if the current user has an active "premium" entitlement.
- * Returns { isPremium: boolean }
  */
 export async function checkPremiumStatus() {
-    if (!isConfigured) return { isPremium: false };
-
     try {
-        const { customerInfo } = await Purchases.getCustomerInfo();
+        const { customerInfo } = await _callSDK(() => Purchases.getCustomerInfo());
         const isPremium = typeof customerInfo.entitlements?.active?.premium !== 'undefined';
         return { isPremium, customerInfo };
     } catch (err) {
@@ -69,11 +77,10 @@ export async function checkPremiumStatus() {
  * Retrieve current offerings (available subscription packages).
  */
 export async function getOfferings() {
-    if (!isConfigured) return null;
-
     try {
-        const { offerings } = await Purchases.getOfferings();
-        return offerings;
+        // RevenueCat Capacitor returns {all: {...}, current: {...}} directly — NOT wrapped in {offerings: ...}
+        const result = await _callSDK(() => Purchases.getOfferings());
+        return result;
     } catch (err) {
         console.error('[Purchases] Failed to get offerings:', err);
         return null;
@@ -82,18 +89,14 @@ export async function getOfferings() {
 
 /**
  * Purchase a specific package.
- * @param {object} pkg — a package object from getOfferings()
  */
 export async function purchasePackage(pkg) {
-    if (!isConfigured) throw new Error('RevenueCat not configured');
-
     try {
-        const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
+        const { customerInfo } = await _callSDK(() => Purchases.purchasePackage({ aPackage: pkg }));
         const isPremium = typeof customerInfo.entitlements?.active?.premium !== 'undefined';
         return { isPremium, customerInfo };
     } catch (err) {
-        // User cancelled — not a real error
-        if (err.code === 1 || err.userCancelled) {
+        if (String(err.code) === '1' || err.userCancelled) {
             console.log('[Purchases] User cancelled purchase');
             return { cancelled: true };
         }
@@ -105,10 +108,8 @@ export async function purchasePackage(pkg) {
  * Restore previously purchased subscriptions.
  */
 export async function restorePurchases() {
-    if (!isConfigured) throw new Error('RevenueCat not configured');
-
     try {
-        const { customerInfo } = await Purchases.restorePurchases();
+        const { customerInfo } = await _callSDK(() => Purchases.restorePurchases());
         const isPremium = typeof customerInfo.entitlements?.active?.premium !== 'undefined';
         return { isPremium, customerInfo };
     } catch (err) {

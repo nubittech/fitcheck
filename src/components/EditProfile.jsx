@@ -28,8 +28,8 @@ const EditProfile = ({ onClose, profile, onSave }) => {
     setAvatarPreview(URL.createObjectURL(file))
   }
 
-  const handleSave = () => {
-    onSave?.({
+  const handleSave = async () => {
+    const success = await onSave?.({
       name: displayName.trim(),
       bio: bio.trim(),
       city: city.trim(),
@@ -39,7 +39,7 @@ const EditProfile = ({ onClose, profile, onSave }) => {
       avatarFile,
       instagram_handle: instagramHandle.trim().replace(/^@/, '')
     })
-    onClose()
+    if (success !== false) onClose()
   }
 
   return (

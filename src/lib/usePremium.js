@@ -25,17 +25,30 @@ export function usePremium() {
     const handleUpgrade = useCallback(async () => {
         setLoading(true)
         try {
-            // REAL REVENUECAT PURCHASE FLOW
-            // Get available packages
             const offerings = await getOfferings()
-            if (!offerings?.current?.availablePackages?.length) {
+
+            // Try current offering first, fall back to "default" in all
+            const activeOffering = offerings?.current ?? offerings?.all?.default
+
+            if (!activeOffering) {
                 alert('Şu anda mevcut paket bulunamadı.')
                 setLoading(false)
                 return false
             }
 
-            // Purchase the first available package (usually the main subscription)
-            const pkg = offerings.current.availablePackages[0]
+            // availablePackages may be empty when StoreKit products aren't in App Store Connect yet
+            const SHORTCUT_KEYS = ['monthly', 'annual', 'weekly', 'threeMonth', 'sixMonth', 'twoMonth']
+            const packages = activeOffering?.availablePackages?.length
+                ? activeOffering.availablePackages
+                : SHORTCUT_KEYS.map(k => activeOffering?.[k]).filter(Boolean)
+
+            if (!packages?.length) {
+                alert('Şu anda mevcut paket bulunamadı.')
+                setLoading(false)
+                return false
+            }
+
+            const pkg = packages[0]
             const result = await purchasePackage(pkg)
 
             if (result.cancelled) {
@@ -44,7 +57,6 @@ export function usePremium() {
             }
 
             if (result.isPremium) {
-                // Persist premium status to Supabase
                 const { supabase } = await import('./supabase')
                 const { data: { session } } = await supabase.auth.getSession()
 
