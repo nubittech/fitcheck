@@ -203,9 +203,10 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         if (mf.type === 'image') {
           try {
             const options = {
-              maxSizeMB: 0.5, // 500KB limit
-              maxWidthOrHeight: 1280, // Cap at 1280px to save network bandwidth
-              useWebWorker: true
+              maxSizeMB: 2,
+              maxWidthOrHeight: 2048,
+              useWebWorker: true,
+              initialQuality: 0.85
             }
             fileToUpload = await imageCompression(mf.file, options)
           } catch (compErr) {
