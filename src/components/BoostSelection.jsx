@@ -126,18 +126,21 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, purchasedBalance = 
               )}
             </button>
           ) : (
-            <button className="boost-activate-btn" onClick={handlePurchase} disabled={purchasing}>
-              {purchasing ? (
-                <span>Satın alınıyor...</span>
-              ) : (
-                <>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  <span>Boost Satın Al — $1.99</span>
-                </>
-              )}
-            </button>
+            <>
+              <button className="boost-activate-btn" onClick={handlePurchase} disabled={purchasing}>
+                {purchasing ? (
+                  <span>Satın alınıyor...</span>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span>5 Boost Satın Al — $1.99</span>
+                  </>
+                )}
+              </button>
+              <p className="boost-purchase-note">Her satın alımda 5 boost kredisi eklenir</p>
+            </>
           )}
           <button className="boost-cancel-btn" onClick={onClose}>Şimdi Değil</button>
         </div>

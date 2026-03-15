@@ -76,11 +76,18 @@ const Login = ({ onLogin, onGoSignUp }) => {
             if (data?.session) {
               onLogin(data.session)
             } else {
-              // Fallback: session bazen geç gelir, direkt al
+              // Fallback: session bazen geç gelir, retry with delay
+              await new Promise(r => setTimeout(r, 500))
               const { data: { session: fallbackSession } } = await supabase.auth.getSession()
               console.log('[Apple Auth] Fallback session:', !!fallbackSession)
               if (fallbackSession) onLogin(fallbackSession)
-              else throw new Error('Session alınamadı. Lütfen tekrar deneyin.')
+              else {
+                // Son deneme: auth state change tetiklenmemiş olabilir
+                await new Promise(r => setTimeout(r, 1000))
+                const { data: { session: retrySession } } = await supabase.auth.getSession()
+                if (retrySession) onLogin(retrySession)
+                else throw new Error('Session alınamadı. Lütfen tekrar deneyin.')
+              }
             }
             return // success
           } else {
@@ -89,7 +96,7 @@ const Login = ({ onLogin, onGoSignUp }) => {
         }
 
         // Other Providers (Google) via OAuth
-        const redirectTo = 'com.fitcheck.app://callback'
+        const redirectTo = 'com.nubittech.veylo://callback'
         const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
