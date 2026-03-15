@@ -23,7 +23,9 @@ import { Keyboard } from '@capacitor/keyboard'
 import { Browser } from '@capacitor/browser'
 import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { Preferences } from '@capacitor/preferences'
 import { initPurchases } from './lib/purchases'
+import Onboarding from './components/Onboarding'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -92,6 +94,8 @@ function App() {
   // ── Normal App ──
   const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'
   const [session, setSession] = useState(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingChecked, setOnboardingChecked] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false)
   const [needsLegalConsent, setNeedsLegalConsent] = useState(false)
@@ -127,6 +131,32 @@ function App() {
     }
     return success
   }, [handleUpgrade, session])
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const { value } = await Preferences.get({ key: 'veylo_onboarding_seen' })
+        if (!value) {
+          setShowOnboarding(true)
+        }
+      } catch (e) {
+        console.warn('Preferences error', e)
+        setShowOnboarding(true) // Show by default if error
+      } finally {
+        setOnboardingChecked(true)
+      }
+    }
+    checkOnboarding()
+  }, [])
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await Preferences.set({ key: 'veylo_onboarding_seen', value: 'true' })
+    } catch (e) {
+      console.warn('Preferences save error', e)
+    }
+    setShowOnboarding(false)
+  }
 
   // Auth listener + OAuth deep link handler
   useEffect(() => {
@@ -551,6 +581,17 @@ function App() {
   }
 
   const renderContent = () => {
+    if (!onboardingChecked) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
+        </div>
+      )
+    }
+
+    if (showOnboarding) {
+      return <Onboarding onComplete={handleOnboardingComplete} />
+    }
+
     if (!isLoggedIn) {
       if (authScreen === 'signup') {
         return (

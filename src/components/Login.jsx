@@ -54,12 +54,13 @@ const Login = ({ onLogin, onGoSignUp }) => {
         // Native Apple Sign In Flow
         if (provider === 'apple') {
           const { SignInWithApple } = await import('@capacitor-community/apple-sign-in')
+          const rawNonce = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)
           const options = {
             clientId: 'com.nubittech.veylo',
             redirectURI: 'https://yxgatmrkuaxhlxhgwzsi.supabase.co/auth/v1/callback',
             scopes: 'email name',
-            state: '12345',
-            nonce: 'nonce',
+            state: Math.random().toString(36).substring(2),
+            nonce: rawNonce,
           }
           const result = await SignInWithApple.authorize(options)
           if (result && result.response && result.response.identityToken) {
@@ -67,9 +68,20 @@ const Login = ({ onLogin, onGoSignUp }) => {
             const { data, error: sbError } = await supabase.auth.signInWithIdToken({
               provider: 'apple',
               token: result.response.identityToken,
+              nonce: rawNonce,
             })
+            console.log('[Apple Auth] signInWithIdToken result:', JSON.stringify({ hasSession: !!data?.session, hasUser: !!data?.user, error: sbError?.message }))
             if (sbError) throw sbError
             setLoading(false)
+            if (data?.session) {
+              onLogin(data.session)
+            } else {
+              // Fallback: session bazen geç gelir, direkt al
+              const { data: { session: fallbackSession } } = await supabase.auth.getSession()
+              console.log('[Apple Auth] Fallback session:', !!fallbackSession)
+              if (fallbackSession) onLogin(fallbackSession)
+              else throw new Error('Session alınamadı. Lütfen tekrar deneyin.')
+            }
             return // success
           } else {
             throw new Error('No identity token returned from Apple')

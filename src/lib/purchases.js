@@ -105,6 +105,29 @@ export async function purchasePackage(pkg) {
 }
 
 /**
+ * Purchase a single boost (consumable) from the 'boosts' offering.
+ */
+export async function purchaseBoost() {
+    try {
+        const result = await _callSDK(() => Purchases.getOfferings());
+        const boostOffering = result?.all?.boosts;
+        if (!boostOffering) throw new Error('Boost offering bulunamadı');
+
+        const boostPackage = boostOffering.availablePackages?.find(p => p.identifier === 'boost');
+        if (!boostPackage) throw new Error('Boost paketi bulunamadı');
+
+        await _callSDK(() => Purchases.purchasePackage({ aPackage: boostPackage }));
+        return { success: true };
+    } catch (err) {
+        if (String(err.code) === '1' || err.userCancelled) {
+            console.log('[Purchases] User cancelled boost purchase');
+            return { cancelled: true };
+        }
+        throw err;
+    }
+}
+
+/**
  * Restore previously purchased subscriptions.
  */
 export async function restorePurchases() {
