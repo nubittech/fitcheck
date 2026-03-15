@@ -891,7 +891,7 @@ function App() {
   return (
     <div className="app">
       {renderContent()}
-      {isLoggedIn && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (
+      {isLoggedIn && !showOnboarding && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (
         <BottomNav activeTab={activeTab} onTabChange={(tab) => {
           setActiveTab(tab)
           if (tab !== 'inbox') setSelectedChat(null)

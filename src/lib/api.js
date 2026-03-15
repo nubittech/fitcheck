@@ -244,20 +244,28 @@ export async function activateBoost(userId) {
   return { data, error }
 }
 
+export async function creditBoostPurchase(userId) {
+  const { data, error } = await supabase.rpc('credit_boost_purchase', {
+    user_id_param: userId
+  })
+  return { data, error }
+}
+
 export async function getBoostStatus(userId) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('boosts_used, boosts_reset_at, is_premium')
+    .select('boosts_used, boosts_reset_at, is_premium, purchased_boosts_balance')
     .eq('id', userId)
     .single()
-  if (error) return { boostsUsed: 0, maxBoosts: 2 }
+  if (error) return { boostsUsed: 0, maxBoosts: 0, purchasedBalance: 0 }
 
   const isPremium = data.is_premium
-  const maxBoosts = isPremium ? 5 : 2
+  const maxBoosts = isPremium ? 3 : 0
+  const purchasedBalance = data.purchased_boosts_balance || 0
 
-  // Free users: no reset, 2 total lifetime boosts
+  // Free users: no monthly boosts, only purchased
   if (!isPremium) {
-    return { boostsUsed: data.boosts_used || 0, maxBoosts }
+    return { boostsUsed: 0, maxBoosts, purchasedBalance }
   }
 
   // Premium users: monthly reset
@@ -266,9 +274,9 @@ export async function getBoostStatus(userId) {
   const now = Date.now()
 
   if (now - resetAt > periodMs) {
-    return { boostsUsed: 0, maxBoosts }
+    return { boostsUsed: 0, maxBoosts, purchasedBalance }
   }
-  return { boostsUsed: data.boosts_used || 0, maxBoosts }
+  return { boostsUsed: data.boosts_used || 0, maxBoosts, purchasedBalance }
 }
 
 export async function uploadAvatar(userId, file) {

@@ -15,7 +15,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 40px 24px 24px 24px; /* Increased top padding to move elements down */
   position: absolute;
   top: 0;
   left: 0;

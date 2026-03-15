@@ -4,7 +4,8 @@ import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
-import { getOutfitsByUser, getBoostStatus, activateBoost } from '../lib/api';
+import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase } from '../lib/api';
+import { purchaseBoost } from '../lib/purchases';
 import { useLang } from '../i18n/LangContext';
 import { usePremium } from '../lib/usePremium';
 
@@ -65,6 +66,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
     const [userOutfits, setUserOutfits] = useState([]);
     const [outfitsLoading, setOutfitsLoading] = useState(true);
     const [boostsUsed, setBoostsUsed] = useState(0);
+    const [purchasedBoostBalance, setPurchasedBoostBalance] = useState(0);
     const [, setTick] = useState(0);
 
     const profile = useMemo(() => ({
@@ -88,6 +90,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
         ]).then(([outfitRes, boostRes]) => {
             setUserOutfits(outfitRes.data || []);
             setBoostsUsed(boostRes.boostsUsed || 0);
+            setPurchasedBoostBalance(boostRes.purchasedBalance || 0);
             setOutfitsLoading(false);
         });
     }, [session?.user?.id]);
@@ -297,6 +300,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 <BoostSelection
                     userType={profile.isPremium ? 'premium' : 'free'}
                     boostsUsed={boostsUsed}
+                    purchasedBalance={purchasedBoostBalance}
                     onClose={() => setShowBoost(false)}
                     onBoost={async () => {
                         if (!session?.user?.id) return;
@@ -306,7 +310,25 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             return;
                         }
                         setBoostsUsed(data.boosts_used);
+                        if (data.used_purchased) {
+                            setPurchasedBoostBalance(prev => Math.max(0, prev - 1));
+                        }
                         setShowBoost(false);
+                    }}
+                    onPurchase={async () => {
+                        if (!session?.user?.id) return;
+                        try {
+                            const result = await purchaseBoost();
+                            if (result.cancelled) return;
+                            if (result.success) {
+                                const { data } = await creditBoostPurchase(session.user.id);
+                                if (data?.success) {
+                                    setPurchasedBoostBalance(data.balance);
+                                }
+                            }
+                        } catch (err) {
+                            alert(err.message || 'Satın alma başarısız oldu.');
+                        }
                     }}
                 />
             )}

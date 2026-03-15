@@ -2,16 +2,18 @@ import { useState } from 'react';
 import '../styles/BoostSelection.css';
 
 const BOOST_LIMITS = {
-  free: { max: 2, period: null, duration: 2 },
-  premium: { max: 5, period: 'ay', duration: 2 }
+  free: { max: 0, period: null, duration: 2 },
+  premium: { max: 3, period: 'ay', duration: 2 }
 };
 
-const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost }) => {
+const BoostSelection = ({ userType = 'free', boostsUsed = 0, purchasedBalance = 0, onClose, onBoost, onPurchase }) => {
   const [activating, setActivating] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const isPremium = userType === 'premium';
   const limits = BOOST_LIMITS[isPremium ? 'premium' : 'free'];
-  const remaining = Math.max(0, limits.max - boostsUsed);
-  const hasBoosts = remaining > 0;
+  const monthlyRemaining = Math.max(0, limits.max - boostsUsed);
+  const totalRemaining = monthlyRemaining + purchasedBalance;
+  const hasBoosts = totalRemaining > 0;
 
   const handleBoost = async () => {
     if (!hasBoosts || activating) return;
@@ -20,6 +22,16 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
       await onBoost();
     } finally {
       setActivating(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    if (purchasing) return;
+    setPurchasing(true);
+    try {
+      await onPurchase();
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -49,12 +61,12 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
         {/* Stats */}
         <div className="boost-stats-row">
           <div className="boost-stat-card">
-            <span className="boost-stat-value">{remaining}</span>
+            <span className="boost-stat-value">{totalRemaining}</span>
             <span className="boost-stat-label">Kalan Boost</span>
           </div>
           <div className="boost-stat-divider" />
           <div className="boost-stat-card">
-            <span className="boost-stat-value">{limits.duration}s</span>
+            <span className="boost-stat-value">{limits.duration}sa</span>
             <span className="boost-stat-label">Süre</span>
           </div>
           <div className="boost-stat-divider" />
@@ -72,7 +84,9 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
           <span>
             {isPremium
               ? `Premium · ${limits.max} boost / ${limits.period}`
-              : `Free · ${limits.max} boost (toplam)`
+              : purchasedBalance > 0
+                ? `${purchasedBalance} satın alınmış boost`
+                : 'Boost satın alarak kullan'
             }
           </span>
         </div>
@@ -112,23 +126,18 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, onClose, onBoost })
               )}
             </button>
           ) : (
-            <>
-              <div className="boost-empty-msg">
-                Bu {isPremium ? limits.period : ''} için boost hakkın bitti.
-                {!isPremium && ' Premium ile 5 boost / ay kazan!'}
-              </div>
-              {!isPremium && (
-                <button className="boost-upgrade-btn" onClick={() => {
-                  import('../lib/usePremium').then(m => m.usePremium)
-                  alert('Premium abonelik yakında aktif olacak!')
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none">
-                    <path d="M6 2l-4 8 10 12L22 10 18 2H6zm2.14 2h7.72l2.5 5H5.64l2.5-5z" />
+            <button className="boost-activate-btn" onClick={handlePurchase} disabled={purchasing}>
+              {purchasing ? (
+                <span>Satın alınıyor...</span>
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                   </svg>
-                  Premium'a Geç
-                </button>
+                  <span>Boost Satın Al — $1.99</span>
+                </>
               )}
-            </>
+            </button>
           )}
           <button className="boost-cancel-btn" onClick={onClose}>Şimdi Değil</button>
         </div>
