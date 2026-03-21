@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS app_config (
 
 INSERT INTO app_config (key, value) VALUES
   ('xp_rewards', '{"post_outfit": 20, "like_outfit": 2, "receive_like": 5, "daily_login": 10, "comment": 5, "explore_profile": 1, "event_post": 50, "streak_7": 50, "streak_14": 100, "streak_30": 200}'),
-  ('level_titles', '{"1": "Caylak", "5": "Moda Meraklisi", "10": "Kombin Artisti", "15": "Stil Avcisi", "20": "Fashionista", "30": "Trend Setter", "40": "Stil Ustasi", "50": "Moda Ikonu"}'),
+  ('level_titles', '{"1": "Yeni Stilist", "3": "Moda Meraklisi", "5": "Kombin Asigi", "8": "Stil Kâsifi", "12": "Kombin Artisti", "16": "Fashionista", "20": "Stil Avcisi", "25": "Trend Setter", "30": "Moda Gurusu", "35": "Stil Ustasi", "40": "Moda Efsanesi", "50": "Moda Ikonu"}'),
   ('daily_mission_count', '{"count": 3}')
 ON CONFLICT (key) DO NOTHING;
 
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS user_levels (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
   xp INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
-  title TEXT DEFAULT 'Caylak',
+  title TEXT DEFAULT 'Yeni Stilist',
   streak_days INTEGER DEFAULT 0,
   last_active_date DATE,
   boost_multiplier FLOAT DEFAULT 1.0,

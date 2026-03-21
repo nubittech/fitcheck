@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import MissionCard from './MissionCard'
 import { getDailyMissions, claimMissionReward } from '../../lib/api'
 import { useXP } from '../../contexts/XPContext'
+import '../../styles/MissionsSheet.css'
 
 const MissionsSheet = ({ isOpen, onClose, userId }) => {
   const [missions, setMissions] = useState([])
@@ -31,6 +32,21 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
     }
   }
 
+  const handleClaimAll = async () => {
+    const unclaimed = missions.filter(m => m.is_completed && !m.is_claimed)
+    if (unclaimed.length === 0) return
+    
+    // Process sequentially to be safe, or Promise.all handling could be used.
+    for (const m of unclaimed) {
+      await claimMissionReward(m.id)
+    }
+    
+    setMissions(prev => prev.map(m =>
+      (m.is_completed && !m.is_claimed) ? { ...m, is_claimed: true } : m
+    ))
+    await refreshLevel()
+  }
+
   // Swipe down to close
   const handleTouchStart = (e) => {
     startY.current = e.touches[0].clientY
@@ -53,99 +69,69 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
 
   const completedCount = missions.filter(m => m.is_completed).length
   const totalCount = missions.length
+  const totalXP = missions.reduce((sum, m) => sum + (m.mission?.xp_reward || 0), 0)
+  const unclaimedCount = missions.filter(m => m.is_completed && !m.is_claimed).length
 
   return (
     <>
       {/* Backdrop */}
       <div
+        className="missions-sheet-backdrop"
         style={{
-          position: 'fixed', inset: 0, zIndex: 998,
-          background: isOpen ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0)',
           pointerEvents: isOpen ? 'auto' : 'none',
-          transition: 'background 0.3s ease',
+          opacity: isOpen ? 1 : 0
         }}
         onClick={onClose}
       />
 
       {/* Sheet */}
       <div
+        className="missions-sheet"
         ref={sheetRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
-          position: 'fixed',
-          left: 0, right: 0, bottom: 0,
-          zIndex: 999,
-          background: '#1a1a1a',
-          borderRadius: '24px 24px 0 0',
-          maxHeight: '75vh',
-          overflowY: 'auto',
           transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-          WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Handle */}
-        <div style={{
-          width: 36, height: 4, borderRadius: 2,
-          background: 'rgba(255,255,255,0.2)',
-          margin: '10px auto 0',
-        }} />
-
         {/* Header */}
-        <div style={{
-          padding: '16px 20px 12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
+        <div className="missions-sheet-header">
           <div>
-            <h2 style={{
-              color: '#fff', fontSize: 20, fontWeight: 700, margin: 0,
-            }}>
-              Gunluk Gorevler
-            </h2>
-            {streakInfo && streakInfo.streak > 0 && (
-              <div style={{
-                color: '#FFD700', fontSize: 12, marginTop: 4,
-                display: 'flex', alignItems: 'center', gap: 4,
-              }}>
-                <span>🔥</span>
-                <span>{streakInfo.streak} Gun Streak</span>
-              </div>
-            )}
+            <h2 className="missions-sheet-title">Günlük Görevler</h2>
+            <div className="missions-sheet-subtitle">BUGÜN {completedCount}/{totalCount} TAMAMLANDI</div>
+            
+            <div className="missions-total-xp">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 15l-3.09-6.26L4 9.27l5 4.87-1.18 6.88L12 17.77l4.18-2.25L15 8.64l5-4.87-4.91-1.01L12 15z" />
+                  <path d="M12 2v2"></path>
+               </svg>
+               {totalXP.toLocaleString()} XP
+            </div>
           </div>
-          <div style={{
-            background: completedCount === totalCount && totalCount > 0
-              ? 'linear-gradient(135deg, #FFD700, #FF8C00)'
-              : 'rgba(255,255,255,0.08)',
-            color: completedCount === totalCount && totalCount > 0 ? '#000' : '#fff',
-            padding: '6px 14px',
-            borderRadius: 20,
-            fontSize: 13,
-            fontWeight: 700,
-          }}>
-            {completedCount}/{totalCount}
-          </div>
+          <button className="missions-sheet-close" onClick={onClose}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
         {/* Mission List */}
-        <div style={{ padding: '0 16px 32px' }}>
+        <div className="missions-list-container">
           {loading ? (
-            <div style={{ color: '#666', fontSize: 14, textAlign: 'center', padding: 40 }}>
-              Yukleniyor...
+            <div style={{ color: '#8f8582', fontSize: 14, textAlign: 'center', padding: 40 }}>
+              Yükleniyor...
             </div>
           ) : missions.length === 0 ? (
-            <div style={{ color: '#666', fontSize: 14, textAlign: 'center', padding: 40 }}>
-              Bugun icin gorev bulunmuyor.
+            <div style={{ color: '#8f8582', fontSize: 14, textAlign: 'center', padding: 40 }}>
+              Bugün için görev bulunmuyor.
             </div>
           ) : (
             missions.map(m => (
               <MissionCard
                 key={m.id}
-                icon={m.mission?.icon}
-                title={m.mission?.title || 'Gorev'}
+                title={m.mission?.title || 'Görev'}
                 progress={m.progress}
                 target={m.target}
                 xp={m.mission?.xp_reward || 0}
@@ -156,6 +142,17 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
             ))
           )}
         </div>
+        
+        {/* Claim All Button */}
+        {missions.length > 0 && (
+          <button 
+             className="missions-claim-all-btn" 
+             onClick={handleClaimAll}
+             disabled={unclaimedCount === 0}
+          >
+             {unclaimedCount > 0 ? `Tümünü Al (${unclaimedCount})` : 'Toplanacak Ödül Yok'}
+          </button>
+        )}
       </div>
     </>
   )
