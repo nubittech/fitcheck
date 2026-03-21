@@ -620,16 +620,9 @@ export function getLevelProgress(xp, level) {
 // ---- V2: DAILY MISSIONS ----
 
 export async function getDailyMissions(userId) {
-  const today = new Date().toISOString().split('T')[0]
+  // Yeni get_user_missions RPC — daily + admin görevleri döner
   const { data, error } = await supabase
-    .from('user_missions')
-    .select(`
-      *,
-      mission:mission_templates(*)
-    `)
-    .eq('user_id', userId)
-    .eq('assigned_date', today)
-    .order('is_completed', { ascending: true })
+    .rpc('get_user_missions', { p_user_id: userId })
   return { data, error }
 }
 

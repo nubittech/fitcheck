@@ -53,14 +53,13 @@
 .missions-total-xp {
   background: #fff0ed;
   color: #f0786c;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 8px 16px;
+  padding: 4px 12px;
   border-radius: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 16px;
+  gap: 4px;
 }
 
 .missions-list-container {
@@ -162,6 +161,39 @@
   background: transparent;
   color: #c4bbb9;
   border: 1px solid #e8e4e1;
+}
+
+/* Admin (özel etkinlik) görev kartı */
+.mission-card.admin-mission {
+  background: linear-gradient(135deg, #eef2ff, #f5f8ff);
+  border: 1px solid #c7d5f5;
+}
+
+.mission-icon-wrap.admin {
+  background: #e8effe;
+  color: #5b7fd4;
+}
+
+.mission-xp-pill.admin {
+  background: #e8effe;
+  color: #4a6fa5;
+}
+
+.mission-xp-pill.done {
+  background: #fef6e4;
+  color: #e8943a;
+  animation: pulse-xp 1.2s infinite;
+}
+
+.mission-desc {
+  color: #a89f9d;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+@keyframes pulse-xp {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
 }
 
 .missions-claim-all-btn {
