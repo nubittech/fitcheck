@@ -113,18 +113,28 @@ const BoostSelection = ({ userType = 'free', boostsUsed = 0, purchasedBalance = 
         {/* Actions */}
         <div className="boost-actions-area">
           {hasBoosts ? (
-            <button className="boost-activate-btn" onClick={handleBoost} disabled={activating}>
-              {activating ? (
-                <span>Aktifleştiriliyor...</span>
-              ) : (
-                <>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  <span>Boost Aktifleştir</span>
-                </>
-              )}
-            </button>
+            <>
+              <button className="boost-activate-btn" onClick={handleBoost} disabled={activating}>
+                {activating ? (
+                  <span>Aktifleştiriliyor...</span>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="none">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span>Boost Aktifleştir</span>
+                  </>
+                )}
+              </button>
+              {/* Also allow purchasing more boosts */}
+              <button className="boost-buy-more-btn" onClick={handlePurchase} disabled={purchasing}>
+                {purchasing ? (
+                  <span>Satın alınıyor...</span>
+                ) : (
+                  <span>+ Daha fazla satın al — 5 boost / $1.99</span>
+                )}
+              </button>
+            </>
           ) : (
             <>
               <button className="boost-activate-btn" onClick={handlePurchase} disabled={purchasing}>

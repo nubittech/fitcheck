@@ -7,8 +7,8 @@ android {
         applicationId "com.veylo.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.4"
+        versionCode 13
+        versionName "1.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -27,6 +27,18 @@ android {
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "androidx.core:core-ktx:$androidxCoreVersion"
+        force "androidx.core:core:$androidxCoreVersion"
+        force "com.google.android.gms:play-services-ads:23.6.0"
+        force "com.google.android.gms:play-services-ads-identifier:18.1.0"
+        force "com.google.android.gms:play-services-ads-lite:23.6.0"
+        force "com.google.android.gms:play-services-basement:18.5.0"
+        force "com.google.android.gms:play-services-tasks:18.2.0"
     }
 }
 

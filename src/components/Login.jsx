@@ -46,6 +46,17 @@ const Login = ({ onLogin, onGoSignUp }) => {
     onLogin(data.session)
   }
 
+  // SHA256 hash for Apple nonce — Apple requires hashed nonce, Supabase needs raw nonce
+  const generateAppleNonce = async () => {
+    const rawNonce = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0')).join('')
+    const msgBuffer = new TextEncoder().encode(rawNonce)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
+    const hashedNonce = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0')).join('')
+    return { rawNonce, hashedNonce }
+  }
+
   const handleSocialLogin = async (provider) => {
     setLoading(true)
     setError('')
@@ -54,13 +65,13 @@ const Login = ({ onLogin, onGoSignUp }) => {
         // Native Apple Sign In Flow
         if (provider === 'apple') {
           const { SignInWithApple } = await import('@capacitor-community/apple-sign-in')
-          const rawNonce = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)
+          const { rawNonce, hashedNonce } = await generateAppleNonce()
           const options = {
             clientId: 'com.nubittech.veylo',
             redirectURI: 'https://yxgatmrkuaxhlxhgwzsi.supabase.co/auth/v1/callback',
             scopes: 'email name',
             state: Math.random().toString(36).substring(2),
-            nonce: rawNonce,
+            nonce: hashedNonce, // Apple receives the SHA256 hashed nonce
           }
           const result = await SignInWithApple.authorize(options)
           if (result && result.response && result.response.identityToken) {
@@ -68,7 +79,7 @@ const Login = ({ onLogin, onGoSignUp }) => {
             const { data, error: sbError } = await supabase.auth.signInWithIdToken({
               provider: 'apple',
               token: result.response.identityToken,
-              nonce: rawNonce,
+              nonce: rawNonce, // Supabase receives the raw nonce to verify
             })
             console.log('[Apple Auth] signInWithIdToken result:', JSON.stringify({ hasSession: !!data?.session, hasUser: !!data?.user, error: sbError?.message }))
             if (sbError) throw sbError
@@ -96,6 +107,8 @@ const Login = ({ onLogin, onGoSignUp }) => {
         }
 
         // Other Providers (Google) via OAuth
+        // Must use SFSafariViewController (no windowName:'_self') so iOS can
+        // intercept the com.nubittech.veylo:// deep link after Google auth
         const redirectTo = 'com.nubittech.veylo://callback'
         const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
           provider,
@@ -110,7 +123,7 @@ const Login = ({ onLogin, onGoSignUp }) => {
         })
         if (oauthError) throw oauthError
         if (data?.url) {
-          await Browser.open({ url: data.url, windowName: '_self' })
+          await Browser.open({ url: data.url }) // SFSafariViewController — deep link works
         }
       } else {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -173,7 +186,9 @@ const Login = ({ onLogin, onGoSignUp }) => {
           <div className="illustration-inner-card">
             <div className="illustration-avatar-head" />
             <div className="illustration-avatar-body">
-              <div className="illustration-avatar-phone" />
+              <div className="illustration-avatar-phone">
+                <div className="illustration-phone-camera" />
+              </div>
             </div>
           </div>
           <div className="illustration-heart-badge">

@@ -168,17 +168,35 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 {/* Level title */}
                 {levelData && (
                     <div style={{
-                        color: '#FFD700',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        letterSpacing: '1px',
-                        marginBottom: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginTop: '8px',
+                        marginBottom: '8px'
                     }}>
-                        {levelData.title || 'Caylak'}
+                        <div style={{
+                            background: '#faebe9',
+                            color: '#f0786c',
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            letterSpacing: '0.5px',
+                            textTransform: 'uppercase'
+                        }}>
+                            {levelData.title || 'Yeni̇ Sti̇li̇st'}
+                        </div>
                     </div>
                 )}
 
-                <p className="user-location">{profile.age} / {profile.city}</p>
+                <p className="user-location" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    {profile.city}
+                </p>
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
                 {profile.instagram_handle && (
                     <a href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="profile-instagram">
@@ -193,7 +211,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
 
                 {/* XP Progress Bar */}
                 {levelData && (
-                    <div style={{ width: '100%', maxWidth: 280, margin: '12px auto 0' }}>
+                    <div style={{ width: '100%', maxWidth: 320, margin: '16px auto 0' }}>
                         <XPProgressBar
                             xp={levelData.xp}
                             progress={levelData.progress}
@@ -273,10 +291,18 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
             </section>
 
             <section className="action-buttons">
-                <button className="btn btn-outline" onClick={() => setShowEditProfile(true)}>{t('edit_profile')}</button>
-                <button className="btn btn-primary" onClick={() => setShowBoost(true)}>
-                    Boost Profile
-                    {ICONS.sparkles}
+                <button className="btn btn-edit-profile" onClick={() => setShowEditProfile(true)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    {t('edit_profile')}
+                </button>
+                <button className="btn btn-boost-profile" onClick={() => setShowBoost(true)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0786c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Boost
                 </button>
             </section>
 

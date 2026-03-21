@@ -7,7 +7,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: env(safe-area-inset-top, 20px) 24px env(safe-area-inset-bottom, 20px);
+    padding: calc(env(safe-area-inset-top, 0px) + 20px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
 }
 
 .legal-consent-container {

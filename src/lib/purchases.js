@@ -7,7 +7,15 @@
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
-const API_KEY = import.meta.env.VITE_REVENUECAT_API_KEY || '';
+const API_KEY_IOS = import.meta.env.VITE_REVENUECAT_API_KEY_IOS || '';
+const API_KEY_ANDROID = import.meta.env.VITE_REVENUECAT_API_KEY_ANDROID || '';
+
+function getApiKey() {
+    const platform = Capacitor.getPlatform();
+    if (platform === 'ios') return API_KEY_IOS;
+    if (platform === 'android') return API_KEY_ANDROID;
+    return '';
+}
 
 let _initPromise = null;
 
@@ -27,8 +35,10 @@ async function _doInit(userId) {
         return;
     }
 
+    const API_KEY = getApiKey();
+
     if (!API_KEY) {
-        console.warn('[Purchases] No API key found. Set VITE_REVENUECAT_API_KEY in .env');
+        console.warn('[Purchases] No API key found for platform:', Capacitor.getPlatform());
         return;
     }
 

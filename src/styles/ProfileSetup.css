@@ -1,7 +1,8 @@
 .profile-setup-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: #f5f2f0;
-  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 16px calc(32px + env(safe-area-inset-bottom, 20px));
   display: flex;
   flex-direction: column;
 }

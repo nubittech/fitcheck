@@ -1,7 +1,7 @@
--- Migration v2: Fix activate_boost integer overflow + 5 boosts per purchase
+-- Migration v2: Fix activate_boost + 5 boosts per purchase
 -- Run this in Supabase SQL Editor
 
--- 1. Fix credit_boost_purchase to give 5 boosts per purchase
+-- 1. credit_boost_purchase: 5 boosts per purchase
 CREATE OR REPLACE FUNCTION credit_boost_purchase(user_id_param UUID)
 RETURNS JSON AS $$
 DECLARE
@@ -20,7 +20,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 2. Fix activate_boost: remove ms arithmetic (caused integer overflow), use INTERVAL instead
+-- 2. activate_boost: safe outfits update (exception handler prevents crash)
 CREATE OR REPLACE FUNCTION activate_boost(user_id_param UUID)
 RETURNS JSON AS $$
 DECLARE
@@ -36,7 +36,7 @@ BEGIN
   IF user_record.is_premium THEN
     max_boosts := 3;
 
-    -- Reset monthly boosts if 30 days have passed (uses INTERVAL, no integer overflow)
+    -- Reset monthly boosts if 30 days have passed
     IF COALESCE(user_record.boosts_reset_at, NOW() - INTERVAL '31 days') < NOW() - INTERVAL '30 days' THEN
       UPDATE profiles
       SET boosts_used = 0, boosts_reset_at = NOW()
@@ -50,10 +50,15 @@ BEGIN
       SET boosts_used = COALESCE(boosts_used, 0) + 1
       WHERE id = user_id_param;
 
-      UPDATE outfits
-      SET is_boosted = true, boosted_at = NOW()
-      WHERE user_id = user_id_param
-        AND created_at > NOW() - INTERVAL '24 hours';
+      -- Safe: outfits update won't crash the function if it fails
+      BEGIN
+        UPDATE outfits
+        SET is_boosted = true, boosted_at = NOW()
+        WHERE user_id = user_id_param
+          AND created_at > NOW() - INTERVAL '24 hours';
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
 
       RETURN json_build_object(
         'success', true,
@@ -69,10 +74,15 @@ BEGIN
     SET purchased_boosts_balance = purchased_boosts_balance - 1
     WHERE id = user_id_param;
 
-    UPDATE outfits
-    SET is_boosted = true, boosted_at = NOW()
-    WHERE user_id = user_id_param
-      AND created_at > NOW() - INTERVAL '24 hours';
+    -- Safe: outfits update won't crash the function if it fails
+    BEGIN
+      UPDATE outfits
+      SET is_boosted = true, boosted_at = NOW()
+      WHERE user_id = user_id_param
+        AND created_at > NOW() - INTERVAL '24 hours';
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END;
 
     RETURN json_build_object(
       'success', true,

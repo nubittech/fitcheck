@@ -257,6 +257,33 @@
   border-radius: 20px 20px 0 0;
 }
 
+/* ===== Tablet slide panel fix ===== */
+@media (min-width: 768px) {
+  .slide-panel {
+    /* Tablet: tam genişlik, phone ile aynı davranış */
+    transform: translateY(calc(100% - 86px - 74px));
+    left: 0;
+    right: 0;
+  }
+
+  .slide-panel.mid {
+    /* Tablet'te mid = panelin alt kenarı navbar'a yaslanır, içerik yukarı doğru açılır */
+    min-height: 55vh;
+    transform: translateY(calc(100% - 55vh));
+  }
+
+  /* Tablet'te panel içi boş alanı kaldır */
+  .panel-detail-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .panel-input {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
 .panel-handle {
   width: 36px;
   height: 4px;

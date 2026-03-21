@@ -7,15 +7,20 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
   },
+  android: {
+    // Edge-to-edge: safe-area-inset-bottom'u navigation bar için aktif et
+    includePlugins: undefined,
+  },
   plugins: {
     StatusBar: {
       style: 'Light',
       backgroundColor: '#f5f2f0',
+      overlaysWebView: false,
     },
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 2000,
-      backgroundColor: '#FAEDE6',
+      backgroundColor: '#E8DACE',
       showSpinner: false,
     },
     Keyboard: {

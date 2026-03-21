@@ -9,7 +9,7 @@ const EditProfile = ({ onClose, profile, onSave }) => {
   const [city, setCity] = useState(profile?.city && profile.city !== 'City not set' ? profile.city : '')
   const [age, setAge] = useState(profile?.age && profile.age !== '-' ? String(profile.age) : '')
   const [selectedVibes, setSelectedVibes] = useState(profile?.styles?.length ? profile.styles : [])
-  const [avatarPreview, setAvatarPreview] = useState(profile?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400')
+  const [avatarPreview, setAvatarPreview] = useState(profile?.avatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' rx='200' fill='%23E8E0DC'/%3E%3Ccircle cx='200' cy='155' r='60' fill='%23C4B5AD'/%3E%3Cellipse cx='200' cy='310' rx='95' ry='75' fill='%23C4B5AD'/%3E%3Ccircle cx='260' cy='290' r='28' fill='%23D4C8C0' stroke='%23B0A399' stroke-width='2'/%3E%3Crect x='254' y='284' width='12' height='12' rx='2' fill='%23B0A399'/%3E%3Ccircle cx='260' cy='294' r='4' fill='none' stroke='%23B0A399' stroke-width='1.5'/%3E%3C/svg%3E")
   const [avatarFile, setAvatarFile] = useState(null)
   const [instagramHandle, setInstagramHandle] = useState(profile?.instagram_handle || '')
 

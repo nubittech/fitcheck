@@ -469,3 +469,62 @@
     font-size: 11px;
   }
 }
+
+/* New UI Updates for Profile */
+.btn-edit-profile {
+  background: #f68a7d;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 6px rgba(246, 138, 125, 0.2);
+}
+
+.btn-boost-profile {
+  background: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #ece7e3;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.xp-progress-v2-container {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 12px 16px;
+  border: 1px solid #ece7e3;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.xp-progress-v2-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.xp-v2-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7d7373;
+  letter-spacing: 0.05em;
+}
+
+.xp-v2-value {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f0786c;
+}
+
+.xp-progress-v2-track {
+  height: 8px;
+  background: #f4efeb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-progress-v2-fill {
+  height: 100%;
+  background: #f68a7d;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

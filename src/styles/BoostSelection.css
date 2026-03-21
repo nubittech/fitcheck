@@ -251,6 +251,29 @@
   margin: -4px 0 4px;
 }
 
+.boost-buy-more-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1.5px solid rgba(255, 138, 122, 0.4);
+  border-radius: 16px;
+  background: transparent;
+  color: #ff8a7a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.boost-buy-more-btn:hover {
+  background: rgba(255, 138, 122, 0.08);
+  border-color: #ff8a7a;
+}
+
+.boost-buy-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .boost-cancel-btn {
   width: 100%;
   padding: 14px;
