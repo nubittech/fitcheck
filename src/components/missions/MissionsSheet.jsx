@@ -26,20 +26,20 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
     const { data } = await claimMissionReward(missionId)
     if (data) {
       setMissions(prev => prev.map(m =>
-        m.id === missionId ? { ...m, status: 'claimed' } : m
+        m.id === missionId ? { ...m, is_claimed: true } : m
       ))
       await refreshLevel()
     }
   }
 
   const handleClaimAll = async () => {
-    const unclaimed = missions.filter(m => m.status === 'completed')
+    const unclaimed = missions.filter(m => m.is_completed && !m.is_claimed)
     if (unclaimed.length === 0) return
     for (const m of unclaimed) {
       await claimMissionReward(m.id)
     }
     setMissions(prev => prev.map(m =>
-      m.status === 'completed' ? { ...m, status: 'claimed' } : m
+      (m.is_completed && !m.is_claimed) ? { ...m, is_claimed: true } : m
     ))
     await refreshLevel()
   }
@@ -62,11 +62,11 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
   const dailyMissions = missions.filter(m => m.mission_type === 'daily')
   const adminMissions = missions.filter(m => m.mission_type === 'admin')
 
-  const dailyCompleted = dailyMissions.filter(m => m.status === 'completed' || m.status === 'claimed').length
+  const dailyCompleted = dailyMissions.filter(m => m.is_completed).length
   const dailyTotal = dailyMissions.length
   const dailyXP = dailyMissions.reduce((sum, m) => sum + (m.xp_reward || 0), 0)
   const adminXP = adminMissions.reduce((sum, m) => sum + (m.xp_reward || 0), 0)
-  const unclaimedCount = missions.filter(m => m.status === 'completed').length
+  const unclaimedCount = missions.filter(m => m.is_completed && !m.is_claimed).length
 
   const tierLabel = (lvl) => {
     if (!lvl) return 'Başlangıç'
@@ -139,8 +139,8 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
-                      completed={m.status === 'completed' || m.status === 'claimed'}
-                      claimed={m.status === 'claimed'}
+                      completed={m.is_completed}
+                      claimed={m.is_claimed}
                       onClaim={() => handleClaim(m.id)}
                     />
                   ))}
@@ -167,8 +167,8 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
-                      completed={m.status === 'completed' || m.status === 'claimed'}
-                      claimed={m.status === 'claimed'}
+                      completed={m.is_completed}
+                      claimed={m.is_claimed}
                       isAdmin={true}
                       onClaim={() => handleClaim(m.id)}
                     />
