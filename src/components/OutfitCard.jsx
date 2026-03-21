@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import ActionButtons from './ActionButtons'
 import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
-import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment } from '../lib/api'
+import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment, trackAction } from '../lib/api'
 import { reportPost } from '../lib/adminApi'
 import { Share } from '@capacitor/share'
 import { Preferences } from '@capacitor/preferences'
@@ -181,7 +181,11 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
     setSubmittingComment(true)
     setInputValue('')
     const { data } = await addComment({ outfitId: outfit.id, userId: currentUser.id, text })
-    if (data) setComments(prev => [...prev, data])
+    if (data) {
+      setComments(prev => [...prev, data])
+      // V2: Track comment action for missions
+      trackAction(currentUser.id, 'comment').catch(() => {})
+    }
     setSubmittingComment(false)
   }
 

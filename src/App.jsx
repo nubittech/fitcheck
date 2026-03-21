@@ -728,6 +728,10 @@ function App() {
           session={session}
           onClose={() => setActiveTab('home')}
           onOutfitCreated={() => {
+            // V2: Track post_outfit action for missions + XP
+            if (session?.user?.id) {
+              trackActionApi(session.user.id, 'post_outfit').catch(() => {})
+            }
             fetchFeed()
             setCurrentIndex(0)
             setActiveTab('home')
@@ -835,7 +839,7 @@ function App() {
                 isFirstCard={false}
                 onNext={handleNext}
                 onSkip={handleSkip}
-                onUserTap={() => setViewingProfile(nextOutfit.user)}
+                onUserTap={() => { setViewingProfile(nextOutfit.user); if (session?.user?.id) trackActionApi(session.user.id, 'explore_profile').catch(() => {}) }}
                 onOpenChat={(conv) => {
                   setSelectedChat(conv)
                   setActiveTab('inbox')
@@ -854,7 +858,7 @@ function App() {
                 onSkip={handleSkip}
                 onLike={handleLike}
                 onItemVote={handleItemVote}
-                onUserTap={() => setViewingProfile(nextOutfit.user)}
+                onUserTap={() => { setViewingProfile(nextOutfit.user); if (session?.user?.id) trackActionApi(session.user.id, 'explore_profile').catch(() => {}) }}
                 onOpenChat={(conv) => {
                   setSelectedChat(conv)
                   setActiveTab('inbox')
@@ -876,7 +880,7 @@ function App() {
               isFirstCard={currentIndex === 0 && !selectedVibe}
               onNext={handleNext}
               onSkip={handleSkip}
-              onUserTap={() => setViewingProfile(currentOutfit.user)}
+              onUserTap={() => { setViewingProfile(currentOutfit.user); if (session?.user?.id) trackActionApi(session.user.id, 'explore_profile').catch(() => {}) }}
               onOpenChat={(conv) => {
                 setSelectedChat(conv)
                 setActiveTab('inbox')
@@ -895,7 +899,7 @@ function App() {
               onSkip={handleSkip}
               onLike={handleLike}
               onItemVote={handleItemVote}
-              onUserTap={() => setViewingProfile(currentOutfit.user)}
+              onUserTap={() => { setViewingProfile(currentOutfit.user); if (session?.user?.id) trackActionApi(session.user.id, 'explore_profile').catch(() => {}) }}
               onOpenChat={(conv) => {
                 setSelectedChat(conv)
                 setActiveTab('inbox')

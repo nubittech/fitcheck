@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { getAbVoteStats, voteAbTest, findOrCreateConversation, getComments, addComment } from '../lib/api'
+import { getAbVoteStats, voteAbTest, findOrCreateConversation, getComments, addComment, trackAction } from '../lib/api'
 import { reportPost } from '../lib/adminApi'
 import { supabase } from '../lib/supabase'
 import { Share } from '@capacitor/share'
@@ -147,7 +147,11 @@ const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, cur
         setSubmittingComment(true)
         setInputValue('')
         const { data } = await addComment({ outfitId: outfit.id, userId: currentUser.id, text })
-        if (data) setComments(prev => [...prev, data])
+        if (data) {
+          setComments(prev => [...prev, data])
+          // V2: Track comment action for missions
+          trackAction(currentUser.id, 'comment').catch(() => {})
+        }
         setSubmittingComment(false)
     }
 
