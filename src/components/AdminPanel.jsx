@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getDashboardStats, getUsers, updateUserStatus, updateUserRole, getReportedPosts, resolveReport, getRecentOutfits, deleteOutfit } from '../lib/adminApi'
+import { getDashboardStats, getUsers, updateUserStatus, updateUserRole, getReportedPosts, resolveReport, getRecentOutfits, deleteOutfit, getMissionTemplates, createMissionTemplate, updateMissionTemplate, deleteMissionTemplate, getEvents, createEvent, updateEvent, deleteEvent, getAdminLeaderboard } from '../lib/adminApi'
 import '../styles/Admin.css'
 
 // ═══ Dashboard Tab ═══
@@ -392,6 +392,294 @@ const ContentTab = () => {
 
 
 // ═══ Main Admin Panel ═══
+// ═══ Missions Admin Tab ═══
+const MissionsTab = () => {
+    const [missions, setMissions] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [editing, setEditing] = useState(null)
+    const [form, setForm] = useState({ title: '', description: '', icon: '🎯', xp_reward: 10, mission_type: 'daily', action_type: 'post_outfit', target_count: 1, is_active: true, priority: 0 })
+
+    const actionTypes = ['post_outfit', 'like_outfit', 'comment', 'share', 'explore_profile', 'event_post', 'follow']
+
+    useEffect(() => { loadMissions() }, [])
+    const loadMissions = () => {
+        setLoading(true)
+        getMissionTemplates().then(({ data }) => { setMissions(data); setLoading(false) })
+    }
+
+    const handleSave = async () => {
+        if (editing) {
+            await updateMissionTemplate(editing, form)
+        } else {
+            await createMissionTemplate(form)
+        }
+        setEditing(null)
+        setForm({ title: '', description: '', icon: '🎯', xp_reward: 10, mission_type: 'daily', action_type: 'post_outfit', target_count: 1, is_active: true, priority: 0 })
+        loadMissions()
+    }
+
+    const handleEdit = (m) => {
+        setEditing(m.id)
+        setForm({ title: m.title, description: m.description || '', icon: m.icon, xp_reward: m.xp_reward, mission_type: m.mission_type, action_type: m.action_type, target_count: m.target_count, is_active: m.is_active, priority: m.priority })
+    }
+
+    const handleDelete = async (id) => {
+        if (!confirm('Bu gorevi silmek istediginize emin misiniz?')) return
+        await deleteMissionTemplate(id)
+        loadMissions()
+    }
+
+    const handleToggle = async (m) => {
+        await updateMissionTemplate(m.id, { is_active: !m.is_active })
+        loadMissions()
+    }
+
+    if (loading) return <div className="admin-loading">Yukleniyor...</div>
+
+    return (
+        <>
+            <div className="admin-page-header">
+                <h1>Gorev Yonetimi</h1>
+                <p>Gunluk gorev sablonlarini yonet</p>
+            </div>
+
+            {/* Form */}
+            <div className="admin-card" style={{ marginBottom: 24, padding: 20 }}>
+                <h3 style={{ margin: '0 0 16px', color: '#fff' }}>{editing ? 'Gorevi Duzenle' : 'Yeni Gorev'}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <input placeholder="Baslik" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inputStyle} />
+                    <input placeholder="Aciklama" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={inputStyle} />
+                    <input placeholder="Icon (emoji)" value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} style={inputStyle} />
+                    <input type="number" placeholder="XP Odulu" value={form.xp_reward} onChange={e => setForm(f => ({ ...f, xp_reward: Number(e.target.value) }))} style={inputStyle} />
+                    <select value={form.action_type} onChange={e => setForm(f => ({ ...f, action_type: e.target.value }))} style={inputStyle}>
+                        {actionTypes.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                    <input type="number" placeholder="Hedef Sayi" value={form.target_count} onChange={e => setForm(f => ({ ...f, target_count: Number(e.target.value) }))} style={inputStyle} />
+                    <input type="number" placeholder="Oncelik" value={form.priority} onChange={e => setForm(f => ({ ...f, priority: Number(e.target.value) }))} style={inputStyle} />
+                    <select value={form.mission_type} onChange={e => setForm(f => ({ ...f, mission_type: e.target.value }))} style={inputStyle}>
+                        <option value="daily">Gunluk</option>
+                        <option value="weekly">Haftalik</option>
+                        <option value="special">Ozel</option>
+                    </select>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button onClick={handleSave} style={btnPrimary}>{editing ? 'Guncelle' : 'Ekle'}</button>
+                    {editing && <button onClick={() => { setEditing(null); setForm({ title: '', description: '', icon: '🎯', xp_reward: 10, mission_type: 'daily', action_type: 'post_outfit', target_count: 1, is_active: true, priority: 0 }) }} style={btnSecondary}>Iptal</button>}
+                </div>
+            </div>
+
+            {/* List */}
+            <div className="admin-card">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <th style={thStyle}>Icon</th>
+                            <th style={thStyle}>Baslik</th>
+                            <th style={thStyle}>Aksiyon</th>
+                            <th style={thStyle}>Hedef</th>
+                            <th style={thStyle}>XP</th>
+                            <th style={thStyle}>Durum</th>
+                            <th style={thStyle}>Islem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {missions.map(m => (
+                            <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <td style={tdStyle}>{m.icon}</td>
+                                <td style={tdStyle}>{m.title}</td>
+                                <td style={tdStyle}><span style={{ fontSize: 11, color: '#888' }}>{m.action_type}</span></td>
+                                <td style={tdStyle}>{m.target_count}</td>
+                                <td style={tdStyle}><span style={{ color: '#FFD700' }}>+{m.xp_reward}</span></td>
+                                <td style={tdStyle}>
+                                    <button onClick={() => handleToggle(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: m.is_active ? '#4CAF50' : '#f44336' }}>
+                                        {m.is_active ? 'Aktif' : 'Pasif'}
+                                    </button>
+                                </td>
+                                <td style={tdStyle}>
+                                    <button onClick={() => handleEdit(m)} style={btnSmall}>Duzenle</button>
+                                    <button onClick={() => handleDelete(m.id)} style={{ ...btnSmall, color: '#f44336' }}>Sil</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </>
+    )
+}
+
+// ═══ Events Admin Tab ═══
+const EventsTab = () => {
+    const [events, setEvents] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [editing, setEditing] = useState(null)
+    const [form, setForm] = useState({ title: '', description: '', tag: '', theme_color: '#FF6B8A', xp_bonus: 50, banner_url: '', start_date: '', end_date: '', is_active: true })
+
+    useEffect(() => { loadEvents() }, [])
+    const loadEvents = () => {
+        setLoading(true)
+        getEvents().then(({ data }) => { setEvents(data); setLoading(false) })
+    }
+
+    const handleSave = async () => {
+        const payload = { ...form }
+        if (payload.start_date) payload.start_date = new Date(payload.start_date).toISOString()
+        if (payload.end_date) payload.end_date = new Date(payload.end_date).toISOString()
+
+        if (editing) {
+            await updateEvent(editing, payload)
+        } else {
+            await createEvent(payload)
+        }
+        setEditing(null)
+        setForm({ title: '', description: '', tag: '', theme_color: '#FF6B8A', xp_bonus: 50, banner_url: '', start_date: '', end_date: '', is_active: true })
+        loadEvents()
+    }
+
+    const handleEdit = (e) => {
+        setEditing(e.id)
+        setForm({
+            title: e.title, description: e.description || '', tag: e.tag,
+            theme_color: e.theme_color || '#FF6B8A', xp_bonus: e.xp_bonus,
+            banner_url: e.banner_url || '',
+            start_date: e.start_date ? e.start_date.slice(0, 16) : '',
+            end_date: e.end_date ? e.end_date.slice(0, 16) : '',
+            is_active: e.is_active
+        })
+    }
+
+    const handleDelete = async (id) => {
+        if (!confirm('Bu etkinligi silmek istediginize emin misiniz?')) return
+        await deleteEvent(id)
+        loadEvents()
+    }
+
+    if (loading) return <div className="admin-loading">Yukleniyor...</div>
+
+    return (
+        <>
+            <div className="admin-page-header">
+                <h1>Etkinlik Yonetimi</h1>
+                <p>Aylik etkinlik ve challange'lari yonet</p>
+            </div>
+
+            {/* Form */}
+            <div className="admin-card" style={{ marginBottom: 24, padding: 20 }}>
+                <h3 style={{ margin: '0 0 16px', color: '#fff' }}>{editing ? 'Etkinligi Duzenle' : 'Yeni Etkinlik'}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <input placeholder="Baslik (Sakura Mevsimi)" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inputStyle} />
+                    <input placeholder="Etiket (#SakuraSezonu)" value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} style={inputStyle} />
+                    <input placeholder="Aciklama" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} style={{ ...inputStyle, gridColumn: '1 / -1' }} />
+                    <input placeholder="Banner URL" value={form.banner_url} onChange={e => setForm(f => ({ ...f, banner_url: e.target.value }))} style={{ ...inputStyle, gridColumn: '1 / -1' }} />
+                    <input type="color" value={form.theme_color} onChange={e => setForm(f => ({ ...f, theme_color: e.target.value }))} style={{ ...inputStyle, height: 40 }} />
+                    <input type="number" placeholder="XP Bonus" value={form.xp_bonus} onChange={e => setForm(f => ({ ...f, xp_bonus: Number(e.target.value) }))} style={inputStyle} />
+                    <div>
+                        <label style={{ color: '#888', fontSize: 11 }}>Baslangic</label>
+                        <input type="datetime-local" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={{ color: '#888', fontSize: 11 }}>Bitis</label>
+                        <input type="datetime-local" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} style={inputStyle} />
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button onClick={handleSave} style={btnPrimary}>{editing ? 'Guncelle' : 'Olustur'}</button>
+                    {editing && <button onClick={() => { setEditing(null); setForm({ title: '', description: '', tag: '', theme_color: '#FF6B8A', xp_bonus: 50, banner_url: '', start_date: '', end_date: '', is_active: true }) }} style={btnSecondary}>Iptal</button>}
+                </div>
+            </div>
+
+            {/* List */}
+            <div className="admin-card">
+                {events.length === 0 ? (
+                    <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>Henuz etkinlik yok</div>
+                ) : events.map(e => (
+                    <div key={e.id} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    }}>
+                        <div>
+                            <div style={{ color: '#fff', fontWeight: 600 }}>{e.title}</div>
+                            <div style={{ color: '#888', fontSize: 12 }}>
+                                {e.tag} | {e.participation_count || 0} katilimci | +{e.xp_bonus} XP
+                            </div>
+                            <div style={{ color: e.is_active ? '#4CAF50' : '#f44336', fontSize: 11 }}>
+                                {e.is_active ? 'Aktif' : 'Pasif'} | {new Date(e.start_date).toLocaleDateString()} - {new Date(e.end_date).toLocaleDateString()}
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => handleEdit(e)} style={btnSmall}>Duzenle</button>
+                            <button onClick={() => handleDelete(e.id)} style={{ ...btnSmall, color: '#f44336' }}>Sil</button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    )
+}
+
+// ═══ Leaderboard Admin Tab ═══
+const LeaderboardTab = () => {
+    const [users, setUsers] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        getAdminLeaderboard(50).then(({ data }) => {
+            setUsers(data)
+            setLoading(false)
+        })
+    }, [])
+
+    if (loading) return <div className="admin-loading">Yukleniyor...</div>
+
+    return (
+        <>
+            <div className="admin-page-header">
+                <h1>Siralama</h1>
+                <p>En yuksek XP'li kullanicilar</p>
+            </div>
+            <div className="admin-card">
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <th style={thStyle}>#</th>
+                            <th style={thStyle}>Kullanici</th>
+                            <th style={thStyle}>Seviye</th>
+                            <th style={thStyle}>XP</th>
+                            <th style={thStyle}>Streak</th>
+                            <th style={thStyle}>Unvan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.map((u, i) => (
+                            <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <td style={tdStyle}>{i + 1}</td>
+                                <td style={tdStyle}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        {u.profiles?.avatar_url && <img src={u.profiles.avatar_url} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />}
+                                        <span>{u.profiles?.full_name || u.profiles?.username || '-'}</span>
+                                    </div>
+                                </td>
+                                <td style={tdStyle}><span style={{ color: '#FFD700', fontWeight: 700 }}>LVL {u.level}</span></td>
+                                <td style={tdStyle}>{u.xp?.toLocaleString()}</td>
+                                <td style={tdStyle}>{u.streak_days || 0} gun</td>
+                                <td style={tdStyle}><span style={{ color: '#aaa' }}>{u.title}</span></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </>
+    )
+}
+
+// Shared styles for admin forms
+const inputStyle = { padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13, outline: 'none' }
+const btnPrimary = { padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #FFD700, #FF8C00)', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: 13 }
+const btnSecondary = { padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 13 }
+const btnSmall = { background: 'none', border: 'none', color: '#4FC3F7', cursor: 'pointer', fontSize: 12, padding: '4px 8px' }
+const thStyle = { padding: '10px 12px', textAlign: 'left', color: '#888', fontSize: 12, fontWeight: 600 }
+const tdStyle = { padding: '10px 12px', color: '#ccc', fontSize: 13 }
+
 const AdminPanel = ({ session, onLogout }) => {
     const [activeTab, setActiveTab] = useState('dashboard')
     const [pendingCount, setPendingCount] = useState(0)
@@ -420,6 +708,18 @@ const AdminPanel = ({ session, onLogout }) => {
             id: 'content', label: 'İçerikler',
             icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
         },
+        {
+            id: 'missions', label: 'Gorevler',
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        },
+        {
+            id: 'events', label: 'Etkinlikler',
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        },
+        {
+            id: 'leaderboard', label: 'Siralama',
+            icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        },
     ]
 
     const renderTab = () => {
@@ -428,6 +728,9 @@ const AdminPanel = ({ session, onLogout }) => {
             case 'users': return <UsersTab />
             case 'reports': return <ReportsTab />
             case 'content': return <ContentTab />
+            case 'missions': return <MissionsTab />
+            case 'events': return <EventsTab />
+            case 'leaderboard': return <LeaderboardTab />
             default: return <DashboardTab />
         }
     }

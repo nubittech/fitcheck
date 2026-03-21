@@ -16,7 +16,7 @@ import LegalConsent from './components/LegalConsent'
 import AdminLogin from './components/AdminLogin'
 import AdminPanel from './components/AdminPanel'
 import { getSession, onAuthStateChange, signOut } from './lib/auth'
-import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost, getOutfitVotes, getItemVotes, getAbVoteStats, getComments } from './lib/api'
+import { getOutfits, getProfile, getUserLikes, likeOutfit, updateProfile, uploadAvatar, sortFeedWithBoost, getOutfitVotes, getItemVotes, getAbVoteStats, getComments, trackAction as trackActionApi } from './lib/api'
 import { supabase } from './lib/supabase'
 import { usePremium } from './lib/usePremium'
 import { Keyboard } from '@capacitor/keyboard'
@@ -25,7 +25,15 @@ import { App as CapApp } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { initPurchases } from './lib/purchases'
+import { initAdMob, insertAdCards } from './lib/admob'
+import AdCard from './components/AdCard'
 import Onboarding from './components/Onboarding'
+import EventBanner from './components/events/EventBanner'
+import EventPage from './components/events/EventPage'
+import XPToast from './components/level/XPToast'
+import LevelUpModal from './components/level/LevelUpModal'
+import { XPProvider, useXP } from './contexts/XPContext'
+import './styles/Level.css'
 import './styles/App.css'
 
 function transformOutfit(raw) {
@@ -92,7 +100,7 @@ function App() {
   }
 
   // ── Normal App ──
-  const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'
+  const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' rx='200' fill='%23E8E0DC'/%3E%3Ccircle cx='200' cy='155' r='60' fill='%23C4B5AD'/%3E%3Cellipse cx='200' cy='310' rx='95' ry='75' fill='%23C4B5AD'/%3E%3Ccircle cx='260' cy='290' r='28' fill='%23D4C8C0' stroke='%23B0A399' stroke-width='2'/%3E%3Crect x='254' y='284' width='12' height='12' rx='2' fill='%23B0A399'/%3E%3Ccircle cx='260' cy='294' r='4' fill='none' stroke='%23B0A399' stroke-width='1.5'/%3E%3C/svg%3E"
   const [session, setSession] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
@@ -115,6 +123,7 @@ function App() {
   const [pendingChat, setPendingChat] = useState(null)
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
   const [viewingOutfit, setViewingOutfit] = useState(null) // kept for compatibility but overlay is removed
+  const [viewingEvent, setViewingEvent] = useState(null)
   const preloadedMediaRef = useRef(new Set())
   const cardDataCacheRef = useRef(new Map())
 
@@ -162,6 +171,9 @@ function App() {
   useEffect(() => {
     // Initialize RevenueCat after Capacitor bridge is ready
     initPurchases().catch(err => console.warn('[App] RevenueCat init skipped:', err))
+
+    // Initialize AdMob
+    initAdMob().catch(err => console.warn('[App] AdMob init skipped:', err))
 
     // Hide iOS keyboard accessory bar to fix double keyboard issue
     Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => { })
@@ -315,7 +327,7 @@ function App() {
       ])
       if (outfitRes.data) {
         const transformed = outfitRes.data.map(transformOutfit)
-        setOutfits(sortFeedWithBoost(transformed))
+        setOutfits(insertAdCards(sortFeedWithBoost(transformed)))
       }
       if (likesRes.data) {
         setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
@@ -422,8 +434,8 @@ function App() {
       outfits[currentIndex + 1],
       outfits[currentIndex + 2]
     ].filter(Boolean)
-    preloadTargets.forEach(preloadOutfit)
-    preloadTargets.forEach(preloadCardData)
+    preloadTargets.filter(o => !o.isAd).forEach(preloadOutfit)
+    preloadTargets.filter(o => !o.isAd).forEach(preloadCardData)
   }, [outfits, currentIndex, preloadOutfit, preloadCardData])
 
   // Direct outfit redirection
@@ -467,8 +479,12 @@ function App() {
 
   const handleNext = async () => {
     if (currentIndex < outfits.length) {
-      const allowed = await incrementSwipe()
-      if (!allowed) return
+      const currentItem = outfits[currentIndex]
+      // Reklam kartları swipe limitini tüketmesin
+      if (!currentItem?.isAd) {
+        const allowed = await incrementSwipe()
+        if (!allowed) return
+      }
       setCurrentIndex(prev => prev + 1)
     }
   }
@@ -486,6 +502,8 @@ function App() {
     ))
     setLikedOutfitIds(prev => new Set([...prev, outfit.id]))
     await likeOutfit({ outfitId: outfit.id, userId: session.user.id })
+    // V2: Track like action for missions
+    trackActionApi(session.user.id, 'like_outfit').catch(() => {})
   }
 
   const handleItemVote = (itemId, type) => {
@@ -667,30 +685,25 @@ function App() {
             const user = viewingProfile
             setViewingProfile(null)
             setPendingChat({
-              user: user.name,
-              avatar: user.avatar,
+              user: user.full_name || user.name || user.username,
+              avatar: user.avatar_url || user.avatar,
               initialMessage: 'Hey!'
             })
             setActiveTab('inbox')
           }}
-          onOutfitClick={(mockLook) => {
-            // Mock transformation for the hardcoded profile
-            const mockOutfit = {
-              id: mockLook.id,
-              user: {
-                id: 'mock-user',
-                name: 'Sarah Miller',
-                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-                isPremium: true
-              },
-              media: [{ id: 1, type: 'image', url: mockLook.image }],
-              caption: mockLook.name,
-              vibe: 'Style',
-              items: [],
-              stats: { likes: Math.floor(Math.random() * 500) }
-            }
-            handleOutfitClickDirect(mockOutfit)
+          onOutfitClick={(outfit) => {
+            setViewingProfile(null)
+            handleOutfitClickDirect(outfit)
           }}
+        />
+      )
+    }
+    if (viewingEvent) {
+      return (
+        <EventPage
+          event={viewingEvent}
+          onBack={() => setViewingEvent(null)}
+          onOutfitClick={(outfit) => handleOutfitClickDirect(transformOutfit(outfit))}
         />
       )
     }
@@ -704,6 +717,7 @@ function App() {
             setActiveTab('home')
           }}
           onOutfitClick={(outfit) => handleOutfitClickDirect(outfit)}
+          onEventClick={(event) => setViewingEvent(event)}
         />
       )
     }
@@ -806,9 +820,11 @@ function App() {
           </div>
         )}
         <div className="outfit-card-wrapper">
-          {/* Pre-rendered next card — full component behind current for instant transitions */}
+          {/* Pre-rendered next card */}
           {nextOutfit && (
-            nextOutfit.postType === 'ab_test' ? (
+            nextOutfit.isAd ? (
+              <AdCard key={nextOutfit.id} isPreview onNext={handleNext} onSkip={handleSkip} />
+            ) : nextOutfit.postType === 'ab_test' ? (
               <ABCard
                 key={`ab-${nextOutfit.id}`}
                 outfit={nextOutfit}
@@ -847,7 +863,10 @@ function App() {
             )
           )}
 
-          {currentOutfit.postType === 'ab_test' ? (
+          {/* Current card */}
+          {currentOutfit.isAd ? (
+            <AdCard key={currentOutfit.id} onNext={handleNext} onSkip={handleSkip} />
+          ) : currentOutfit.postType === 'ab_test' ? (
             <ABCard
               key={`ab-${currentOutfit.id}`}
               outfit={currentOutfit}
@@ -889,15 +908,30 @@ function App() {
   }
 
   return (
-    <div className="app">
-      {renderContent()}
-      {isLoggedIn && !showOnboarding && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (
-        <BottomNav activeTab={activeTab} onTabChange={(tab) => {
-          setActiveTab(tab)
-          if (tab !== 'inbox') setSelectedChat(null)
-        }} />
-      )}
-    </div>
+    <XPProvider userId={session?.user?.id}>
+      <AppXPOverlays />
+      <div className="app">
+        {renderContent()}
+        {isLoggedIn && !showOnboarding && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (
+          <BottomNav activeTab={activeTab} onTabChange={(tab) => {
+            setActiveTab(tab)
+            if (tab !== 'inbox') setSelectedChat(null)
+          }} />
+        )}
+      </div>
+    </XPProvider>
+  )
+}
+
+// Global XP overlay komponentleri (toast + level up modal)
+function AppXPOverlays() {
+  const { xpToast, levelUp, setLevelUp, newBadge, setNewBadge } = useXP()
+
+  return (
+    <>
+      {xpToast && <XPToast amount={xpToast.amount} source={xpToast.source} />}
+      {levelUp && <LevelUpModal oldLevel={levelUp.oldLevel} newLevel={levelUp.newLevel} onClose={() => setLevelUp(null)} />}
+    </>
   )
 }
 

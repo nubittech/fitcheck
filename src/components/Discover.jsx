@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { STYLE_TYPES } from '../constants/styleTypes'
 import { useLang } from '../i18n/LangContext'
+import { getActiveEvents } from '../lib/api'
+import EventBanner from './events/EventBanner'
 import '../styles/Discover.css'
 
 const ICONS = {
@@ -62,7 +64,14 @@ const STYLE_ICON_MAP = {
   )
 }
 
-const Discover = ({ outfits = [], onSelectStyle, onOutfitClick }) => {
+const Discover = ({ outfits = [], onSelectStyle, onOutfitClick, onEventClick }) => {
+  const [activeEvent, setActiveEvent] = useState(null)
+
+  useEffect(() => {
+    getActiveEvents().then(({ data }) => {
+      if (data?.[0]) setActiveEvent(data[0])
+    }).catch(() => {})
+  }, [])
   const { t } = useLang()
   const [query, setQuery] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('all')
@@ -153,6 +162,14 @@ const Discover = ({ outfits = [], onSelectStyle, onOutfitClick }) => {
           ))}
         </div>
       </section>
+
+      {/* V2: Event Banner */}
+      {activeEvent && (
+        <EventBanner
+          event={activeEvent}
+          onClick={(e) => onEventClick?.(e)}
+        />
+      )}
 
       <section className="section trending">
         <div className="section-header">

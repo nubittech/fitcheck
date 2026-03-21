@@ -4,10 +4,14 @@ import BoostSelection from './BoostSelection';
 import PremiumPromo from './PremiumPromo';
 import EditProfile from './EditProfile';
 import Settings from './Settings';
-import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase } from '../lib/api';
+import XPRing from './level/XPRing';
+import XPProgressBar from './level/XPProgressBar';
+import MissionsSheet from './missions/MissionsSheet';
+import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase, getUserBadges } from '../lib/api';
 import { purchaseBoost } from '../lib/purchases';
 import { useLang } from '../i18n/LangContext';
 import { usePremium } from '../lib/usePremium';
+import { useXP } from '../contexts/XPContext';
 
 const ICONS = {
     settings: (
@@ -59,38 +63,43 @@ function getTimeLeft(createdAt) {
 
 const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitClick, onUpgrade }) => {
     const { t } = useLang();
+    const { level: levelData, streakInfo } = useXP();
     const handleUpgrade = onUpgrade || (() => { });
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showMissions, setShowMissions] = useState(false);
     const [userOutfits, setUserOutfits] = useState([]);
     const [outfitsLoading, setOutfitsLoading] = useState(true);
     const [boostsUsed, setBoostsUsed] = useState(0);
     const [purchasedBoostBalance, setPurchasedBoostBalance] = useState(0);
+    const [badges, setBadges] = useState([]);
     const [, setTick] = useState(0);
 
     const profile = useMemo(() => ({
         name: currentUser?.full_name || 'New Member',
         age: currentUser?.age ?? '-',
         city: currentUser?.city || 'City not set',
-        avatar: currentUser?.avatar_url || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+        avatar: currentUser?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' rx='200' fill='%23E8E0DC'/%3E%3Ccircle cx='200' cy='155' r='60' fill='%23C4B5AD'/%3E%3Cellipse cx='200' cy='310' rx='95' ry='75' fill='%23C4B5AD'/%3E%3Ccircle cx='260' cy='290' r='28' fill='%23D4C8C0' stroke='%23B0A399' stroke-width='2'/%3E%3Crect x='254' y='284' width='12' height='12' rx='2' fill='%23B0A399'/%3E%3Ccircle cx='260' cy='294' r='4' fill='none' stroke='%23B0A399' stroke-width='1.5'/%3E%3C/svg%3E",
         styles: currentUser?.vibes || [],
         bio: currentUser?.bio || '',
         instagram_handle: currentUser?.instagram_handle || '',
         isPremium: Boolean(currentUser?.is_premium),
     }), [currentUser]);
 
-    // Fetch user outfits + boost status
+    // Fetch user outfits + boost status + badges
     useEffect(() => {
         if (!session?.user?.id) return;
         setOutfitsLoading(true);
         Promise.all([
             getOutfitsByUser(session.user.id),
-            getBoostStatus(session.user.id)
-        ]).then(([outfitRes, boostRes]) => {
+            getBoostStatus(session.user.id),
+            getUserBadges(session.user.id)
+        ]).then(([outfitRes, boostRes, badgeRes]) => {
             setUserOutfits(outfitRes.data || []);
             setBoostsUsed(boostRes.boostsUsed || 0);
             setPurchasedBoostBalance(boostRes.purchasedBalance || 0);
+            setBadges(badgeRes.data || []);
             setOutfitsLoading(false);
         });
     }, [session?.user?.id]);
@@ -131,12 +140,22 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 </button>
             </header>
 
-            {/* User Info */}
+            {/* User Info — V2 with XP Ring */}
             <section className="user-info">
-                <div className="avatar-container">
-                    <div className="avatar-ring">
-                        <img src={profile.avatar} alt="Profile" className="avatar-img" />
-                    </div>
+                <div className="avatar-container" style={{ position: 'relative' }}>
+                    {levelData ? (
+                        <XPRing
+                            percentage={levelData.percentage || 0}
+                            level={levelData.level || 1}
+                            avatarUrl={profile.avatar}
+                            name={profile.name}
+                            size={120}
+                        />
+                    ) : (
+                        <div className="avatar-ring">
+                            <img src={profile.avatar} alt="Profile" className="avatar-img" />
+                        </div>
+                    )}
                     {profile.isPremium && (
                         <div className="premium-badge">
                             {ICONS.verified}
@@ -145,6 +164,20 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     )}
                 </div>
                 <h2 className="user-name">{profile.name}</h2>
+
+                {/* Level title */}
+                {levelData && (
+                    <div style={{
+                        color: '#FFD700',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: '1px',
+                        marginBottom: 4,
+                    }}>
+                        {levelData.title || 'Caylak'}
+                    </div>
+                )}
+
                 <p className="user-location">{profile.age} / {profile.city}</p>
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
                 {profile.instagram_handle && (
@@ -156,6 +189,74 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                         </svg>
                         @{profile.instagram_handle}
                     </a>
+                )}
+
+                {/* XP Progress Bar */}
+                {levelData && (
+                    <div style={{ width: '100%', maxWidth: 280, margin: '12px auto 0' }}>
+                        <XPProgressBar
+                            xp={levelData.xp}
+                            progress={levelData.progress}
+                            range={levelData.range}
+                            percentage={levelData.percentage}
+                            level={levelData.level}
+                        />
+                    </div>
+                )}
+
+                {/* Streak badge */}
+                {streakInfo && streakInfo.streak > 1 && (
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        background: 'rgba(255,165,0,0.1)',
+                        color: '#FFD700',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '4px 12px',
+                        borderRadius: 12,
+                        marginTop: 8,
+                    }}>
+                        🔥 {streakInfo.streak} Gun Streak
+                    </div>
+                )}
+
+                {/* Badges preview */}
+                {badges.length > 0 && (
+                    <div style={{
+                        display: 'flex',
+                        gap: 6,
+                        justifyContent: 'center',
+                        marginTop: 10,
+                        flexWrap: 'wrap',
+                    }}>
+                        {badges.slice(0, 5).map(ub => (
+                            <div key={ub.id} style={{
+                                width: 32, height: 32,
+                                borderRadius: 8,
+                                background: ub.badge?.rarity === 'legendary' ? 'rgba(255,215,0,0.15)' :
+                                    ub.badge?.rarity === 'epic' ? 'rgba(156,39,176,0.15)' :
+                                    ub.badge?.rarity === 'rare' ? 'rgba(33,150,243,0.15)' :
+                                    'rgba(255,255,255,0.06)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 16,
+                                border: ub.badge?.rarity === 'legendary' ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                            }} title={ub.badge?.name}>
+                                {ub.badge?.icon_url || '🏅'}
+                            </div>
+                        ))}
+                        {badges.length > 5 && (
+                            <div style={{
+                                width: 32, height: 32, borderRadius: 8,
+                                background: 'rgba(255,255,255,0.06)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, color: '#666', fontWeight: 600,
+                            }}>
+                                +{badges.length - 5}
+                            </div>
+                        )}
+                    </div>
                 )}
             </section>
 
@@ -176,6 +277,40 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 <button className="btn btn-primary" onClick={() => setShowBoost(true)}>
                     Boost Profile
                     {ICONS.sparkles}
+                </button>
+            </section>
+
+            {/* Daily Missions Button */}
+            <section style={{ padding: '0 20px 8px' }}>
+                <button
+                    onClick={() => setShowMissions(true)}
+                    style={{
+                        width: '100%',
+                        padding: '14px 16px',
+                        background: 'rgba(255,215,0,0.08)',
+                        border: '1px solid rgba(255,215,0,0.15)',
+                        borderRadius: 16,
+                        color: '#FFD700',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                    }}
+                >
+                    🎯 Gunluk Gorevler
+                    {streakInfo && streakInfo.streak > 0 && (
+                        <span style={{
+                            background: 'rgba(255,215,0,0.2)',
+                            padding: '2px 8px',
+                            borderRadius: 10,
+                            fontSize: 11,
+                        }}>
+                            🔥 {streakInfo.streak}
+                        </span>
+                    )}
                 </button>
             </section>
 
@@ -295,6 +430,13 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     onClose={() => setShowEditProfile(false)}
                 />
             )}
+
+            {/* Missions Bottom Sheet */}
+            <MissionsSheet
+                isOpen={showMissions}
+                onClose={() => setShowMissions(false)}
+                userId={session?.user?.id}
+            />
 
             {showBoost && (
                 <BoostSelection

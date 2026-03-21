@@ -1,50 +1,39 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { getProfile, getOutfitsByUser } from '../lib/api'
 import '../styles/PublicProfile.css'
 
-const MOCK_USER = {
-  name: 'Sarah Miller',
-  username: 'sarah_miller',
-  instagram_handle: 'sarahmiller',
-  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-  location: 'Brooklyn, NY',
-  bio: 'Thrifting enthusiast & lover of earth tones. Always looking for the perfect vintage denim. Let\'s swap style tips! ✨',
-  likes: '1.2k',
-  outfits: 14,
-  vibes: ['Minimalist', 'Vintage', 'Earth Tones', 'Boho'],
-  looks: [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600',
-      name: 'Linen Layers',
-      timeLeft: '4H LEFT',
-      isLive: true
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600',
-      name: 'City Evening',
-      timeLeft: '12H LEFT',
-      isLive: true
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600',
-      name: 'Pop of Yellow',
-      timeLeft: '1H LEFT',
-      isLive: true
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600',
-      name: 'Denim Days',
-      timeLeft: '23H LEFT',
-      isLive: true
-    }
-  ]
-}
+const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
+  const [profile, setProfile] = useState(null)
+  const [outfits, setOutfits] = useState([])
+  const [loading, setLoading] = useState(true)
 
-const PublicProfile = ({ onBack, onMessage, onOutfitClick }) => {
-  const user = MOCK_USER
+  useEffect(() => {
+    if (!userId) return
+    const load = async () => {
+      setLoading(true)
+      try {
+        const [profileRes, outfitsRes] = await Promise.all([
+          getProfile(userId),
+          getOutfitsByUser(userId, { limit: 12 })
+        ])
+        if (profileRes.data) setProfile(profileRes.data)
+        if (outfitsRes.data) setOutfits(outfitsRes.data)
+      } catch (e) {
+        console.error('[PublicProfile] load error:', e)
+      }
+      setLoading(false)
+    }
+    load()
+  }, [userId])
+
+  const totalLikes = outfits.reduce((sum, o) => sum + (o.likes_count || 0), 0)
+  const formatLikes = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+
+  const getFirstMedia = (outfit) => {
+    if (outfit.media && outfit.media.length > 0) return outfit.media[0].url
+    if (outfit.media_url) return outfit.media_url
+    return null
+  }
 
   return (
     <div className="public-profile-page">
@@ -56,104 +45,134 @@ const PublicProfile = ({ onBack, onMessage, onOutfitClick }) => {
           </svg>
         </button>
         <span className="pp-header-title">PUBLIC PROFILE</span>
-        <button className="pp-menu-btn">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
-          </svg>
-        </button>
+        <div style={{ width: 40 }} />
       </header>
 
-      <div className="pp-scroll-content">
-        {/* Avatar */}
-        <div className="pp-avatar-section">
-          <div className="pp-avatar-ring">
-            <img src={user.avatar} alt={user.name} className="pp-avatar-img" />
-          </div>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '60vh' }}>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Yükleniyor...</div>
         </div>
-
-        {/* Name & Location */}
-        <h1 className="pp-name">{user.name}</h1>
-        <div className="pp-location">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
-          </svg>
-          <span>{user.location}</span>
+      ) : !profile ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '60vh' }}>
+          <div style={{ color: '#aaa', fontSize: 14 }}>Profil bulunamadı.</div>
         </div>
-
-        {/* Bio */}
-        <p className="pp-bio">{user.bio}</p>
-
-        {/* Instagram */}
-        {user.instagram_handle && (
-          <div className="pp-instagram-wrap">
-            <a href={`https://instagram.com/${user.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="pp-instagram">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-              @{user.instagram_handle}
-            </a>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="pp-stats">
-          <div className="pp-stat">
-            <span className="pp-stat-value">{user.likes}</span>
-            <span className="pp-stat-label">LIKES</span>
-          </div>
-          <div className="pp-stat-divider" />
-          <div className="pp-stat">
-            <span className="pp-stat-value">{user.outfits}</span>
-            <span className="pp-stat-label">OUTFITS</span>
-          </div>
-        </div>
-
-        {/* Message Button */}
-        <button className="pp-message-btn" onClick={onMessage}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-          </svg>
-          Message {user.name.split(' ')[0]}
-        </button>
-
-        {/* Style Vibe */}
-        <div className="pp-vibe-section">
-          <span className="pp-vibe-label">STYLE VIBE</span>
-          <div className="pp-vibe-chips">
-            {user.vibes.map(vibe => (
-              <span key={vibe} className="pp-vibe-chip">{vibe}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Current Looks */}
-        <div className="pp-looks-section">
-          <div className="pp-looks-header">
-            <span className="pp-looks-title">Current Looks</span>
-            <span className="pp-live-badge">LIVE NOW</span>
-          </div>
-          <div className="pp-looks-grid">
-            {user.looks.map(look => (
-              <div key={look.id} className="pp-look-card" onClick={() => onOutfitClick?.(look)} style={{ cursor: 'pointer' }}>
-                <div className="pp-look-img-wrapper">
-                  <img src={look.image} alt={look.name} className="pp-look-img" />
-                  {look.timeLeft && (
-                    <div className="pp-look-badge">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z" />
-                      </svg>
-                      <span>{look.timeLeft}</span>
-                    </div>
-                  )}
+      ) : (
+        <div className="pp-scroll-content">
+          {/* Avatar */}
+          <div className="pp-avatar-section">
+            <div className="pp-avatar-ring">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.full_name} className="pp-avatar-img" />
+              ) : (
+                <div className="pp-avatar-img" style={{
+                  background: '#E8E0DC',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 36, fontWeight: 700, color: '#C4B5AD'
+                }}>
+                  {(profile.full_name || profile.username || '?')[0].toUpperCase()}
                 </div>
-                <span className="pp-look-name">{look.name}</span>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
+
+          {/* Name */}
+          <h1 className="pp-name">{profile.full_name || profile.username}</h1>
+
+          {/* Username */}
+          {profile.username && (
+            <div style={{ color: '#999', fontSize: 14, marginBottom: 8 }}>@{profile.username}</div>
+          )}
+
+          {/* Bio */}
+          {profile.bio && <p className="pp-bio">{profile.bio}</p>}
+
+          {/* Instagram */}
+          {profile.instagram_handle && (
+            <div className="pp-instagram-wrap">
+              <a href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="pp-instagram">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                @{profile.instagram_handle}
+              </a>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="pp-stats">
+            <div className="pp-stat">
+              <span className="pp-stat-value">{formatLikes(totalLikes)}</span>
+              <span className="pp-stat-label">LIKES</span>
+            </div>
+            <div className="pp-stat-divider" />
+            <div className="pp-stat">
+              <span className="pp-stat-value">{outfits.length}</span>
+              <span className="pp-stat-label">OUTFITS</span>
+            </div>
+          </div>
+
+          {/* Message Button */}
+          <button className="pp-message-btn" onClick={onMessage}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+            </svg>
+            Mesaj Gönder
+          </button>
+
+          {/* Style Vibes */}
+          {profile.styles && profile.styles.length > 0 && (
+            <div className="pp-vibe-section">
+              <span className="pp-vibe-label">STYLE VIBE</span>
+              <div className="pp-vibe-chips">
+                {profile.styles.map(vibe => (
+                  <span key={vibe} className="pp-vibe-chip">{vibe}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Outfits Grid */}
+          {outfits.length > 0 && (
+            <div className="pp-looks-section">
+              <div className="pp-looks-header">
+                <span className="pp-looks-title">Kombinler</span>
+              </div>
+              <div className="pp-looks-grid">
+                {outfits.map(outfit => {
+                  const mediaUrl = getFirstMedia(outfit)
+                  return (
+                    <div key={outfit.id} className="pp-look-card" onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
+                      <div className="pp-look-img-wrapper">
+                        {mediaUrl ? (
+                          <img src={mediaUrl} alt={outfit.caption || ''} className="pp-look-img" />
+                        ) : (
+                          <div className="pp-look-img" style={{ background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                              <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                          </div>
+                        )}
+                        {outfit.likes_count > 0 && (
+                          <div className="pp-look-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            <span>{outfit.likes_count}</span>
+                          </div>
+                        )}
+                      </div>
+                      {outfit.caption && <span className="pp-look-name">{outfit.caption}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

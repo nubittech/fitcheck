@@ -51,7 +51,7 @@ export function sortFeedWithBoost(outfits) {
   })
 }
 
-export async function getOutfitsByUser(userId) {
+export async function getOutfitsByUser(userId, { limit = 50, offset = 0 } = {}) {
   const { data, error } = await supabase
     .from('outfits')
     .select(`
@@ -60,6 +60,7 @@ export async function getOutfitsByUser(userId) {
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
   return { data, error }
 }
 
@@ -169,17 +170,19 @@ export async function unlikeOutfit({ outfitId, userId }) {
   return { error }
 }
 
-export async function getUserLikes(userId) {
+export async function getUserLikes(userId, { limit = 500 } = {}) {
   const { data, error } = await supabase
     .from('likes')
     .select('outfit_id')
     .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
   return { data, error }
 }
 
 // ---- COMMENTS ----
 
-export async function getComments(outfitId) {
+export async function getComments(outfitId, { limit = 50 } = {}) {
   const { data, error } = await supabase
     .from('comments')
     .select(`
@@ -187,8 +190,10 @@ export async function getComments(outfitId) {
       profiles:user_id ( id, full_name, username, avatar_url )
     `)
     .eq('outfit_id', outfitId)
-    .order('created_at', { ascending: true })
-  return { data, error }
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  // Reverse so oldest first in UI
+  return { data: data ? data.reverse() : data, error }
 }
 
 export async function addComment({ outfitId, userId, text }) {
@@ -299,7 +304,7 @@ export async function uploadAvatar(userId, file) {
 /**
  * Get all conversations for a user, including partner profile and last message info.
  */
-export async function getConversations(userId) {
+export async function getConversations(userId, { limit = 50 } = {}) {
   const { data, error } = await supabase
     .from('conversations')
     .select(`
@@ -314,6 +319,7 @@ export async function getConversations(userId) {
     `)
     .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
     .order('last_message_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
 
   return { data, error }
 }
@@ -321,14 +327,15 @@ export async function getConversations(userId) {
 /**
  * Get all messages in a conversation, oldest first.
  */
-export async function getMessages(conversationId) {
+export async function getMessages(conversationId, { limit = 100 } = {}) {
   const { data, error } = await supabase
     .from('messages')
     .select('id, sender_id, text, created_at')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-
-  return { data, error }
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  // Reverse so oldest first in UI
+  return { data: data ? data.reverse() : data, error }
 }
 
 /**
@@ -464,6 +471,7 @@ export async function getOutfitVotes({ outfitId, userId }) {
     .from('outfit_votes')
     .select('vote, user_id')
     .eq('outfit_id', outfitId)
+    .limit(1000)
 
   if (error) return { likes: 0, dislikes: 0, myVote: null }
 
@@ -517,6 +525,7 @@ export async function getItemVotes({ outfitId, userId }) {
     .from('item_votes')
     .select('item_index, vote, user_id')
     .eq('outfit_id', outfitId)
+    .limit(1000)
 
   if (error || !data) return {}
 
@@ -539,6 +548,201 @@ export async function getItemVotes({ outfitId, userId }) {
   }
 
   return result
+}
+
+// ---- V2: LEVEL & XP ----
+
+export async function getUserLevel(userId) {
+  const { data, error } = await supabase
+    .from('user_levels')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
+  return { data, error }
+}
+
+export async function getXpHistory(userId, limit = 20) {
+  const { data, error } = await supabase
+    .from('xp_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return { data, error }
+}
+
+export async function awardXp(userId, amount, source, sourceId = null) {
+  const { data, error } = await supabase
+    .rpc('award_xp', {
+      p_user_id: userId,
+      p_amount: amount,
+      p_source: source,
+      p_source_id: sourceId
+    })
+  return { data, error }
+}
+
+export async function updateStreak(userId) {
+  const { data, error } = await supabase
+    .rpc('update_streak', { p_user_id: userId })
+  return { data, error }
+}
+
+export async function trackAction(userId, actionType) {
+  const { data, error } = await supabase
+    .rpc('update_mission_progress', {
+      p_user_id: userId,
+      p_action_type: actionType,
+      p_increment: 1
+    })
+  return { data, error }
+}
+
+export async function checkBadges(userId) {
+  const { data, error } = await supabase
+    .rpc('check_badges', { p_user_id: userId })
+  return { data, error }
+}
+
+// XP icin gereken seviye hesabi (client-side mirror)
+export function getXpForLevel(level) {
+  return (level - 1) * (level - 1) * 50
+}
+
+export function getLevelProgress(xp, level) {
+  const currentLevelXp = getXpForLevel(level)
+  const nextLevelXp = getXpForLevel(level + 1)
+  const range = nextLevelXp - currentLevelXp
+  const progress = xp - currentLevelXp
+  return { progress, range, percentage: range > 0 ? Math.min(progress / range, 1) : 0 }
+}
+
+// ---- V2: DAILY MISSIONS ----
+
+export async function getDailyMissions(userId) {
+  const today = new Date().toISOString().split('T')[0]
+  const { data, error } = await supabase
+    .from('user_missions')
+    .select(`
+      *,
+      mission:mission_templates(*)
+    `)
+    .eq('user_id', userId)
+    .eq('assigned_date', today)
+    .order('is_completed', { ascending: true })
+  return { data, error }
+}
+
+export async function assignDailyMissions(userId) {
+  const { data, error } = await supabase
+    .rpc('assign_daily_missions', { p_user_id: userId })
+  return { data, error }
+}
+
+export async function claimMissionReward(missionId) {
+  const { data, error } = await supabase
+    .from('user_missions')
+    .update({ is_claimed: true })
+    .eq('id', missionId)
+    .eq('is_completed', true)
+    .eq('is_claimed', false)
+    .select()
+    .single()
+  return { data, error }
+}
+
+// ---- V2: EVENTS ----
+
+export async function getActiveEvents() {
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('is_active', true)
+    .lte('start_date', now)
+    .gte('end_date', now)
+    .order('start_date', { ascending: false })
+  return { data, error }
+}
+
+export async function getEventById(eventId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', eventId)
+    .single()
+  return { data, error }
+}
+
+export async function getEventPosts(eventTag, limit = 50) {
+  // outfits tablosunda tags array kolonu olabilir veya caption icinde arama
+  const { data, error } = await supabase
+    .from('outfits')
+    .select(`
+      *,
+      profiles:user_id ( id, full_name, username, avatar_url ),
+      outfit_media ( id, media_url, media_type, sort_order )
+    `)
+    .ilike('caption', `%${eventTag}%`)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return { data, error }
+}
+
+export async function joinEvent(eventId, userId, outfitId) {
+  const { data, error } = await supabase
+    .from('event_participations')
+    .insert({
+      event_id: eventId,
+      user_id: userId,
+      outfit_id: outfitId
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function getEventParticipations(eventId) {
+  const { data, error } = await supabase
+    .from('event_participations')
+    .select(`
+      *,
+      profiles:user_id ( id, full_name, username, avatar_url )
+    `)
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+// ---- V2: BADGES ----
+
+export async function getUserBadges(userId) {
+  const { data, error } = await supabase
+    .from('user_badges')
+    .select('*, badge:badges(*)')
+    .eq('user_id', userId)
+    .order('earned_at', { ascending: false })
+  return { data, error }
+}
+
+export async function getAllBadges() {
+  const { data, error } = await supabase
+    .from('badges')
+    .select('*')
+    .eq('is_active', true)
+    .order('rarity', { ascending: true })
+  return { data, error }
+}
+
+// ---- V2: LEADERBOARD ----
+
+export async function getLeaderboard(limit = 50) {
+  const { data, error } = await supabase
+    .from('user_levels')
+    .select('*, profiles:user_id(full_name, username, avatar_url)')
+    .order('xp', { ascending: false })
+    .limit(limit)
+  return { data, error }
 }
 
 // ---- ACCOUNT DELETION ----

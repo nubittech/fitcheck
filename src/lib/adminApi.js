@@ -157,6 +157,138 @@ export async function reportPost({ outfitId, reporterId, reason = '' }) {
     return { data, error }
 }
 
+// ── V2: Mission Management ──
+
+export async function getMissionTemplates() {
+    const { data, error } = await supabase
+        .from('mission_templates')
+        .select('*')
+        .order('priority', { ascending: false })
+    return { data: data || [], error }
+}
+
+export async function createMissionTemplate(mission) {
+    const { data, error } = await supabase
+        .from('mission_templates')
+        .insert(mission)
+        .select()
+        .single()
+    return { data, error }
+}
+
+export async function updateMissionTemplate(id, updates) {
+    const { data, error } = await supabase
+        .from('mission_templates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    return { data, error }
+}
+
+export async function deleteMissionTemplate(id) {
+    const { error } = await supabase
+        .from('mission_templates')
+        .delete()
+        .eq('id', id)
+    return { error }
+}
+
+// ── V2: Event Management ──
+
+export async function getEvents() {
+    const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false })
+    return { data: data || [], error }
+}
+
+export async function createEvent(event) {
+    const { data, error } = await supabase
+        .from('events')
+        .insert(event)
+        .select()
+        .single()
+    return { data, error }
+}
+
+export async function updateEvent(id, updates) {
+    const { data, error } = await supabase
+        .from('events')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+    return { data, error }
+}
+
+export async function deleteEvent(id) {
+    const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id)
+    return { error }
+}
+
+// ── V2: Badge Management ──
+
+export async function getBadges() {
+    const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .order('created_at', { ascending: false })
+    return { data: data || [], error }
+}
+
+export async function createBadge(badge) {
+    const { data, error } = await supabase
+        .from('badges')
+        .insert(badge)
+        .select()
+        .single()
+    return { data, error }
+}
+
+export async function updateBadge(id, updates) {
+    const { data, error } = await supabase
+        .from('badges')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+    return { data, error }
+}
+
+// ── V2: XP Config ──
+
+export async function getAppConfig() {
+    const { data, error } = await supabase
+        .from('app_config')
+        .select('*')
+    return { data: data || [], error }
+}
+
+export async function updateAppConfig(key, value) {
+    const { data, error } = await supabase
+        .from('app_config')
+        .upsert({ key, value, updated_at: new Date().toISOString() })
+        .select()
+        .single()
+    return { data, error }
+}
+
+// ── V2: Leaderboard (Admin View) ──
+
+export async function getAdminLeaderboard(limit = 100) {
+    const { data, error } = await supabase
+        .from('user_levels')
+        .select('*, profiles:user_id(full_name, username, avatar_url)')
+        .order('xp', { ascending: false })
+        .limit(limit)
+    return { data: data || [], error }
+}
+
 export async function deleteOutfit(outfitId) {
     // Use server-side RPC function that runs with SECURITY DEFINER
     // This bypasses RLS so admins can delete any outfit
