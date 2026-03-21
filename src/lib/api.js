@@ -604,9 +604,10 @@ export async function checkBadges(userId) {
   return { data, error }
 }
 
-// XP icin gereken seviye hesabi (client-side mirror)
+// XP icin gereken seviye hesabi — SQL formülü: L × (L-1) × 50
+// LVL 1=0, LVL 2=100, LVL 3=300, LVL 4=600, LVL 5=1000, LVL 50=122500
 export function getXpForLevel(level) {
-  return (level - 1) * (level - 1) * 50
+  return level * (level - 1) * 50
 }
 
 export function getLevelProgress(xp, level) {
@@ -615,6 +616,20 @@ export function getLevelProgress(xp, level) {
   const range = nextLevelXp - currentLevelXp
   const progress = xp - currentLevelXp
   return { progress, range, percentage: range > 0 ? Math.min(progress / range, 1) : 0 }
+}
+
+// Yeni kullanıcı için user_levels satırı yoksa oluştur
+export async function ensureUserLevel(userId) {
+  const { data } = await supabase
+    .from('user_levels')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!data) {
+    await supabase
+      .from('user_levels')
+      .upsert({ user_id: userId, xp: 0, level: 1, title: 'Yeni Stilist' }, { onConflict: 'user_id' })
+  }
 }
 
 // ---- V2: DAILY MISSIONS ----

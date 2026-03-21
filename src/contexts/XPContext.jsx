@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import {
   getUserLevel, awardXp, trackAction, updateStreak,
-  checkBadges, assignDailyMissions, getLevelProgress
+  checkBadges, assignDailyMissions, getLevelProgress, ensureUserLevel
 } from '../lib/api'
 
 const XPContext = createContext()
@@ -31,6 +31,9 @@ export const XPProvider = ({ children, userId }) => {
     initRef.current = true
 
     const init = async () => {
+      // 0. user_levels satiri yoksa olustur (yeni kullanicilar)
+      await ensureUserLevel(userId)
+
       // 1. Streak guncelle (gunluk giris XP)
       const { data: streak } = await updateStreak(userId)
       if (streak) {

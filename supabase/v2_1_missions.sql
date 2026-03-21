@@ -13,6 +13,14 @@
 
 
 -- =============================================
+-- ADIM 0: Mevcut fonksiyonları sil (return tipi değiştiği için)
+-- =============================================
+DROP FUNCTION IF EXISTS assign_daily_missions(UUID);
+DROP FUNCTION IF EXISTS get_user_missions(UUID, DATE);
+DROP FUNCTION IF EXISTS admin_broadcast_mission(UUID, TIMESTAMPTZ);
+
+
+-- =============================================
 -- ADIM 1: mission_templates tablosuna yeni kolonlar ekle
 -- =============================================
 ALTER TABLE mission_templates
