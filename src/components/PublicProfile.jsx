@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { getProfile, getOutfitsByUser } from '../lib/api'
+import { getProfile, getOutfitsByUser, getUserLevel, getUserBadges } from '../lib/api'
+import XPRing from './level/XPRing'
+import { getXpForLevel, getLevelProgress } from '../lib/api'
 import '../styles/PublicProfile.css'
 
 const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
   const [profile, setProfile] = useState(null)
   const [outfits, setOutfits] = useState([])
+  const [levelData, setLevelData] = useState(null)
+  const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -12,12 +16,20 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const [profileRes, outfitsRes] = await Promise.all([
+        const [profileRes, outfitsRes, levelRes, badgeRes] = await Promise.all([
           getProfile(userId),
-          getOutfitsByUser(userId, { limit: 12 })
+          getOutfitsByUser(userId, { limit: 12 }),
+          getUserLevel(userId),
+          getUserBadges(userId)
         ])
         if (profileRes.data) setProfile(profileRes.data)
         if (outfitsRes.data) setOutfits(outfitsRes.data)
+        if (levelRes.data) {
+          const lv = levelRes.data
+          const progress = getLevelProgress(lv.xp, lv.level)
+          setLevelData({ ...lv, ...progress })
+        }
+        if (badgeRes.data) setBadges(badgeRes.data)
       } catch (e) {
         console.error('[PublicProfile] load error:', e)
       }
@@ -58,29 +70,100 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
         </div>
       ) : (
         <div className="pp-scroll-content">
-          {/* Avatar */}
+          {/* Avatar with Level Ring */}
           <div className="pp-avatar-section">
-            <div className="pp-avatar-ring">
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.full_name} className="pp-avatar-img" />
-              ) : (
-                <div className="pp-avatar-img" style={{
-                  background: '#E8E0DC',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 36, fontWeight: 700, color: '#C4B5AD'
-                }}>
-                  {(profile.full_name || profile.username || '?')[0].toUpperCase()}
-                </div>
-              )}
-            </div>
+            {levelData ? (
+              <XPRing
+                percentage={levelData.percentage || 0}
+                level={levelData.level || 1}
+                avatarUrl={profile.avatar_url || ''}
+                name={profile.full_name || profile.username || '?'}
+                size={120}
+              />
+            ) : (
+              <div className="pp-avatar-ring">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.full_name} className="pp-avatar-img" />
+                ) : (
+                  <div className="pp-avatar-img" style={{
+                    background: '#E8E0DC',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 36, fontWeight: 700, color: '#C4B5AD'
+                  }}>
+                    {(profile.full_name || profile.username || '?')[0].toUpperCase()}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Name */}
           <h1 className="pp-name">{profile.full_name || profile.username}</h1>
 
+          {/* Level Title + Location */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: 8
+          }}>
+            {levelData && (
+              <div style={{
+                background: '#faebe9',
+                color: '#f0786c',
+                fontSize: '11px',
+                fontWeight: '700',
+                padding: '4px 12px',
+                borderRadius: '14px',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase'
+              }}>
+                {levelData.title || 'Yeni Stilist'}
+              </div>
+            )}
+          </div>
+
           {/* Username */}
           {profile.username && (
             <div style={{ color: '#999', fontSize: 14, marginBottom: 8 }}>@{profile.username}</div>
+          )}
+
+          {/* Badges preview */}
+          {badges.length > 0 && (
+            <div style={{
+              display: 'flex',
+              gap: 5,
+              justifyContent: 'center',
+              marginBottom: 10,
+              flexWrap: 'wrap',
+            }}>
+              {badges.slice(0, 5).map(ub => (
+                <div key={ub.id} style={{
+                  width: 28, height: 28,
+                  borderRadius: 7,
+                  background: ub.badge?.rarity === 'legendary' ? 'rgba(255,215,0,0.15)' :
+                    ub.badge?.rarity === 'epic' ? 'rgba(156,39,176,0.15)' :
+                    ub.badge?.rarity === 'rare' ? 'rgba(33,150,243,0.15)' :
+                    'rgba(0,0,0,0.04)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14,
+                  border: ub.badge?.rarity === 'legendary' ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(0,0,0,0.06)',
+                }} title={ub.badge?.name}>
+                  {ub.badge?.icon_url || '🏅'}
+                </div>
+              ))}
+              {badges.length > 5 && (
+                <div style={{
+                  width: 28, height: 28, borderRadius: 7,
+                  background: 'rgba(0,0,0,0.04)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, color: '#999', fontWeight: 600,
+                }}>
+                  +{badges.length - 5}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Bio */}

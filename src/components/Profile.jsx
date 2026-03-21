@@ -142,17 +142,15 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             <circle cx="12" cy="12" r="6"></circle>
                             <circle cx="12" cy="12" r="2"></circle>
                         </svg>
-                        {streakInfo && streakInfo.streak > 0 && (
-                            <span style={{ 
-                                position: 'absolute', top: -2, right: -4, 
-                                background: '#f0786c', color: 'white', 
-                                fontSize: '9px', fontWeight: 'bold', 
-                                padding: '2px 4px', borderRadius: '8px',
-                                border: '1px solid #fff'
-                            }}>
-                                {streakInfo.streak}🔥
-                            </span>
-                        )}
+                        <span style={{ 
+                            position: 'absolute', top: -4, right: -8, 
+                            background: '#f0786c', color: 'white', 
+                            fontSize: '9px', fontWeight: 'bold', 
+                            padding: '2px 4px', borderRadius: '8px',
+                            border: '1px solid #fff'
+                        }}>
+                            YENİ
+                        </span>
                     </button>
                     <button className="settings-btn" onClick={() => setShowSettings(true)} style={{ position: 'relative', right: 'auto' }}>
                         {ICONS.settings}
@@ -260,42 +258,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     </div>
                 )}
 
-                {/* Badges preview */}
-                {badges.length > 0 && (
-                    <div style={{
-                        display: 'flex',
-                        gap: 6,
-                        justifyContent: 'center',
-                        marginTop: 10,
-                        flexWrap: 'wrap',
-                    }}>
-                        {badges.slice(0, 5).map(ub => (
-                            <div key={ub.id} style={{
-                                width: 32, height: 32,
-                                borderRadius: 8,
-                                background: ub.badge?.rarity === 'legendary' ? 'rgba(255,215,0,0.15)' :
-                                    ub.badge?.rarity === 'epic' ? 'rgba(156,39,176,0.15)' :
-                                    ub.badge?.rarity === 'rare' ? 'rgba(33,150,243,0.15)' :
-                                    'rgba(255,255,255,0.06)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 16,
-                                border: ub.badge?.rarity === 'legendary' ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                            }} title={ub.badge?.name}>
-                                {ub.badge?.icon_url || '🏅'}
-                            </div>
-                        ))}
-                        {badges.length > 5 && (
-                            <div style={{
-                                width: 32, height: 32, borderRadius: 8,
-                                background: 'rgba(255,255,255,0.06)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 11, color: '#666', fontWeight: 600,
-                            }}>
-                                +{badges.length - 5}
-                            </div>
-                        )}
-                    </div>
-                )}
+
             </section>
 
             <section className="stats-row">

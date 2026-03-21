@@ -230,13 +230,17 @@ BEGIN
 
   new_title := CASE
     WHEN new_level >= 50 THEN 'Moda Ikonu'
-    WHEN new_level >= 40 THEN 'Stil Ustasi'
-    WHEN new_level >= 30 THEN 'Trend Setter'
-    WHEN new_level >= 20 THEN 'Fashionista'
-    WHEN new_level >= 15 THEN 'Stil Avcisi'
-    WHEN new_level >= 10 THEN 'Kombin Artisti'
-    WHEN new_level >= 5  THEN 'Moda Meraklisi'
-    ELSE 'Caylak'
+    WHEN new_level >= 40 THEN 'Moda Efsanesi'
+    WHEN new_level >= 35 THEN 'Stil Ustasi'
+    WHEN new_level >= 30 THEN 'Moda Gurusu'
+    WHEN new_level >= 25 THEN 'Trend Setter'
+    WHEN new_level >= 20 THEN 'Stil Avcisi'
+    WHEN new_level >= 16 THEN 'Fashionista'
+    WHEN new_level >= 12 THEN 'Kombin Artisti'
+    WHEN new_level >= 8  THEN 'Stil Kasifi'
+    WHEN new_level >= 5  THEN 'Kombin Asigi'
+    WHEN new_level >= 3  THEN 'Moda Meraklisi'
+    ELSE 'Yeni Stilist'
   END;
 
   NEW.level := new_level;

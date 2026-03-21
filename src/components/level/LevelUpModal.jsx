@@ -11,14 +11,18 @@ const LevelUpModal = ({ oldLevel, newLevel, onClose }) => {
   }, [onClose])
 
   const title = (() => {
-    if (newLevel >= 50) return 'Moda Ikonu'
-    if (newLevel >= 40) return 'Stil Ustasi'
-    if (newLevel >= 30) return 'Trend Setter'
-    if (newLevel >= 20) return 'Fashionista'
-    if (newLevel >= 15) return 'Stil Avcisi'
-    if (newLevel >= 10) return 'Kombin Artisti'
-    if (newLevel >= 5) return 'Moda Meraklisi'
-    return 'Caylak'
+    if (newLevel >= 50) return 'Moda İkonu'
+    if (newLevel >= 40) return 'Moda Efsanesi'
+    if (newLevel >= 35) return 'Stil Ustası'
+    if (newLevel >= 30) return 'Moda Gurusu'
+    if (newLevel >= 25) return 'Trend Setter'
+    if (newLevel >= 20) return 'Stil Avcısı'
+    if (newLevel >= 16) return 'Fashionista'
+    if (newLevel >= 12) return 'Kombin Artisti'
+    if (newLevel >= 8)  return 'Stil Kâşifi'
+    if (newLevel >= 5)  return 'Kombin Âşığı'
+    if (newLevel >= 3)  return 'Moda Meraklısı'
+    return 'Yeni Stilist'
   })()
 
   return (
