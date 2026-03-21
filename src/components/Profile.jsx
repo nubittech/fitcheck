@@ -135,9 +135,29 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
         <div className="profile-page">
             <header className="profile-header">
                 <h1>{t('profile')}</h1>
-                <button className="settings-btn" onClick={() => setShowSettings(true)}>
-                    {ICONS.settings}
-                </button>
+                <div style={{ position: 'absolute', right: '0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button className="settings-btn" onClick={() => setShowMissions(true)} style={{ position: 'relative', right: 'auto' }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                        {streakInfo && streakInfo.streak > 0 && (
+                            <span style={{ 
+                                position: 'absolute', top: -2, right: -4, 
+                                background: '#f0786c', color: 'white', 
+                                fontSize: '9px', fontWeight: 'bold', 
+                                padding: '2px 4px', borderRadius: '8px',
+                                border: '1px solid #fff'
+                            }}>
+                                {streakInfo.streak}🔥
+                            </span>
+                        )}
+                    </button>
+                    <button className="settings-btn" onClick={() => setShowSettings(true)} style={{ position: 'relative', right: 'auto' }}>
+                        {ICONS.settings}
+                    </button>
+                </div>
             </header>
 
             {/* User Info — V2 with XP Ring */}
@@ -165,38 +185,38 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 </div>
                 <h2 className="user-name">{profile.name}</h2>
 
-                {/* Level title */}
-                {levelData && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        marginTop: '8px',
-                        marginBottom: '8px'
-                    }}>
+                {/* Level title & Location */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    marginTop: '12px',
+                    marginBottom: '12px'
+                }}>
+                    {levelData && (
                         <div style={{
                             background: '#faebe9',
                             color: '#f0786c',
-                            fontSize: '11px',
-                            fontWeight: '800',
-                            padding: '4px 10px',
-                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            padding: '6px 14px',
+                            borderRadius: '16px',
                             letterSpacing: '0.5px',
                             textTransform: 'uppercase'
                         }}>
-                            {levelData.title || 'Yeni̇ Sti̇li̇st'}
+                            {levelData.title || 'YENİ STİLİST'}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <p className="user-location" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    {profile.city}
-                </p>
+                    <p className="user-location" style={{ display: 'flex', alignItems: 'center', margin: 0, gap: '6px', fontSize: '15px', color: '#665b5b', fontWeight: '500' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        {profile.city}
+                    </p>
+                </div>
                 {profile.bio && <p className="profile-bio">{profile.bio}</p>}
                 {profile.instagram_handle && (
                     <a href={`https://instagram.com/${profile.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="profile-instagram">
@@ -211,7 +231,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
 
                 {/* XP Progress Bar */}
                 {levelData && (
-                    <div style={{ width: '100%', maxWidth: 320, margin: '16px auto 0' }}>
+                    <div style={{ width: '100%', maxWidth: 360, margin: '20px auto 0' }}>
                         <XPProgressBar
                             xp={levelData.xp}
                             progress={levelData.progress}
@@ -306,39 +326,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                 </button>
             </section>
 
-            {/* Daily Missions Button */}
-            <section style={{ padding: '0 20px 8px' }}>
-                <button
-                    onClick={() => setShowMissions(true)}
-                    style={{
-                        width: '100%',
-                        padding: '14px 16px',
-                        background: 'rgba(255,215,0,0.08)',
-                        border: '1px solid rgba(255,215,0,0.15)',
-                        borderRadius: 16,
-                        color: '#FFD700',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                    }}
-                >
-                    🎯 Gunluk Gorevler
-                    {streakInfo && streakInfo.streak > 0 && (
-                        <span style={{
-                            background: 'rgba(255,215,0,0.2)',
-                            padding: '2px 8px',
-                            borderRadius: 10,
-                            fontSize: 11,
-                        }}>
-                            🔥 {streakInfo.streak}
-                        </span>
-                    )}
-                </button>
-            </section>
+
 
             {/* Premium Promo for Free Users */}
             {!profile.isPremium && <PremiumPromo onUpgrade={handleUpgrade} />}
