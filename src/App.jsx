@@ -503,7 +503,7 @@ function App() {
     setLikedOutfitIds(prev => new Set([...prev, outfit.id]))
     await likeOutfit({ outfitId: outfit.id, userId: session.user.id })
     // V2: Track like action for missions
-    trackActionApi(session.user.id, 'like_outfit').catch(() => {})
+    trackActionApi(session.user.id, 'like_outfit').then(r => console.log('like track:', r)).catch(e => console.warn('like track err:', e))
   }
 
   const handleItemVote = (itemId, type) => {

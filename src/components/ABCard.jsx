@@ -104,6 +104,8 @@ const ABCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onUserTap, cur
             if (!error) {
                 const { data } = await getAbVoteStats(outfit.id)
                 if (data && data.total > 0) setAbStats(data)
+                // V2: Track like action for missions (AB vote counts as like)
+                trackAction(currentUser.id, 'like_outfit').catch(() => {})
             }
         } catch {
             setMyVote(prevVote)

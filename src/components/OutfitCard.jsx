@@ -141,6 +141,10 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
 
     try {
       await voteOutfit({ outfitId: outfit.id, userId: currentUser.id, vote })
+      // V2: Track like action for missions
+      if (vote === 'like') {
+        trackAction(currentUser.id, 'like_outfit').catch(e => console.warn('like track err:', e))
+      }
     } catch {
       setOutfitVotes(prev) // rollback on network error
     }
