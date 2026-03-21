@@ -472,19 +472,20 @@
 
 /* New UI Updates for Profile */
 .btn-edit-profile {
+  background: #ffffff;
+  color: #231b1f;
+  border: 1px solid #e1d8d5;
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.btn-boost-profile {
   background: #f68a7d;
   color: #ffffff;
   border: none;
   border-radius: 999px;
-  box-shadow: 0 4px 6px rgba(246, 138, 125, 0.2);
-}
-
-.btn-boost-profile {
-  background: #ffffff;
-  color: #1a1a1a;
-  border: 1px solid #ece7e3;
-  border-radius: 999px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 12px rgba(246, 138, 125, 0.25);
+  font-weight: 700;
 }
 
 .xp-progress-v2-container {
