@@ -4,6 +4,25 @@ import { getDailyMissions, claimMissionReward } from '../../lib/api'
 import { useXP } from '../../contexts/XPContext'
 import '../../styles/MissionsSheet.css'
 
+const ACTION_ICON_MAP = {
+  ab_post: '🆚',
+  ab_vote: '🗳️',
+  post_outfit: '👗',
+  like_outfit: '❤️',
+  comment: '💬',
+  share: '📤',
+  explore_profile: '🔍',
+  event_post: '📅',
+  follow: '➕',
+}
+
+const getIcon = (m) => {
+  // If icon is a non-ASCII string (real emoji), use it directly
+  if (m.icon && /[^\x00-\x7F]/.test(m.icon)) return m.icon
+  // Otherwise fall back to action_type mapping
+  return ACTION_ICON_MAP[m.action_type] || ACTION_ICON_MAP[m.icon] || '🎯'
+}
+
 const MissionsSheet = ({ isOpen, onClose, userId }) => {
   const [missions, setMissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -135,7 +154,7 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                       key={m.id}
                       title={m.title || 'Görev'}
                       description={m.description}
-                      icon={m.icon}
+                      icon={getIcon(m)}
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
@@ -163,7 +182,7 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                       key={m.id}
                       title={m.title || 'Özel Görev'}
                       description={m.description}
-                      icon={m.icon || '🎪'}
+                      icon={getIcon(m) || '🎪'}
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
