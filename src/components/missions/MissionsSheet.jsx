@@ -4,6 +4,33 @@ import { getDailyMissions, claimMissionReward } from '../../lib/api'
 import { useXP } from '../../contexts/XPContext'
 import '../../styles/MissionsSheet.css'
 
+// Özel tasarım ikonlar
+const StarIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.15))' }}>
+    <defs>
+      <linearGradient id="starGradPill" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFF5BA" />
+        <stop offset="50%" stopColor="#FFD700" />
+        <stop offset="100%" stopColor="#FFA500" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+      fill="url(#starGradPill)"
+    />
+  </svg>
+)
+
+const CalendarIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
+    <rect x="3" y="6" width="18" height="15" rx="2" fill="white" stroke="#c97b6e" strokeWidth="1.5" />
+    <path d="M3 6h18v4.5H3V6z" fill="#c97b6e" />
+    <text x="12" y="18" textAnchor="middle" fontSize="8" fontWeight="900" fill="#555" fontFamily="-apple-system, system-ui, sans-serif">17</text>
+    <rect x="6" y="4" width="2" height="4" rx="1" fill="#a05a4e" />
+    <rect x="16" y="4" width="2" height="4" rx="1" fill="#a05a4e" />
+  </svg>
+)
+
 const MissionsSheet = ({ isOpen, onClose, userId }) => {
   const [missions, setMissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,13 +85,16 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
     currentY.current = 0
   }
 
-  // Görevleri daily ve admin olarak ayır
-  const dailyMissions = missions.filter(m => m.mission_type === 'daily')
-  const adminMissions = missions.filter(m => m.mission_type === 'admin')
+  // Görevleri türlerine göre ayır — link_sale görevlerini her yerde gizle
+  const activeMissions = missions.filter(m => m.action_type !== 'link_sale')
+  const dailyMissions = activeMissions.filter(m => m.mission_type === 'daily')
+  const superMissions = activeMissions.filter(m => m.mission_type === 'super')
+  const adminMissions = activeMissions.filter(m => m.mission_type === 'admin')
 
   const dailyCompleted = dailyMissions.filter(m => m.is_completed).length
   const dailyTotal = dailyMissions.length
   const dailyXP = dailyMissions.reduce((sum, m) => sum + (m.xp_reward || 0), 0)
+  const superXP = superMissions.reduce((sum, m) => sum + (m.xp_reward || 0), 0)
   const adminXP = adminMissions.reduce((sum, m) => sum + (m.xp_reward || 0), 0)
   const unclaimedCount = missions.filter(m => m.is_completed && !m.is_claimed).length
 
@@ -100,11 +130,12 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
               <div className="missions-total-xp">
-                ⭐ Günlük: {dailyXP.toLocaleString()} XP
+                <StarIcon size={16} />
+                <span>Günlük: {dailyXP.toLocaleString()} XP</span>
               </div>
               {streakInfo?.streak_days > 0 && (
                 <div style={{ background: '#fff3e0', color: '#e07a2f', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                  🔥 {streakInfo.streak_days} Gün Seri
+                  {streakInfo.streak_days} Gün Seri
                 </div>
               )}
             </div>
@@ -127,15 +158,16 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
               {/* Günlük Görevler */}
               {dailyMissions.length > 0 && (
                 <>
-                  <div style={{ padding: '12px 20px 6px', fontSize: 11, fontWeight: 700, color: '#c97b6e', letterSpacing: 1, textTransform: 'uppercase' }}>
-                    📅 Günlük Görevler
+                  <div style={{ padding: '12px 0 8px', fontSize: 11, fontWeight: 800, color: '#c97b6e', letterSpacing: 0.5, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+                    <CalendarIcon size={18} />
+                    GÜNLÜK GÖREVLER
                   </div>
                   {dailyMissions.map(m => (
                     <MissionCard
                       key={m.id}
                       title={m.title || 'Görev'}
                       description={m.description}
-                      icon={m.icon}
+                      actionType={m.action_type}
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
@@ -147,11 +179,40 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                 </>
               )}
 
+              {/* Süper Görevler */}
+              {superMissions.length > 0 && (
+                <>
+                  <div style={{ padding: '16px 0 8px', fontSize: 11, fontWeight: 700, color: '#d4a017', letterSpacing: 1, textTransform: 'uppercase' }}>
+                    Süper Görevler
+                    {superXP > 0 && (
+                      <span style={{ marginLeft: 8, background: '#fef6e4', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>
+                        +{superXP} XP
+                      </span>
+                    )}
+                  </div>
+                  {superMissions.map(m => (
+                    <MissionCard
+                      key={m.id}
+                      title={m.title || 'Süper Görev'}
+                      description={m.description}
+                      actionType={m.action_type}
+                      progress={m.progress}
+                      target={m.target}
+                      xp={m.xp_reward || 0}
+                      completed={m.is_completed}
+                      claimed={m.is_claimed}
+                      isSuper={true}
+                      onClaim={() => handleClaim(m.id)}
+                    />
+                  ))}
+                </>
+              )}
+
               {/* Admin / Etkinlik Görevleri */}
               {adminMissions.length > 0 && (
                 <>
-                  <div style={{ padding: '16px 20px 6px', fontSize: 11, fontWeight: 700, color: '#6e8fc9', letterSpacing: 1, textTransform: 'uppercase' }}>
-                    🎪 Özel Görevler
+                  <div style={{ padding: '16px 0 8px', fontSize: 11, fontWeight: 700, color: '#6e8fc9', letterSpacing: 1, textTransform: 'uppercase' }}>
+                    Özel Görevler
                     {adminXP > 0 && (
                       <span style={{ marginLeft: 8, background: '#e8f0fe', borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>
                         +{adminXP} XP
@@ -163,7 +224,7 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
                       key={m.id}
                       title={m.title || 'Özel Görev'}
                       description={m.description}
-                      icon={m.icon || '🎪'}
+                      actionType={m.action_type}
                       progress={m.progress}
                       target={m.target}
                       xp={m.xp_reward || 0}
