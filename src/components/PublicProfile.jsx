@@ -35,11 +35,22 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
     load()
   }, [userId])
 
+  // 24 saat içindeki aktif paylaşımları filtrele
+  const activeOutfits = outfits.filter(o => {
+    if (!o.created_at) return false
+    const created = new Date(o.created_at).getTime()
+    const now = Date.now()
+    return (now - created) < 24 * 60 * 60 * 1000
+  })
+
   const totalLikes = outfits.reduce((sum, o) => sum + (o.likes_count || 0), 0)
   const formatLikes = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
 
   const getFirstMedia = (outfit) => {
-    if (outfit.media && outfit.media.length > 0) return outfit.media[0].url
+    // Supabase'den gelen alan adı outfit_media
+    const media = outfit.outfit_media || outfit.media || []
+    const sorted = [...media].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    if (sorted.length > 0) return sorted[0].media_url || sorted[0].url
     if (outfit.media_url) return outfit.media_url
     return null
   }
@@ -154,7 +165,7 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
             </div>
             <div className="pp-stat-divider" />
             <div className="pp-stat">
-              <span className="pp-stat-value">{outfits.length}</span>
+              <span className="pp-stat-value">{activeOutfits.length}</span>
               <span className="pp-stat-label">OUTFITS</span>
             </div>
           </div>
@@ -180,13 +191,13 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
           )}
 
           {/* Outfits Grid */}
-          {outfits.length > 0 && (
+          {activeOutfits.length > 0 && (
             <div className="pp-looks-section">
               <div className="pp-looks-header">
                 <span className="pp-looks-title">Kombinler</span>
               </div>
               <div className="pp-looks-grid">
-                {outfits.map(outfit => {
+                {activeOutfits.map(outfit => {
                   const mediaUrl = getFirstMedia(outfit)
                   return (
                     <div key={outfit.id} className="pp-look-card" onClick={() => onOutfitClick?.(outfit)} style={{ cursor: 'pointer' }}>
