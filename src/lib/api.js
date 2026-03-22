@@ -219,6 +219,34 @@ export async function addComment({ outfitId, userId, text }) {
   return { data, error }
 }
 
+// ---- DELETE OUTFIT ----
+
+export async function deleteOutfit(outfitId, userId) {
+  // Önce outfit'in bu kullanıcıya ait olduğunu kontrol et
+  const { data: outfit, error: fetchError } = await supabase
+    .from('outfits')
+    .select('id, user_id')
+    .eq('id', outfitId)
+    .eq('user_id', userId)
+    .single()
+
+  if (fetchError || !outfit) return { error: new Error('Paylaşım bulunamadı veya size ait değil') }
+
+  // İlişkili verileri sil
+  await supabase.from('comments').delete().eq('outfit_id', outfitId)
+  await supabase.from('votes').delete().eq('outfit_id', outfitId)
+  await supabase.from('outfit_media').delete().eq('outfit_id', outfitId)
+
+  // Outfit'i sil
+  const { error } = await supabase
+    .from('outfits')
+    .delete()
+    .eq('id', outfitId)
+    .eq('user_id', userId)
+
+  return { error }
+}
+
 // ---- PROFILES ----
 
 export async function getProfile(userId) {
@@ -284,11 +312,38 @@ export async function getBoostStatus(userId) {
   return { boostsUsed: data.boosts_used || 0, maxBoosts, purchasedBalance }
 }
 
+// Avatar sıkıştırma — max 400px, JPEG %75 kalite
+function compressImage(file, maxSize = 400, quality = 0.75) {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+      if (width > height) {
+        if (width > maxSize) { height = (height * maxSize) / width; width = maxSize }
+      } else {
+        if (height > maxSize) { width = (width * maxSize) / height; height = maxSize }
+      }
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => resolve(blob || file), 'image/jpeg', quality)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 export async function uploadAvatar(userId, file) {
-  const filePath = `${userId}/avatar-${Date.now()}.${file.name.split('.').pop()}`
+  // Sıkıştır
+  const compressed = await compressImage(file)
+  const filePath = `${userId}/avatar-${Date.now()}.jpg`
   const { error: uploadError } = await supabase.storage
     .from('media')
-    .upload(filePath, file, { upsert: true })
+    .upload(filePath, compressed, { upsert: true, contentType: 'image/jpeg' })
 
   if (uploadError) return { data: null, error: uploadError }
 

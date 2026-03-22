@@ -2,14 +2,14 @@ import React, { useState, useRef, useEffect } from 'react'
 import ActionButtons from './ActionButtons'
 import ItemDots from './ItemDots'
 import MediaCarousel from './MediaCarousel'
-import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment, trackAction } from '../lib/api'
+import { voteOutfit, getOutfitVotes, voteItem, getItemVotes, findOrCreateConversation, sendMessage, getComments, addComment, trackAction, deleteOutfit } from '../lib/api'
 import { reportPost } from '../lib/adminApi'
 import { Share } from '@capacitor/share'
 import { Preferences } from '@capacitor/preferences'
 import { useLang } from '../i18n/LangContext'
 import '../styles/OutfitCard.css'
 
-const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat, cardDataCache }) => {
+const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, onItemVote, onUserTap, currentUser, onOpenChat, onDelete, cardDataCache }) => {
   const { t } = useLang()
 
   // Read pre-fetched data from cache (populated by App.jsx preloadCardData)
@@ -208,6 +208,21 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
     alert(t('user_blocked') || 'Kullanıcı engellendi.')
     if (onSkip) onSkip()
   }
+
+  const handleDeleteOutfit = async () => {
+    setShowOptionsArgs(false)
+    const confirmed = window.confirm('Bu paylaşımı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')
+    if (!confirmed) return
+    const { error } = await deleteOutfit(outfit.id, currentUser.id)
+    if (error) {
+      alert('Silme işlemi başarısız oldu.')
+      return
+    }
+    alert('Paylaşım silindi.')
+    onDelete?.(outfit.id)
+  }
+
+  const isOwnPost = currentUser?.id && outfit?.user_id === currentUser.id
 
   // ── Message button ──
   const handleMessage = async () => {
@@ -760,16 +775,27 @@ const OutfitCard = ({ outfit, isPreview, isFirstCard, onNext, onSkip, onLike, on
               <h4>{t('options') || 'Options'}</h4>
             </div>
             <div className="quick-ask-items">
-              <button className="quick-ask-item" onClick={handleReport} style={{ color: '#ef4444' }}>
-                <div className="quick-ask-item-info">
-                  <span style={{ fontWeight: 600 }}>{t('report_post') || 'Report Post'}</span>
-                </div>
-              </button>
-              <button className="quick-ask-item" onClick={handleBlock} style={{ color: '#ef4444' }}>
-                <div className="quick-ask-item-info">
-                  <span style={{ fontWeight: 600 }}>{t('block_user') || 'Block User'}</span>
-                </div>
-              </button>
+              {isOwnPost && (
+                <button className="quick-ask-item" onClick={handleDeleteOutfit} style={{ color: '#ef4444' }}>
+                  <div className="quick-ask-item-info">
+                    <span style={{ fontWeight: 600 }}>Paylaşımı Sil</span>
+                  </div>
+                </button>
+              )}
+              {!isOwnPost && (
+                <>
+                  <button className="quick-ask-item" onClick={handleReport} style={{ color: '#ef4444' }}>
+                    <div className="quick-ask-item-info">
+                      <span style={{ fontWeight: 600 }}>{t('report_post') || 'Report Post'}</span>
+                    </div>
+                  </button>
+                  <button className="quick-ask-item" onClick={handleBlock} style={{ color: '#ef4444' }}>
+                    <div className="quick-ask-item-info">
+                      <span style={{ fontWeight: 600 }}>{t('block_user') || 'Block User'}</span>
+                    </div>
+                  </button>
+                </>
+              )}
               <button className="quick-ask-item" onClick={() => setShowOptionsArgs(false)}>
                 <div className="quick-ask-item-info">
                   <span style={{ fontWeight: 500 }}>{t('cancel') || 'Cancel'}</span>

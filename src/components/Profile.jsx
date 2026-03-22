@@ -7,7 +7,7 @@ import Settings from './Settings';
 import XPRing from './level/XPRing';
 import XPProgressBar from './level/XPProgressBar';
 import MissionsSheet from './missions/MissionsSheet';
-import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase, trackAction } from '../lib/api';
+import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase, trackAction, deleteOutfit } from '../lib/api';
 import { purchaseBoost } from '../lib/purchases';
 import { useLang } from '../i18n/LangContext';
 import { usePremium } from '../lib/usePremium';
@@ -111,6 +111,15 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
     const activeOutfits = useMemo(() => {
         return userOutfits.filter(o => getTimeLeft(o.created_at) !== null);
     }, [userOutfits]);
+
+    const handleDeleteOutfit = async (e, outfitId) => {
+        e.stopPropagation()
+        const confirmed = window.confirm('Bu paylaşımı silmek istediğinize emin misiniz?')
+        if (!confirmed) return
+        const { error } = await deleteOutfit(outfitId, session.user.id)
+        if (error) { alert('Silme başarısız oldu.'); return }
+        setUserOutfits(prev => prev.filter(o => o.id !== outfitId))
+    }
 
     // Stats from real data
     const totalLikes = useMemo(() => {
@@ -289,6 +298,9 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             {activeOutfits[0].post_type === 'ab_test' && (
                                 <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                             )}
+                            <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            </button>
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
@@ -307,6 +319,9 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                                 {outfit.post_type === 'ab_test' && (
                                     <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                                 )}
+                                <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, outfit.id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                </button>
                                 <div className="look-overlay">
                                     <div className="timer-badge">
                                         {ICONS.clock} {getTimeLeft(outfit.created_at)}
@@ -325,6 +340,9 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             {activeOutfits[0].post_type === 'ab_test' && (
                                 <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                             )}
+                            <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            </button>
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
