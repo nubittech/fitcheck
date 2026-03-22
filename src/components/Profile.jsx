@@ -7,7 +7,7 @@ import Settings from './Settings';
 import XPRing from './level/XPRing';
 import XPProgressBar from './level/XPProgressBar';
 import MissionsSheet from './missions/MissionsSheet';
-import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase, getUserBadges } from '../lib/api';
+import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase } from '../lib/api';
 import { purchaseBoost } from '../lib/purchases';
 import { useLang } from '../i18n/LangContext';
 import { usePremium } from '../lib/usePremium';
@@ -73,7 +73,6 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
     const [outfitsLoading, setOutfitsLoading] = useState(true);
     const [boostsUsed, setBoostsUsed] = useState(0);
     const [purchasedBoostBalance, setPurchasedBoostBalance] = useState(0);
-    const [badges, setBadges] = useState([]);
     const [, setTick] = useState(0);
 
     const profile = useMemo(() => ({
@@ -93,13 +92,11 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
         setOutfitsLoading(true);
         Promise.all([
             getOutfitsByUser(session.user.id),
-            getBoostStatus(session.user.id),
-            getUserBadges(session.user.id)
-        ]).then(([outfitRes, boostRes, badgeRes]) => {
+            getBoostStatus(session.user.id)
+        ]).then(([outfitRes, boostRes]) => {
             setUserOutfits(outfitRes.data || []);
             setBoostsUsed(boostRes.boostsUsed || 0);
             setPurchasedBoostBalance(boostRes.purchasedBalance || 0);
-            setBadges(badgeRes.data || []);
             setOutfitsLoading(false);
         });
     }, [session?.user?.id]);
@@ -240,23 +237,6 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     </div>
                 )}
 
-                {/* Streak badge */}
-                {streakInfo && streakInfo.streak > 1 && (
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        background: 'rgba(255,165,0,0.1)',
-                        color: '#FFD700',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '4px 12px',
-                        borderRadius: 12,
-                        marginTop: 8,
-                    }}>
-                        🔥 {streakInfo.streak} Gun Streak
-                    </div>
-                )}
 
 
             </section>

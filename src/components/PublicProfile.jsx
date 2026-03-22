@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getProfile, getOutfitsByUser, getUserLevel, getUserBadges } from '../lib/api'
+import { getProfile, getOutfitsByUser, getUserLevel } from '../lib/api'
 import XPRing from './level/XPRing'
 import { getXpForLevel, getLevelProgress } from '../lib/api'
 import '../styles/PublicProfile.css'
@@ -8,7 +8,6 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
   const [profile, setProfile] = useState(null)
   const [outfits, setOutfits] = useState([])
   const [levelData, setLevelData] = useState(null)
-  const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -16,11 +15,10 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const [profileRes, outfitsRes, levelRes, badgeRes] = await Promise.all([
+        const [profileRes, outfitsRes, levelRes] = await Promise.all([
           getProfile(userId),
           getOutfitsByUser(userId, { limit: 12 }),
-          getUserLevel(userId),
-          getUserBadges(userId)
+          getUserLevel(userId)
         ])
         if (profileRes.data) setProfile(profileRes.data)
         if (outfitsRes.data) setOutfits(outfitsRes.data)
@@ -29,7 +27,6 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
           const progress = getLevelProgress(lv.xp, lv.level)
           setLevelData({ ...lv, ...progress })
         }
-        if (badgeRes.data) setBadges(badgeRes.data)
       } catch (e) {
         console.error('[PublicProfile] load error:', e)
       }
@@ -129,42 +126,8 @@ const PublicProfile = ({ userId, onBack, onMessage, onOutfitClick }) => {
             <div style={{ color: '#999', fontSize: 14, marginBottom: 8 }}>@{profile.username}</div>
           )}
 
-          {/* Badges preview */}
-          {badges.length > 0 && (
-            <div style={{
-              display: 'flex',
-              gap: 5,
-              justifyContent: 'center',
-              marginBottom: 10,
-              flexWrap: 'wrap',
-            }}>
-              {badges.slice(0, 5).map(ub => (
-                <div key={ub.id} style={{
-                  width: 28, height: 28,
-                  borderRadius: 7,
-                  background: ub.badge?.rarity === 'legendary' ? 'rgba(255,215,0,0.15)' :
-                    ub.badge?.rarity === 'epic' ? 'rgba(156,39,176,0.15)' :
-                    ub.badge?.rarity === 'rare' ? 'rgba(33,150,243,0.15)' :
-                    'rgba(0,0,0,0.04)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14,
-                  border: ub.badge?.rarity === 'legendary' ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(0,0,0,0.06)',
-                }} title={ub.badge?.name}>
-                  {ub.badge?.icon_url || '🏅'}
-                </div>
-              ))}
-              {badges.length > 5 && (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 7,
-                  background: 'rgba(0,0,0,0.04)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, color: '#999', fontWeight: 600,
-                }}>
-                  +{badges.length - 5}
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {/* Bio */}
           {profile.bio && <p className="pp-bio">{profile.bio}</p>}
