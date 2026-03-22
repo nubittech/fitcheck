@@ -1,3 +1,11 @@
+.missions-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.35);
+  transition: opacity 0.3s ease;
+}
+
 .missions-sheet {
   position: fixed;
   left: 0; right: 0; bottom: 0;
@@ -69,28 +77,41 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ────────────────── Mission Card ────────────────── */
+
 .mission-card {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: 14px 16px;
   background: #ffffff;
   border-radius: 24px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.02);
-  border: 1px solid #f6f3f0;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+  border: 1px solid #f4f0ed;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  cursor: pointer;
 }
 
 .mission-card:active {
   transform: scale(0.98);
 }
 
+/* Süper görev — altın sarısı arka plan */
 .mission-card.super-mission {
-  background: linear-gradient(135deg, #ffe0b2, #fff3e0);
-  border: 1px solid #ffd54f;
-  box-shadow: 0 4px 16px rgba(255, 160, 0, 0.1);
+  background: linear-gradient(135deg, #fef6e4 0%, #fdedc1 100%);
+  border: 1.5px solid #f5dca0;
 }
+
+/* Admin / özel görev — mavi tonlar */
+.mission-card.admin-mission {
+  background: linear-gradient(135deg, #eef2ff, #f5f8ff);
+  border: 1px solid #c7d5f5;
+}
+
+.mission-card.mission-claimed {
+  opacity: 0.55;
+}
+
+/* ────────────────── Icon Wrap ────────────────── */
 
 .mission-icon-wrap {
   width: 48px;
@@ -100,7 +121,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-right: 16px;
+  margin-right: 14px;
 }
 
 .mission-icon-wrap.default {
@@ -113,10 +134,17 @@
   color: #f68a7d;
 }
 
-.mission-icon-wrap.super-mission-icon {
+.mission-icon-wrap.super-icon {
   background: #231b1f;
-  color: #ffffff;
+  color: #fdf0d5;
 }
+
+.mission-icon-wrap.admin {
+  background: #e8effe;
+  color: #5b7fd4;
+}
+
+/* ────────────────── Content ────────────────── */
 
 .mission-content {
   flex: 1;
@@ -125,17 +153,56 @@
 
 .mission-title {
   color: #231b1f;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .mission-subtitle {
   color: #8f8582;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
+
+.mission-desc {
+  color: #a89f9d;
+  font-size: 11px;
+  margin-top: 1px;
+  margin-bottom: 2px;
+}
+
+/* Progress bar row */
+.mission-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mission-progress-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #f0ebe8;
+  overflow: hidden;
+}
+
+.mission-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.mission-progress-text {
+  font-size: 11px;
+  color: #a89f9d;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ────────────────── XP Pill ────────────────── */
 
 .mission-xp-pill {
   padding: 6px 12px;
@@ -143,7 +210,8 @@
   font-size: 13px;
   font-weight: 800;
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-left: 10px;
+  white-space: nowrap;
   transition: all 0.3s ease;
 }
 
@@ -155,23 +223,8 @@
 .mission-xp-pill.super {
   background: #231b1f;
   color: #ffffff;
-}
-
-.mission-xp-pill.claimed {
-  background: transparent;
-  color: #c4bbb9;
-  border: 1px solid #e8e4e1;
-}
-
-/* Admin (özel etkinlik) görev kartı */
-.mission-card.admin-mission {
-  background: linear-gradient(135deg, #eef2ff, #f5f8ff);
-  border: 1px solid #c7d5f5;
-}
-
-.mission-icon-wrap.admin {
-  background: #e8effe;
-  color: #5b7fd4;
+  padding: 8px 14px;
+  border-radius: 20px;
 }
 
 .mission-xp-pill.admin {
@@ -180,28 +233,30 @@
 }
 
 .mission-xp-pill.done {
-  background: #fef6e4;
-  color: #e8943a;
+  background: linear-gradient(135deg, #fef6e4, #fdedc1);
+  color: #d4920a;
   animation: pulse-xp 1.2s infinite;
 }
 
-.mission-desc {
-  color: #a89f9d;
-  font-size: 11px;
-  margin-bottom: 2px;
+.mission-xp-pill.claimed {
+  background: transparent;
+  color: #c4bbb9;
+  font-size: 12px;
 }
 
 @keyframes pulse-xp {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.04); }
+  50% { opacity: 0.85; transform: scale(1.05); }
 }
+
+/* ────────────────── Claim All Button ────────────────── */
 
 .missions-claim-all-btn {
   position: absolute;
-  bottom: 32px;
+  bottom: calc(env(safe-area-inset-bottom, 20px) + 12px);
   left: 24px;
   right: 24px;
-  background: #f68a7d;
+  background: linear-gradient(135deg, #f68a7d, #e8503a);
   color: #ffffff;
   border: none;
   border-radius: 999px;

@@ -28,6 +28,7 @@ import { initPurchases } from './lib/purchases'
 import { initAdMob, insertAdCards } from './lib/admob'
 import AdCard from './components/AdCard'
 import Onboarding from './components/Onboarding'
+import SplashScreen from './components/SplashScreen'
 import EventBanner from './components/events/EventBanner'
 import EventPage from './components/events/EventPage'
 import XPToast from './components/level/XPToast'
@@ -124,6 +125,7 @@ function App() {
   const [selectedVibe, setSelectedVibe] = useState(null) // null = all styles
   const [viewingOutfit, setViewingOutfit] = useState(null) // kept for compatibility but overlay is removed
   const [viewingEvent, setViewingEvent] = useState(null)
+  const [feedReady, setFeedReady] = useState(false)
   const preloadedMediaRef = useRef(new Set())
   const cardDataCacheRef = useRef(new Map())
 
@@ -316,6 +318,21 @@ function App() {
     })
   }, [session?.user?.id, lockProfileSetup])
 
+  // Preload images and return a promise that resolves when they're loaded
+  const preloadImages = useCallback((urls) => {
+    if (!urls.length) return Promise.resolve()
+    return Promise.all(
+      urls.map(url => new Promise((resolve) => {
+        const img = new Image()
+        img.onload = resolve
+        img.onerror = resolve // don't block on errors
+        img.src = url
+        // Safety timeout — don't wait more than 4s per image
+        setTimeout(resolve, 4000)
+      }))
+    )
+  }, [])
+
   // Fetch feed (skip if profile setup still needed)
   const fetchFeed = useCallback(async () => {
     if (!session || needsProfileSetup) return
@@ -327,7 +344,29 @@ function App() {
       ])
       if (outfitRes.data) {
         const transformed = outfitRes.data.map(transformOutfit)
-        setOutfits(insertAdCards(sortFeedWithBoost(transformed)))
+        const finalFeed = insertAdCards(sortFeedWithBoost(transformed))
+        setOutfits(finalFeed)
+
+        // Preload first 2 cards' images before showing feed
+        const imagesToPreload = []
+        for (let i = 0; i < Math.min(2, finalFeed.length); i++) {
+          const o = finalFeed[i]
+          if (!o || o.isAd) continue
+          // Main media
+          if (o.media?.[0]?.url && o.media[0].type !== 'video') {
+            imagesToPreload.push(o.media[0].url)
+          }
+          // Avatar
+          if (o.user?.avatar) imagesToPreload.push(o.user.avatar)
+          // AB test image B
+          if (o.postType === 'ab_test' && o.imageUrlB) {
+            imagesToPreload.push(o.imageUrlB)
+          }
+        }
+
+        if (imagesToPreload.length > 0) {
+          await preloadImages(imagesToPreload)
+        }
       }
       if (likesRes.data) {
         setLikedOutfitIds(new Set(likesRes.data.map(l => l.outfit_id)))
@@ -336,7 +375,8 @@ function App() {
       console.warn('Feed fetch failed:', err.message)
     }
     setFeedLoading(false)
-  }, [session, needsProfileSetup, selectedVibe])
+    setFeedReady(true)
+  }, [session, needsProfileSetup, selectedVibe, preloadImages])
 
   useEffect(() => {
     if (session && !needsProfileSetup && profileChecked) fetchFeed()
@@ -528,6 +568,7 @@ function App() {
     setNeedsProfileSetup(false)
     setProfileChecked(true)
     setLockProfileSetup(false)
+    setFeedReady(false)
     setOutfits([])
     setCurrentIndex(0)
     setActiveTab('home')
@@ -598,12 +639,12 @@ function App() {
     return true
   }
 
+  // Show splash screen while app is initializing or feed images loading
+  const showSplash = !onboardingChecked || (isLoggedIn && profileChecked && !needsProfileSetup && !needsLegalConsent && !feedReady)
+
   const renderContent = () => {
     if (!onboardingChecked) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
-        </div>
-      )
+      return null // SplashScreen handles this
     }
 
     if (showOnboarding) {
@@ -635,11 +676,7 @@ function App() {
       )
     }
     if (!profileChecked) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Preparing your profile...</p>
-        </div>
-      )
+      return null // SplashScreen handles this
     }
     if (needsLegalConsent) {
       return (
@@ -727,10 +764,15 @@ function App() {
           currentUser={currentUser}
           session={session}
           onClose={() => setActiveTab('home')}
-          onOutfitCreated={() => {
-            // V2: Track post_outfit action for missions + XP
+          onOutfitCreated={(createdPostType) => {
+            // V2: Track post_outfit / ab_post action for missions + XP
             if (session?.user?.id) {
-              trackActionApi(session.user.id, 'post_outfit').catch(() => {})
+              const actionType = createdPostType === 'ab_test' ? 'ab_post' : 'post_outfit'
+              trackActionApi(session.user.id, actionType).catch(() => {})
+              // AB post also counts as a regular post
+              if (createdPostType === 'ab_test') {
+                trackActionApi(session.user.id, 'post_outfit').catch(() => {})
+              }
             }
             fetchFeed()
             setCurrentIndex(0)
@@ -780,11 +822,7 @@ function App() {
     }
 
     if (feedLoading && outfits.length === 0) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--secondary)' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>Loading...</p>
-        </div>
-      )
+      return null // SplashScreen handles this
     }
 
     const currentOutfit = outfits[currentIndex]
@@ -914,6 +952,7 @@ function App() {
   return (
     <XPProvider userId={session?.user?.id}>
       <AppXPOverlays />
+      {showSplash && <SplashScreen />}
       <div className="app">
         {renderContent()}
         {isLoggedIn && !showOnboarding && !needsProfileSetup && activeTab !== 'add' && !viewingProfile && !selectedChat && (

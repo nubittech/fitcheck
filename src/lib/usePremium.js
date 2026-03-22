@@ -68,6 +68,10 @@ export function usePremium() {
                 }
 
                 setIsPremium(true)
+                // Premium görevini tamamla
+                const { trackAction } = await import('./api')
+                trackAction(session.user.id, 'become_premium').catch(() => {})
+
                 alert('Premium abonelik başarıyla aktifleştirildi! 🎉')
                 setLoading(false)
                 return true

@@ -78,6 +78,31 @@ const MissionIcon = ({ actionType, size = 22, isSuper }) => {
           <path d="M16 10a4 4 0 0 1-8 0" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
         </svg>
       )
+    case 'complete_profile':
+      // Profil tamamla — kullanıcı ikonu + check
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="8.5" cy="7" r="4" stroke={color} strokeWidth="1.8"/>
+          <path d="M17 11l2 2 4-4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )
+    case 'use_boost':
+      // Boost/roket ikonu
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C12 2 7 7 7 12c0 2.76 2.24 5 5 5s5-2.24 5-5c0-5-5-10-5-10z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10 19l-1 3M14 19l1 3M12 17v5" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      )
+    case 'become_premium':
+      // Premium — taç ikonu
+      return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+          <path d="M2 20h20l-2-8-4 4-4-8-4 8-4-4-2 8z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M5 20v2h14v-2" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+        </svg>
+      )
     case 'trend_finish':
       // Yıldız ikonu
       return (
@@ -102,7 +127,7 @@ const MissionIcon = ({ actionType, size = 22, isSuper }) => {
   }
 }
 
-const MissionCard = ({ title, description, actionType, progress, target, xp, completed, claimed, isSuper, isAdmin, onClaim }) => {
+const MissionCard = ({ title, description, actionType, progress, target, xp, completed, claimed, isSuper, isAdmin, isOnetime, onClaim }) => {
   const pct = target > 0 ? Math.min((progress / target) * 100, 100) : 0
   const isClaimed = claimed
   const isDone = completed && !claimed

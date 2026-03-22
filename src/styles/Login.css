@@ -199,7 +199,8 @@
 
 .login-methods {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 48px;
   margin-top: 10px;
   position: relative;
 }

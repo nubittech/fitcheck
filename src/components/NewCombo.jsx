@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import MediaCarousel from './MediaCarousel'
-import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus, getDailyPostCount } from '../lib/api'
+import { createOutfit, uploadMedia, insertOutfitMedia, activateBoost, getBoostStatus, getDailyPostCount, trackAction } from '../lib/api'
 import { useLang } from '../i18n/LangContext'
 import { validateAffiliateLink, affiliateLinkError } from '../lib/affiliateValidator'
 import '../styles/NewCombo.css'
@@ -253,7 +253,9 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       // Activate boost via RPC if enabled (sets boosted_at, decrements quota)
       if (boostEnabled) {
         const { data: boostResult } = await activateBoost(session.user.id)
-        if (!boostResult?.success) {
+        if (boostResult?.success) {
+          trackAction(session.user.id, 'use_boost').catch(() => {})
+        } else {
           console.warn('Boost activation failed:', boostResult?.error)
         }
       }
@@ -270,7 +272,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       }
 
       resetForm()
-      onOutfitCreated?.()
+      onOutfitCreated?.(postType)
     } catch (err) {
       console.error('Submit combo error:', err)
       setSubmitError(err.message || 'Failed to share combo')

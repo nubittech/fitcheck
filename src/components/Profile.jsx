@@ -7,7 +7,7 @@ import Settings from './Settings';
 import XPRing from './level/XPRing';
 import XPProgressBar from './level/XPProgressBar';
 import MissionsSheet from './missions/MissionsSheet';
-import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase } from '../lib/api';
+import { getOutfitsByUser, getBoostStatus, activateBoost, creditBoostPurchase, trackAction } from '../lib/api';
 import { purchaseBoost } from '../lib/purchases';
 import { useLang } from '../i18n/LangContext';
 import { usePremium } from '../lib/usePremium';
@@ -402,6 +402,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             alert(data?.error || 'Boost aktifleştirilemedi.');
                             return;
                         }
+                        trackAction(session.user.id, 'use_boost').catch(() => {});
                         setBoostsUsed(data.boosts_used);
                         if (data.used_purchased) {
                             setPurchasedBoostBalance(prev => Math.max(0, prev - 1));

@@ -87,6 +87,7 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
 
   // Görevleri türlerine göre ayır — link_sale görevlerini her yerde gizle
   const activeMissions = missions.filter(m => m.action_type !== 'link_sale')
+  const onetimeMissions = activeMissions.filter(m => m.mission_type === 'onetime' && !m.is_claimed)
   const dailyMissions = activeMissions.filter(m => m.mission_type === 'daily')
   const superMissions = activeMissions.filter(m => m.mission_type === 'super')
   const adminMissions = activeMissions.filter(m => m.mission_type === 'admin')
@@ -155,6 +156,27 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
             </div>
           ) : (
             <>
+              {/* Tek Seferlik Görevler */}
+              {onetimeMissions.length > 0 && (
+                <>
+                  {onetimeMissions.map(m => (
+                    <MissionCard
+                      key={m.id}
+                      title={m.title || 'Görev'}
+                      description={m.description}
+                      actionType={m.action_type}
+                      progress={m.progress}
+                      target={m.target}
+                      xp={m.xp_reward || 0}
+                      completed={m.is_completed}
+                      claimed={m.is_claimed}
+                      isOnetime={true}
+                      onClaim={() => handleClaim(m.id)}
+                    />
+                  ))}
+                </>
+              )}
+
               {/* Günlük Görevler */}
               {dailyMissions.length > 0 && (
                 <>
