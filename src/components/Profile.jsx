@@ -63,7 +63,7 @@ function getTimeLeft(createdAt) {
 
 const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitClick, onUpgrade }) => {
     const { t } = useLang();
-    const { level: levelData, streakInfo } = useXP();
+    const { level: levelData } = useXP();
     const handleUpgrade = onUpgrade || (() => { });
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
@@ -240,23 +240,6 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                     </div>
                 )}
 
-                {/* Streak badge */}
-                {streakInfo && streakInfo.streak > 1 && (
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        background: 'rgba(255,165,0,0.1)',
-                        color: '#FFD700',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '4px 12px',
-                        borderRadius: 12,
-                        marginTop: 8,
-                    }}>
-                        🔥 {streakInfo.streak} Gun Streak
-                    </div>
-                )}
 
 
             </section>

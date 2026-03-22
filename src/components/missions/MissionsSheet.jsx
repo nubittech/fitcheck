@@ -26,7 +26,7 @@ const getIcon = (m) => {
 const MissionsSheet = ({ isOpen, onClose, userId }) => {
   const [missions, setMissions] = useState([])
   const [loading, setLoading] = useState(true)
-  const { refreshLevel, streakInfo, level } = useXP()
+  const { refreshLevel, level } = useXP()
   const sheetRef = useRef(null)
   const startY = useRef(0)
   const currentY = useRef(0)
@@ -121,11 +121,6 @@ const MissionsSheet = ({ isOpen, onClose, userId }) => {
               <div className="missions-total-xp">
                 ⭐ Günlük: {dailyXP.toLocaleString()} XP
               </div>
-              {streakInfo?.streak_days > 0 && (
-                <div style={{ background: '#fff3e0', color: '#e07a2f', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                  🔥 {streakInfo.streak_days} Gün Seri
-                </div>
-              )}
             </div>
           </div>
           <button className="missions-sheet-close" onClick={onClose}>
