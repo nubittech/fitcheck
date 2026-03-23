@@ -70,17 +70,14 @@
 }
 
 .profile-page .premium-badge {
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: #ffffff;
   border: 1px solid #ece7e3;
   border-radius: 999px;
   padding: 3px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  margin-top: 6px;
 }
 
 .profile-page .premium-badge span {

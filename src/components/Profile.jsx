@@ -181,14 +181,14 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             <img src={profile.avatar} alt="Profile" className="avatar-img" />
                         </div>
                     )}
-                    {profile.isPremium && (
-                        <div className="premium-badge">
-                            {ICONS.verified}
-                            <span>PREMIUM</span>
-                        </div>
-                    )}
                 </div>
                 <h2 className="user-name">{profile.name}</h2>
+                {profile.isPremium && (
+                    <div className="premium-badge">
+                        {ICONS.verified}
+                        <span>PREMIUM</span>
+                    </div>
+                )}
 
                 {/* Level title & Location */}
                 <div style={{
