@@ -65,6 +65,7 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
     const { t } = useLang();
     const { level: levelData, streakInfo } = useXP();
     const handleUpgrade = onUpgrade || (() => { });
+    const isOwnProfile = session?.user?.id && session.user.id === currentUser?.id;
     const [showBoost, setShowBoost] = useState(false);
     const [showEditProfile, setShowEditProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -298,15 +299,19 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             {activeOutfits[0].post_type === 'ab_test' && (
                                 <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                             )}
-                            <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-                            </button>
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
                                 </div>
-                                <div className="likes-badge">
-                                    {ICONS.heart} {activeOutfits[0].likes_count || 0}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    {isOwnProfile && (
+                                        <button onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                        </button>
+                                    )}
+                                    <div className="likes-badge">
+                                        {ICONS.heart} {activeOutfits[0].likes_count || 0}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -319,15 +324,19 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                                 {outfit.post_type === 'ab_test' && (
                                     <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                                 )}
-                                <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, outfit.id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-                                </button>
                                 <div className="look-overlay">
                                     <div className="timer-badge">
                                         {ICONS.clock} {getTimeLeft(outfit.created_at)}
                                     </div>
-                                    <div className="likes-badge">
-                                        {ICONS.heart} {outfit.likes_count || 0}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                        {isOwnProfile && (
+                                            <button onClick={(e) => handleDeleteOutfit(e, outfit.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                            </button>
+                                        )}
+                                        <div className="likes-badge">
+                                            {ICONS.heart} {outfit.likes_count || 0}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -340,15 +349,19 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                             {activeOutfits[0].post_type === 'ab_test' && (
                                 <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 'bold', zIndex: 2 }}>A/B</div>
                             )}
-                            <button className="delete-outfit-btn" onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3, cursor: 'pointer' }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-                            </button>
                             <div className="look-overlay">
                                 <div className="timer-badge">
                                     {ICONS.clock} {getTimeLeft(activeOutfits[0].created_at)}
                                 </div>
-                                <div className="likes-badge">
-                                    {ICONS.heart} {activeOutfits[0].likes_count || 0}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                    {isOwnProfile && (
+                                        <button onClick={(e) => handleDeleteOutfit(e, activeOutfits[0].id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                        </button>
+                                    )}
+                                    <div className="likes-badge">
+                                        {ICONS.heart} {activeOutfits[0].likes_count || 0}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -363,6 +376,13 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                                         <div className="timer-badge">
                                             {ICONS.clock} {getTimeLeft(outfit.created_at)}
                                         </div>
+                                        {isOwnProfile && (
+                                            <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-end' }}>
+                                                <button onClick={(e) => handleDeleteOutfit(e, outfit.id)} style={{ background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
