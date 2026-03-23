@@ -26,7 +26,7 @@ export const PRIVACY_POLICY = `
 <p>We store the information we collect for as long as it is necessary for the purpose(s) for which we originally collected it.</p>
 
 <h3>6. Contact Us</h3>
-<p>If you have any questions about this Privacy Policy, please contact us at support@veylo.app.</p>
+<p>If you have any questions about this Privacy Policy, please contact us at partnerships@nubit.tech.</p>
 `;
 
 export const TERMS_OF_SERVICE = `
@@ -60,7 +60,7 @@ export const TERMS_OF_SERVICE = `
 <p>We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.</p>
 
 <h3>7. Contact</h3>
-<p>If you have any questions about these Terms, please contact us at support@veylo.app.</p>
+<p>If you have any questions about these Terms, please contact us at partnerships@nubit.tech.</p>
 `;
 
 export const COMMUNITY_GUIDELINES = `
