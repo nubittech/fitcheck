@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLang } from '../i18n/LangContext';
+import LegalPage from './LegalPage';
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './LegalContent';
 import '../styles/Profile.css';
 
 const PremiumPromo = ({ onUpgrade }) => {
     const { t, lang } = useLang();
+    const [legalView, setLegalView] = useState(null);
 
     const features = [
         {
@@ -64,9 +67,33 @@ const PremiumPromo = ({ onUpgrade }) => {
                 ))}
             </div>
 
+            <div style={{ fontSize: '11px', color: '#999', textAlign: 'center', marginBottom: '8px', lineHeight: '1.4' }}>
+                <strong>{lang === 'tr' ? 'Veylo Premium — Aylık Abonelik' : 'Veylo Premium — Monthly Subscription'}</strong><br />
+                {lang === 'tr' ? 'Aylık $2.99 · Otomatik yenilenir · İstediğin zaman iptal et' : '$2.99/month · Auto-renews · Cancel anytime'}
+            </div>
+
             <button className="premium-upgrade-btn" onClick={onUpgrade}>
-                {lang === 'tr' ? "Premium'a Geç — Aylık $3" : 'Get Premium for $3/mo'}
+                {lang === 'tr' ? "Premium'a Geç — Aylık $2.99" : 'Get Premium for $2.99/mo'}
             </button>
+
+            <div style={{ fontSize: '10px', color: '#aaa', textAlign: 'center', marginTop: '8px', lineHeight: '1.5' }}>
+                {lang === 'tr' ? (
+                    <>
+                        Satın alma işlemi Apple ID hesabınızdan tahsil edilir. Abonelik, mevcut dönem sona ermeden en az 24 saat önce iptal edilmediği sürece otomatik olarak yenilenir.{' '}
+                        <span onClick={() => setLegalView('terms')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Kullanım Koşulları</span> ve{' '}
+                        <span onClick={() => setLegalView('privacy')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Gizlilik Politikası</span>
+                    </>
+                ) : (
+                    <>
+                        Payment is charged to your Apple ID account. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.{' '}
+                        <span onClick={() => setLegalView('terms')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms of Use</span> &{' '}
+                        <span onClick={() => setLegalView('privacy')} style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span>
+                    </>
+                )}
+            </div>
+
+            {legalView === 'terms' && <LegalPage title={lang === 'tr' ? 'Kullanım Koşulları' : 'Terms of Service'} content={TERMS_OF_SERVICE} onBack={() => setLegalView(null)} />}
+            {legalView === 'privacy' && <LegalPage title={lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'} content={PRIVACY_POLICY} onBack={() => setLegalView(null)} />}
         </div>
     );
 };

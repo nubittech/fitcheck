@@ -73,12 +73,16 @@ const DailyLimitDemo = ({ swipeCount = 75, onBack, onGoHome, onUpgrade, onGoProf
 
             <button className="dl-premium-btn" onClick={onUpgrade}>
               <span>Premium'a Geç</span>
-              <span className="dl-premium-price">($3/ay)</span>
+              <span className="dl-premium-price">($2.99/ay)</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
             </button>
+
+            <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: '6px 0 0', lineHeight: '1.4' }}>
+              Aylık $2.99 · Otomatik yenilenir · İstediğin zaman iptal et
+            </p>
 
             <p className="dl-more-link" onClick={onGoProfile} style={{ cursor: 'pointer' }}>Daha fazla avantajı gör</p>
           </div>

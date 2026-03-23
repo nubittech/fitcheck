@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",

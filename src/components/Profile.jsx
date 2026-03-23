@@ -409,6 +409,22 @@ const Profile = ({ currentUser, session, onLogout, onProfileUpdated, onOutfitCli
                         const success = await handleUpgrade()
                         if (success) setShowSettings(false)
                     }}
+                    onRestore={async () => {
+                        try {
+                            const { restorePurchases: restore } = await import('../lib/purchases')
+                            const { supabase } = await import('../lib/supabase')
+                            const result = await restore()
+                            if (result.isPremium) {
+                                await supabase.from('profiles').update({ is_premium: true, boosts_used: 0 }).eq('id', session.user.id)
+                                alert('Premium üyeliğiniz başarıyla geri yüklendi!')
+                                setShowSettings(false)
+                            } else {
+                                alert('Geri yüklenecek aktif abonelik bulunamadı.')
+                            }
+                        } catch (err) {
+                            alert('Geri yükleme sırasında bir hata oluştu.')
+                        }
+                    }}
                 />
             )}
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { Capacitor } from '@capacitor/core'
 import LegalPage from './LegalPage'
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, COMMUNITY_GUIDELINES } from './LegalContent'
 import { useLang } from '../i18n/LangContext'
@@ -6,7 +7,7 @@ import '../styles/Settings.css'
 
 const APP_VERSION = '1.0.0'
 
-const Settings = ({ onClose, onLogout, currentUser, onUpgrade, session }) => {
+const Settings = ({ onClose, onLogout, currentUser, onUpgrade, onRestore, session }) => {
   const { t, lang, toggleLang } = useLang()
   const [currentView, setCurrentView] = useState('main')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -117,7 +118,52 @@ const Settings = ({ onClose, onLogout, currentUser, onUpgrade, session }) => {
               </div>
               {!isPremium && <span className="settings-upgrade-badge">{t('upgrade')}</span>}
             </div>
+            {isPremium && (
+              <div
+                className="settings-item"
+                onClick={() => {
+                  const platform = Capacitor.getPlatform()
+                  if (platform === 'ios') {
+                    window.open('https://apps.apple.com/account/subscriptions', '_blank')
+                  } else if (platform === 'android') {
+                    window.open('https://play.google.com/store/account/subscriptions', '_blank')
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="settings-item-left">
+                  <div className="settings-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <span>{lang === 'tr' ? 'Aboneliği Yönet' : 'Manage Subscription'}</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+              </div>
+            )}
           </div>
+
+          {/* Restore Purchases */}
+          {!isPremium && Capacitor.isNativePlatform() && (
+            <div className="settings-section">
+              <div
+                className="settings-item"
+                onClick={onRestore}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="settings-item-left">
+                  <div className="settings-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
+                  </div>
+                  <span>{lang === 'tr' ? 'Satın Alımları Geri Yükle' : 'Restore Purchases'}</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+              </div>
+            </div>
+          )}
 
           {/* Legal */}
           <div className="settings-section">

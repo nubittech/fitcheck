@@ -95,6 +95,15 @@ export function usePremium() {
             const result = await restorePurchases()
             setIsPremium(result.isPremium)
             if (result.isPremium) {
+                // Sync with Supabase
+                const { supabase } = await import('./supabase')
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session?.user?.id) {
+                    await supabase
+                        .from('profiles')
+                        .update({ is_premium: true, boosts_used: 0 })
+                        .eq('id', session.user.id)
+                }
                 alert('Premium üyeliğiniz başarıyla geri yüklendi!')
             } else {
                 alert('Geri yüklenecek aktif abonelik bulunamadı.')

@@ -4,12 +4,15 @@ import { supabase } from '../lib/supabase'
 import { useLang } from '../i18n/LangContext'
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
+import LegalPage from './LegalPage'
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from './LegalContent'
 import veyloLogo from '../assets/veylo-logo.png'
 import '../styles/Login.css'
 
 const Login = ({ onLogin, onGoSignUp }) => {
   const { t, lang } = useLang()
   const [showEmailForm, setShowEmailForm] = useState(false)
+  const [legalView, setLegalView] = useState(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -242,10 +245,13 @@ const Login = ({ onLogin, onGoSignUp }) => {
 
       <div className="login-terms">
         {lang === 'tr'
-          ? <> Devam ederek <a href="#">Kullanım Koşullarını</a><br /> ve <a href="#">Gizlilik Politikasını</a> kabul etmiş ve 16 yaşından büyük olduğunuzu onaylamış olursunuz</>
-          : <> By continuing, you accept the <a href="#">Terms of Use</a><br /> and <a href="#">Privacy Policy</a>, and confirm that you are over 16 years old</>
+          ? <> Devam ederek <span onClick={() => setLegalView('terms')} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#FF8B7B' }}>Kullanım Koşullarını</span><br /> ve <span onClick={() => setLegalView('privacy')} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#FF8B7B' }}>Gizlilik Politikasını</span> kabul etmiş ve 16 yaşından büyük olduğunuzu onaylamış olursunuz</>
+          : <> By continuing, you accept the <span onClick={() => setLegalView('terms')} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#FF8B7B' }}>Terms of Use</span><br /> and <span onClick={() => setLegalView('privacy')} style={{ textDecoration: 'underline', cursor: 'pointer', color: '#FF8B7B' }}>Privacy Policy</span>, and confirm that you are over 16 years old</>
         }
       </div>
+
+      {legalView === 'terms' && <LegalPage title={lang === 'tr' ? 'Kullanım Koşulları' : 'Terms of Service'} content={TERMS_OF_SERVICE} onBack={() => setLegalView(null)} />}
+      {legalView === 'privacy' && <LegalPage title={lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'} content={PRIVACY_POLICY} onBack={() => setLegalView(null)} />}
 
       <button className="login-cant">{lang === 'tr' ? 'Giriş yapamıyor musun?' : "Can't login?"}</button>
 

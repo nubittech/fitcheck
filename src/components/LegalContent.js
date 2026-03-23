@@ -26,7 +26,7 @@ export const PRIVACY_POLICY = `
 <p>We store the information we collect for as long as it is necessary for the purpose(s) for which we originally collected it.</p>
 
 <h3>6. Contact Us</h3>
-<p>If you have any questions about this Privacy Policy, please contact us at support@fitcheck.app.</p>
+<p>If you have any questions about this Privacy Policy, please contact us at support@veylo.app.</p>
 `;
 
 export const TERMS_OF_SERVICE = `
@@ -47,8 +47,20 @@ export const TERMS_OF_SERVICE = `
   <li>Posting content that is infringing, libelous, defamatory, obscene, pornographic, abusive, or offensive</li>
 </ul>
 
-<h3>5. Termination</h3>
+<h3>5. Subscriptions and In-App Purchases</h3>
+<p>Veylo offers auto-renewable subscriptions and consumable in-app purchases.</p>
+<ul>
+  <li><strong>Veylo Premium</strong> — Monthly subscription at $2.99/month. Includes unlimited feed access, filtered sharing, 5 monthly boosts, and affiliate links.</li>
+  <li><strong>Boost Packs</strong> — Consumable purchase of 5 boosts for $1.99.</li>
+</ul>
+<p>Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the same price.</p>
+<p>You can manage and cancel your subscriptions by going to your device's Settings > Apple ID > Subscriptions (iOS) or Google Play Store > Subscriptions (Android).</p>
+
+<h3>6. Termination</h3>
 <p>We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.</p>
+
+<h3>7. Contact</h3>
+<p>If you have any questions about these Terms, please contact us at support@veylo.app.</p>
 `;
 
 export const COMMUNITY_GUIDELINES = `
