@@ -869,3 +869,79 @@ export async function deleteAccount(userId) {
     return { success: false, error: err.message }
   }
 }
+
+// ─────────────────────────────────────────────
+// BOUTIQUE API (feature flag: FEATURES.BOUTIQUE_ACCOUNTS)
+// ─────────────────────────────────────────────
+
+export async function getBoutiqueProducts(userId) {
+  const { data, error } = await supabase
+    .from('outfits')
+    .select('*, outfit_media(*)')
+    .eq('user_id', userId)
+    .eq('is_boutique_product', true)
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export async function getBoutiqueStats(boutiqueId) {
+  const { data, error } = await supabase
+    .from('boutique_stats')
+    .select('*')
+    .eq('boutique_id', boutiqueId)
+    .single()
+  return { data, error }
+}
+
+export async function getBoutiqueList() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, boutique_name, avatar_url, account_type')
+    .eq('account_type', 'boutique')
+    .order('created_at', { ascending: false })
+  return { data, error }
+}
+
+export async function followUser(followerId, followingId) {
+  const { error } = await supabase
+    .from('followers')
+    .insert({ follower_id: followerId, following_id: followingId })
+  return { error }
+}
+
+export async function unfollowUser(followerId, followingId) {
+  const { error } = await supabase
+    .from('followers')
+    .delete()
+    .eq('follower_id', followerId)
+    .eq('following_id', followingId)
+  return { error }
+}
+
+export async function isFollowing(followerId, followingId) {
+  const { data } = await supabase
+    .from('followers')
+    .select('id')
+    .eq('follower_id', followerId)
+    .eq('following_id', followingId)
+    .single()
+  return !!data
+}
+
+export async function upgradeToBoutiqueAccount(userId, accountType, boutiqueName, shopUrl) {
+  const updates = {
+    account_type: accountType,
+    ...(boutiqueName && { boutique_name: boutiqueName }),
+    ...(shopUrl && { shop_url: shopUrl }),
+  }
+  const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+  return { error }
+}
+
+export async function downgradeToNormalAccount(userId) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ account_type: 'normal' })
+    .eq('id', userId)
+  return { error }
+}
