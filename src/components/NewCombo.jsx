@@ -6,10 +6,12 @@ import { validateAffiliateLink, affiliateLinkError } from '../lib/affiliateValid
 import '../styles/NewCombo.css'
 import { STYLE_TYPES } from '../constants/styleTypes'
 import imageCompression from 'browser-image-compression'
+import { FEATURES } from '../lib/features'
 
 const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const { t, lang } = useLang()
   const tr = lang === 'tr'
+  const isBoutique = FEATURES.BOUTIQUE_ACCOUNTS && currentUser?.account_type === 'boutique'
   const [mediaFiles, setMediaFiles] = useState([])
   const [pieces, setPieces] = useState([])
   const [pieceName, setPieceName] = useState('')
@@ -19,12 +21,25 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const [gender, setGender] = useState('unisex')
   const [selectedStyle, setSelectedStyle] = useState('Minimalist')
   const [styleOpen, setStyleOpen] = useState(false)
-  const [postType, setPostType] = useState('single') // 'single' | 'ab_test'
+  const [postType, setPostType] = useState('single') // 'single' | 'ab_test' | 'boutique_product'
   const [ageRange, setAgeRange] = useState([18, 35])
   const [draggingThumb, setDraggingThumb] = useState(null)
   const [caption, setCaption] = useState('')
   const fileInputRef = useRef(null)
   const sliderRef = useRef(null)
+
+  // Butik ürün alanları
+  const [productPrice, setProductPrice] = useState('')
+  const [productUrl, setProductUrl] = useState('')
+  const [productUrlError, setProductUrlError] = useState('')
+  const [productBrand, setProductBrand] = useState('')
+  const [productSizes, setProductSizes] = useState('')
+  const [productDescription, setProductDescription] = useState('')
+
+  // Butik hesap ise otomatik ürün paylaş moduna geç
+  useEffect(() => {
+    if (isBoutique) setPostType('boutique_product')
+  }, [isBoutique])
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
@@ -156,12 +171,14 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
   const videoCount = mediaFiles.filter(m => m.type === 'video').length
   const imageCount = mediaFiles.filter(m => m.type === 'image').length
-  const maxAllowed = postType === 'ab_test' ? 2 : 4
+  const maxAllowed = postType === 'ab_test' ? 2 : postType === 'boutique_product' ? 4 : 4
   const canAddMore = mediaFiles.length < maxAllowed
   const isValid = postType === 'ab_test'
     ? (mediaFiles.length === 2)
+    : postType === 'boutique_product'
+    ? (mediaFiles.length > 0 && caption.trim().length > 0 && productPrice.trim().length > 0 && productUrl.trim().length > 0)
     : (mediaFiles.length > 0 && pieces.length > 0)
-  const postsRemaining = isPremium ? Infinity : Math.max(0, FREE_DAILY_POST_LIMIT - dailyPostCount)
+  const postsRemaining = isBoutique ? Infinity : isPremium ? Infinity : Math.max(0, FREE_DAILY_POST_LIMIT - dailyPostCount)
   const canPost = isPremium || postsRemaining > 0
 
   const resetForm = () => {
@@ -173,7 +190,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setPieceName('')
     setPieceBrand('')
     setPieceLink('')
-    setPostType('single')
+    setPostType(isBoutique ? 'boutique_product' : 'single')
     setGender('unisex')
     setSelectedStyle('Minimalist')
     setStyleOpen(false)
@@ -182,6 +199,12 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setTagDots([])
     setBoostEnabled(false)
     setShowPreview(false)
+    setProductPrice('')
+    setProductUrl('')
+    setProductUrlError('')
+    setProductBrand('')
+    setProductSizes('')
+    setProductDescription('')
   }
 
   const handleShareCombo = async () => {
@@ -235,7 +258,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       })
 
       // Create outfit row
-      const { data: outfit, error: outfitError } = await createOutfit({
+      const outfitData = {
         userId: session.user.id,
         caption: caption.trim(),
         gender,
@@ -244,9 +267,21 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         ageRangeMax: ageRange[1],
         items: itemsData,
         isBoosted: boostEnabled,
-        postType,
+        postType: isBoutique ? 'boutique_product' : postType,
         imageUrlB
-      })
+      }
+
+      // Butik ürün ek verileri
+      if (isBoutique) {
+        outfitData.isBoutiqueProduct = true
+        outfitData.productPrice = productPrice.trim()
+        outfitData.productUrl = productUrl.trim()
+        outfitData.productBrand = productBrand.trim() || null
+        outfitData.productSizes = productSizes.trim() || null
+        outfitData.productDescription = productDescription.trim() || null
+      }
+
+      const { data: outfit, error: outfitError } = await createOutfit(outfitData)
 
       if (outfitError) throw outfitError
 
@@ -456,7 +491,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
       {/* Header */}
       <div className="newcombo-header">
         <button className="newcombo-cancel" onClick={onClose}>{t('cancel')}</button>
-        <h1 className="newcombo-title">{t('new_combo')}</h1>
+        <h1 className="newcombo-title">{isBoutique ? (tr ? 'Yeni Ürün' : 'New Product') : t('new_combo')}</h1>
         <div className="newcombo-header-spacer" />
       </div>
 
@@ -464,25 +499,33 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         {/* Post Type Selection */}
         <div className="newcombo-section">
           <label className="field-label">{tr ? 'GÖNDERİ TİPİ' : 'POST TYPE'}</label>
-          <div className="gender-row" style={{ marginTop: '8px' }}>
-            <button
-              className={`gender-chip ${postType === 'single' ? 'selected' : ''}`}
-              onClick={() => {
-                setPostType('single')
-              }}
-            >
-              {tr ? 'Kombini Paylaş' : 'Share Look'}
-            </button>
-            <button
-              className={`gender-chip ${postType === 'ab_test' ? 'selected' : ''}`}
-              onClick={() => {
-                setPostType('ab_test')
-                if (mediaFiles.length > 2) setMediaFiles(mediaFiles.slice(0, 2))
-              }}
-            >
-              {tr ? 'Kombin Kıyaslat' : 'Versus Battle'}
-            </button>
-          </div>
+          {isBoutique ? (
+            <div className="gender-row" style={{ marginTop: '8px' }}>
+              <button className="gender-chip selected">
+                {tr ? 'Ürün Paylaş' : 'Share Product'}
+              </button>
+            </div>
+          ) : (
+            <div className="gender-row" style={{ marginTop: '8px' }}>
+              <button
+                className={`gender-chip ${postType === 'single' ? 'selected' : ''}`}
+                onClick={() => {
+                  setPostType('single')
+                }}
+              >
+                {tr ? 'Kombini Paylaş' : 'Share Look'}
+              </button>
+              <button
+                className={`gender-chip ${postType === 'ab_test' ? 'selected' : ''}`}
+                onClick={() => {
+                  setPostType('ab_test')
+                  if (mediaFiles.length > 2) setMediaFiles(mediaFiles.slice(0, 2))
+                }}
+              >
+                {tr ? 'Kombin Kıyaslat' : 'Versus Battle'}
+              </button>
+            </div>
+          )}
           {postType === 'ab_test' && (
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px', lineHeight: 1.4 }}>
               {tr ? 'Kararsız kaldığın 2 kombini yükle, hangisinin daha iyi olduğuna topluluk karar versin!' : 'Upload 2 outfits you are unsure about and let the community decide!'}
@@ -503,7 +546,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                   </svg>
                   <div className="upload-plus">+</div>
                 </div>
-                <span className="upload-text">{tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look'}</span>
+                <span className="upload-text">{isBoutique ? (tr ? 'Ürün fotoğrafını yükle' : 'Upload product photo') : (tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look')}</span>
                 <span className="upload-sub">{tr ? 'JPG, PNG desteklenir (Maks 5MB)' : 'Supports JPG, PNG (Max 5MB)'}</span>
               </div>
             ) : postType === 'ab_test' ? (
@@ -598,7 +641,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         <div className="newcombo-section">
           <textarea
             className="caption-input"
-            placeholder={tr ? 'Kombin için bir başlık yaz...' : 'Write a caption for your combo...'}
+            placeholder={isBoutique ? (tr ? 'Ürün başlığı (zorunlu)...' : 'Product title (required)...') : (tr ? 'Kombin için bir başlık yaz...' : 'Write a caption for your combo...')}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={280}
@@ -607,8 +650,83 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           <div className="caption-counter">{caption.length}/280</div>
         </div>
 
-        {/* Tag Pieces (Hide for A/B Test or make optional) */}
-        {postType !== 'ab_test' && (
+        {/* Butik Ürün Bilgileri */}
+        {isBoutique && postType === 'boutique_product' && (
+          <div className="newcombo-section">
+            <h2 className="section-title">{tr ? 'Ürün Bilgileri' : 'Product Details'}</h2>
+
+            {/* Fiyat (zorunlu) */}
+            <input
+              className="piece-input"
+              placeholder={tr ? '💰 Fiyat (ör. 450 TL)' : '💰 Price (e.g. $45)'}
+              value={productPrice}
+              onChange={(e) => setProductPrice(e.target.value)}
+              inputMode="numeric"
+            />
+
+            {/* Ürün linki (zorunlu) */}
+            <input
+              className={`piece-input piece-link-input ${productUrlError === 'ok' ? 'link-valid' : productUrlError ? 'link-error' : ''}`}
+              placeholder={tr ? '🔗 Ürün linki (zorunlu)' : '🔗 Product URL (required)'}
+              value={productUrl}
+              onChange={(e) => { setProductUrl(e.target.value); setProductUrlError('') }}
+              onBlur={() => {
+                if (!productUrl.trim()) { setProductUrlError(''); return }
+                let url = productUrl.trim()
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+                setProductUrl(url)
+                const { valid, reason } = validateAffiliateLink(url)
+                setProductUrlError(valid ? 'ok' : affiliateLinkError(reason, lang))
+              }}
+              type="url"
+              inputMode="url"
+            />
+            {productUrlError && productUrlError !== 'ok' && (
+              <p className="link-error-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><circle cx="12" cy="16" r="1" fill="currentColor" />
+                </svg>
+                {productUrlError}
+              </p>
+            )}
+            {productUrlError === 'ok' && (
+              <p className="link-ok-msg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {tr ? 'Geçerli link ✓' : 'Valid link ✓'}
+              </p>
+            )}
+
+            {/* İsteğe bağlı alanlar */}
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              {tr ? 'İsteğe Bağlı' : 'Optional'}
+            </div>
+            <input
+              className="piece-input small"
+              placeholder={tr ? 'Marka' : 'Brand'}
+              value={productBrand}
+              onChange={(e) => setProductBrand(e.target.value)}
+            />
+            <input
+              className="piece-input small"
+              placeholder={tr ? 'Beden / Renk seçenekleri (ör. S, M, L - Siyah, Beyaz)' : 'Size / Color options'}
+              value={productSizes}
+              onChange={(e) => setProductSizes(e.target.value)}
+            />
+            <textarea
+              className="caption-input"
+              placeholder={tr ? 'Ürün açıklaması...' : 'Product description...'}
+              value={productDescription}
+              onChange={(e) => setProductDescription(e.target.value)}
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+        )}
+
+        {/* Tag Pieces (Hide for A/B Test and Boutique) */}
+        {postType !== 'ab_test' && !isBoutique && (
           <div className="newcombo-section">
             <div className="section-header">
               <h2 className="section-title">{t('tag_pieces')}</h2>
@@ -740,7 +858,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             </div>
           )}
           <div style={!isPremium ? { opacity: 0.35, pointerEvents: 'none' } : undefined}>
-            <h2 className="section-title">{tr ? 'Bu kombin kimin için?' : 'Who is this for?'}</h2>
+            <h2 className="section-title">{isBoutique ? (tr ? 'Bu ürün kimin için?' : 'Who is this product for?') : (tr ? 'Bu kombin kimin için?' : 'Who is this for?')}</h2>
 
             {/* Gender */}
             <label className="field-label">{tr ? 'CİNSİYET' : 'GENDER'}</label>
@@ -814,7 +932,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
 
         {/* Submit */}
         <div className="newcombo-section newcombo-submit-section">
-          {!isPremium && (
+          {!isPremium && !isBoutique && (
             <div style={{ textAlign: 'center', marginBottom: '8px', fontSize: '12px', color: canPost ? 'var(--text-secondary)' : '#e53e3e' }}>
               {canPost
                 ? (tr ? `Bugün ${postsRemaining} kombin daha paylaşabilirsin` : `${postsRemaining} posts remaining today`)
