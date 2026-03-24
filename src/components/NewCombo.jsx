@@ -28,6 +28,10 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const fileInputRef = useRef(null)
   const sliderRef = useRef(null)
 
+  // Butik ürün görseli (profil grid + carousel son sayfa)
+  const [productThumbnail, setProductThumbnail] = useState(null)
+  const thumbnailInputRef = useRef(null)
+
   // Butik ürün alanları
   const [productPrice, setProductPrice] = useState('')
   const [productUrl, setProductUrl] = useState('')
@@ -40,6 +44,28 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   useEffect(() => {
     if (isBoutique) setPostType('boutique_product')
   }, [isBoutique])
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      alert(tr ? 'Sadece fotoğraf yükleyebilirsiniz.' : 'Only images are allowed.')
+      return
+    }
+    if (productThumbnail) URL.revokeObjectURL(productThumbnail.preview)
+    setProductThumbnail({
+      id: Date.now() + Math.random(),
+      file,
+      type: 'image',
+      preview: URL.createObjectURL(file)
+    })
+    e.target.value = ''
+  }
+
+  const removeThumbnail = () => {
+    if (productThumbnail) URL.revokeObjectURL(productThumbnail.preview)
+    setProductThumbnail(null)
+  }
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
@@ -176,7 +202,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
   const isValid = postType === 'ab_test'
     ? (mediaFiles.length === 2)
     : postType === 'boutique_product'
-    ? (mediaFiles.length > 0 && caption.trim().length > 0 && productPrice.trim().length > 0 && productUrl.trim().length > 0)
+    ? (mediaFiles.length > 0 && productThumbnail && caption.trim().length > 0 && productPrice.trim().length > 0 && productUrl.trim().length > 0)
     : (mediaFiles.length > 0 && pieces.length > 0)
   const postsRemaining = isBoutique ? Infinity : isPremium ? Infinity : Math.max(0, FREE_DAILY_POST_LIMIT - dailyPostCount)
   const canPost = isPremium || postsRemaining > 0
@@ -199,6 +225,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
     setTagDots([])
     setBoostEnabled(false)
     setShowPreview(false)
+    if (productThumbnail) URL.revokeObjectURL(productThumbnail.preview)
+    setProductThumbnail(null)
     setProductPrice('')
     setProductUrl('')
     setProductUrlError('')
@@ -279,6 +307,17 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
         outfitData.productBrand = productBrand.trim() || null
         outfitData.productSizes = productSizes.trim() || null
         outfitData.productDescription = productDescription.trim() || null
+
+        // Upload product thumbnail (profile grid + last carousel page)
+        if (productThumbnail) {
+          let thumbFile = productThumbnail.file
+          try {
+            thumbFile = await imageCompression(thumbFile, { maxSizeMB: 2, maxWidthOrHeight: 2048, useWebWorker: true, initialQuality: 0.85 })
+          } catch (e) { console.warn('Thumbnail compression failed:', e) }
+          const { data: thumbUp, error: thumbErr } = await uploadMedia(session.user.id, thumbFile)
+          if (thumbErr) throw thumbErr
+          outfitData.productThumbnailUrl = thumbUp.url
+        }
       }
 
       const { data: outfit, error: outfitError } = await createOutfit(outfitData)
@@ -533,8 +572,50 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
           )}
         </div>
 
+        {/* Product Thumbnail Upload (Boutique only) */}
+        {isBoutique && (
+          <div className="newcombo-section">
+            <h2 className="section-title" style={{ marginBottom: 8 }}>{tr ? 'Ürün Görseli' : 'Product Image'}</h2>
+            <div className="media-upload-area" style={{ minHeight: 140 }} onClick={() => !productThumbnail && thumbnailInputRef.current?.click()}>
+              {!productThumbnail ? (
+                <div className="upload-placeholder">
+                  <div className="upload-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <div className="upload-plus">+</div>
+                  </div>
+                  <span className="upload-text">{tr ? 'Yalnız ürün görseli yükleyin' : 'Upload product-only image'}</span>
+                  <span className="upload-sub">{tr ? 'Profil listesinde ve kaydırma kartının son sayfasında görünecek' : 'Shown in profile grid and as last carousel page'}</span>
+                </div>
+              ) : (
+                <div className="media-preview-grid" onClick={(e) => e.stopPropagation()}>
+                  <div className="media-preview-item">
+                    <img src={productThumbnail.preview} className="media-thumb" alt="thumbnail" />
+                    <button className="media-remove" onClick={removeThumbnail}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <input
+                ref={thumbnailInputRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleThumbnailChange}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Media Upload Area */}
         <div className="newcombo-section">
+          {isBoutique && <h2 className="section-title" style={{ marginBottom: 8 }}>{tr ? 'Ürün Fotoğrafları' : 'Product Photos'}</h2>}
           <div className={`media-upload-area ${mediaFiles.length > 0 && postType === 'ab_test' ? 'has-media-ab' : ''}`} onClick={() => canAddMore && fileInputRef.current?.click()}>
             {mediaFiles.length === 0 ? (
               <div className="upload-placeholder">
@@ -546,7 +627,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
                   </svg>
                   <div className="upload-plus">+</div>
                 </div>
-                <span className="upload-text">{isBoutique ? (tr ? 'Ürün fotoğrafını yükle' : 'Upload product photo') : (tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look')}</span>
+                <span className="upload-text">{isBoutique ? (tr ? 'Ürün fotoğraflarını yükle' : 'Upload product photos') : (tr ? 'Kombin fotoğrafını yükle' : 'Tap to upload your look')}</span>
                 <span className="upload-sub">{tr ? 'JPG, PNG desteklenir (Maks 5MB)' : 'Supports JPG, PNG (Max 5MB)'}</span>
               </div>
             ) : postType === 'ab_test' ? (
@@ -658,7 +739,8 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             {/* Fiyat (zorunlu) */}
             <input
               className="piece-input"
-              placeholder={tr ? '💰 Fiyat (ör. 450 TL)' : '💰 Price (e.g. $45)'}
+              placeholder={tr ? 'Fiyat (ör. 450 TL)' : 'Price (e.g. $45)'}
+              style={{ marginBottom: 6 }}
               value={productPrice}
               onChange={(e) => setProductPrice(e.target.value)}
               inputMode="numeric"
@@ -667,7 +749,7 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
             {/* Ürün linki (zorunlu) */}
             <input
               className={`piece-input piece-link-input ${productUrlError === 'ok' ? 'link-valid' : productUrlError ? 'link-error' : ''}`}
-              placeholder={tr ? '🔗 Ürün linki (zorunlu)' : '🔗 Product URL (required)'}
+              placeholder={tr ? 'Ürün linki (zorunlu)' : 'Product URL (required)'}
               value={productUrl}
               onChange={(e) => { setProductUrl(e.target.value); setProductUrlError('') }}
               onBlur={() => {
@@ -707,12 +789,14 @@ const NewCombo = ({ onClose, currentUser, session, onOutfitCreated }) => {
               placeholder={tr ? 'Marka' : 'Brand'}
               value={productBrand}
               onChange={(e) => setProductBrand(e.target.value)}
+              style={{ marginBottom: 6 }}
             />
             <input
               className="piece-input small"
-              placeholder={tr ? 'Beden / Renk seçenekleri (ör. S, M, L - Siyah, Beyaz)' : 'Size / Color options'}
+              placeholder={tr ? 'Beden (ör. S, M, L)' : 'Size (e.g. S, M, L)'}
               value={productSizes}
               onChange={(e) => setProductSizes(e.target.value)}
+              style={{ marginBottom: 6 }}
             />
             <textarea
               className="caption-input"
