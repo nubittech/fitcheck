@@ -397,15 +397,23 @@ const MissionsTab = () => {
     const [missions, setMissions] = useState([])
     const [loading, setLoading] = useState(true)
     const [editing, setEditing] = useState(null)
+    const [filterType, setFilterType] = useState('daily')
+    const [filterTier, setFilterTier] = useState(0)
     const [form, setForm] = useState({ title: '', description: '', icon: '🎯', xp_reward: 10, mission_type: 'daily', action_type: 'post_outfit', target_count: 1, is_active: true, priority: 0 })
 
-    const actionTypes = ['post_outfit', 'like_outfit', 'comment', 'share', 'explore_profile', 'event_post', 'follow']
+    const actionTypes = ['post_outfit', 'like_outfit', 'comment', 'share', 'explore_profile', 'ab_post', 'ab_vote', 'use_boost', 'trend_finish', 'link_sale', 'become_premium', 'complete_profile', 'event_post', 'follow']
 
     useEffect(() => { loadMissions() }, [])
     const loadMissions = () => {
         setLoading(true)
         getMissionTemplates().then(({ data }) => { setMissions(data); setLoading(false) })
     }
+
+    const filtered = missions.filter(m => {
+        if (m.mission_type !== filterType) return false
+        if (filterType === 'daily' && filterTier > 0 && m.tier !== filterTier) return false
+        return true
+    })
 
     const handleSave = async () => {
         if (editing) {
@@ -468,6 +476,33 @@ const MissionsTab = () => {
                 </div>
             </div>
 
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                {['daily', 'super', 'onetime', 'admin'].map(t => (
+                    <button key={t} onClick={() => { setFilterType(t); setFilterTier(0) }}
+                        style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                            background: filterType === t ? '#FFD700' : 'rgba(255,255,255,0.08)',
+                            color: filterType === t ? '#000' : '#aaa' }}>
+                        {t === 'daily' ? `Gunluk (${missions.filter(m => m.mission_type === 'daily').length})` :
+                         t === 'super' ? `Super (${missions.filter(m => m.mission_type === 'super').length})` :
+                         t === 'onetime' ? `Tek Seferlik (${missions.filter(m => m.mission_type === 'onetime').length})` :
+                         `Admin (${missions.filter(m => m.mission_type === 'admin').length})`}
+                    </button>
+                ))}
+                {filterType === 'daily' && (
+                    <div style={{ display: 'flex', gap: 6, marginLeft: 8 }}>
+                        {[0,1,2,3,4].map(t => (
+                            <button key={t} onClick={() => setFilterTier(t)}
+                                style={{ padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12,
+                                    background: filterTier === t ? '#fff' : 'rgba(255,255,255,0.05)',
+                                    color: filterTier === t ? '#000' : '#aaa' }}>
+                                {t === 0 ? 'Tumu' : `Tier ${t}`}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             {/* List */}
             <div className="admin-card">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -483,7 +518,7 @@ const MissionsTab = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {missions.map(m => (
+                        {filtered.map(m => (
                             <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                 <td style={tdStyle}>{m.icon}</td>
                                 <td style={tdStyle}>{m.title}</td>
