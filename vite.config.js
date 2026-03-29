@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true
+    host: true,
+    allowedHosts: 'all'
   },
   build: {
     // Warn if any chunk exceeds 500KB
